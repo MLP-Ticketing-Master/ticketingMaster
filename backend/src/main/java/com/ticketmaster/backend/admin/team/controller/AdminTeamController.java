@@ -1,0 +1,51 @@
+package com.ticketmaster.backend.admin.team.controller;
+
+import com.ticketmaster.backend.admin.team.dto.request.AdminTeamCreateRequest;
+import com.ticketmaster.backend.admin.team.dto.request.AdminTeamUpdateRequest;
+import com.ticketmaster.backend.admin.team.dto.response.AdminTeamResponse;
+import com.ticketmaster.backend.admin.team.service.AdminTeamService;
+import com.ticketmaster.backend.domain.event.entity.SportType;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/admin")
+@RequiredArgsConstructor
+public class AdminTeamController {
+
+    private final AdminTeamService teamService;
+
+    /** 팀 목록 조회 (종목 필터 가능) — 200 OK */
+    @GetMapping("/teams")
+    public ResponseEntity<List<AdminTeamResponse>> getTeams(
+            @RequestParam(required = false) SportType sportType) {
+        return ResponseEntity.ok(teamService.getTeams(sportType));
+    }
+
+    /** 팀 등록 — 201 Created */
+    @PostMapping("/teams")
+    public ResponseEntity<AdminTeamResponse> createTeam(
+            @RequestBody @Valid AdminTeamCreateRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(teamService.createTeam(request));
+    }
+
+    /** 팀 부분 수정 — 200 OK */
+    @PatchMapping("/teams/{teamId}")
+    public ResponseEntity<AdminTeamResponse> updateTeam(
+            @PathVariable Long teamId,
+            @RequestBody @Valid AdminTeamUpdateRequest request) {
+        return ResponseEntity.ok(teamService.updateTeam(teamId, request));
+    }
+
+    /** 팀 삭제 (소프트 삭제) — 204 No Content */
+    @DeleteMapping("/teams/{teamId}")
+    public ResponseEntity<Void> deleteTeam(@PathVariable Long teamId) {
+        teamService.deleteTeam(teamId);
+        return ResponseEntity.noContent().build();
+    }
+}
