@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 /** PATCH 부분 수정 — 변경할 필드만 전송, 나머지는 null */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class SeatGradeUpdateRequest {
+public class AdminSeatGradeUpdateRequest {
 
     @Positive(message = "가격은 0보다 커야 합니다.")
     private Integer price;

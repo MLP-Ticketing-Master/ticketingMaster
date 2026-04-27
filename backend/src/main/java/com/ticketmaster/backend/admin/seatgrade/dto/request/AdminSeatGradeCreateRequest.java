@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class SeatGradeCreateRequest {
+public class AdminSeatGradeCreateRequest {
 
     @NotBlank(message = "등급 코드를 입력해주세요.")
     private String gradeCode;   // "VIP", "R", "S", "A"

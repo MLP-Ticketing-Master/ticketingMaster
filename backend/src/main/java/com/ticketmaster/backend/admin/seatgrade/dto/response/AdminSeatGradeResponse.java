@@ -7,7 +7,7 @@ import lombok.*;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class SeatGradeResponse {
+public class AdminSeatGradeResponse {
 
     private Long seatGradeId;
     private String gradeCode;
@@ -17,8 +17,8 @@ public class SeatGradeResponse {
     /**
      * SeatGrade 엔티티 → 응답 DTO 변환
      */
-    public static SeatGradeResponse from(SeatGrade entity) {
-        return new SeatGradeResponse(
+    public static AdminSeatGradeResponse from(SeatGrade entity) {
+        return new AdminSeatGradeResponse(
                 entity.getId(),
                 entity.getGradeCode(),
                 entity.getPrice(),

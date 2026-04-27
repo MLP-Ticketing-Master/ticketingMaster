@@ -19,6 +19,9 @@ import java.time.LocalDateTime;
 @Entity
 @Table(
         name = "seats",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_seat_match_code", columnNames = {"match_id", "seat_code"})
+        },
         indexes = {
                 @Index(name = "idx_seat_match_status", columnList = "match_id,status"),
                 @Index(name = "idx_seat_match_section", columnList = "match_id,section_id"),
@@ -61,6 +64,10 @@ public class Seat extends BaseEntity {
     @Column(name = "reserved_until")
     private LocalDateTime reservedUntil;
 
+    // ==================================================
+    // 사용자 기능
+    // ==================================================
+
     // 상태 변경 메서드
     /** AVAILABLE → RESERVED */
     public void reserve(LocalDateTime until) {
@@ -98,5 +105,56 @@ public class Seat extends BaseEntity {
             throw new BusinessException(ErrorCode.INVALID_SEAT_STATUS);
         }
         this.status = SeatStatus.AVAILABLE;
+    }
+
+    /**
+     * 수정 가능 여부 — AVAILABLE 만 허용 (RESERVED/SOLD 모두 차단)
+     * - 결제 진행 중(RESERVED) 이거나 판매 완료(SOLD) 인 좌석은 사용자와 엮여 있어
+     *   관리자가 임의로 등급/구역을 바꾸면 결제 정합성이 깨짐
+     * - admin 의 좌석 수정/삭제 검증에서도 호출되지만 "상태 질의" 라 사용자 기능으로 분류
+     */
+    public boolean isEditable() {
+        return this.status == SeatStatus.AVAILABLE;
+    }
+
+    /**
+     * 삭제 가능 여부 — AVAILABLE 만 허용 (RESERVED/SOLD 모두 차단)
+     * - 사용자와 엮여 있는 좌석을 지우면 FK 가 깨지거나 환불 처리가 불가능해짐
+     * */
+    public boolean isDeletable() {
+        return this.status == SeatStatus.AVAILABLE;
+    }
+
+    // ==================================================
+    // 관리자 기능
+    // ==================================================
+
+    /**
+     * 좌석 생성
+     * - 등록 시 status 는 항상 AVAILABLE
+     * - admin/seat Service에서 호출
+     */
+    public static Seat create(Match match, Section section, SeatGrade grade,
+                              String rowLabel, int seatNo, String seatCode) {
+        Seat s = new Seat();
+        s.match = match;
+        s.section = section;
+        s.seatGrade = grade;
+        s.rowLabel = rowLabel;
+        s.seatNo = seatNo;
+        s.seatCode = seatCode;
+        s.status = SeatStatus.AVAILABLE;
+        return s;
+    }
+
+    /**
+     * 좌석 수정 — 구역/등급만 변경
+     * - rowLabel/seatNo/seatCode 는 식별값이라 변경하지 않음
+     * - 호출 전 isEditable() 로 확인 먼저
+     * - admin/seat Service에서 호출
+     */
+    public void changeSectionAndGrade(Section section, SeatGrade seatGrade) {
+        if (section != null) this.section = section;
+        if (seatGrade != null) this.seatGrade = seatGrade;
     }
 }

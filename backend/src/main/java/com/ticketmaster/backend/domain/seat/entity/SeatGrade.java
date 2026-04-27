@@ -9,7 +9,10 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
-@Table(name = "seat_grades")
+@Table(name = "seat_grades",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_seat_grade_event_code", columnNames = {"event_id", "grade_code"})
+        })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SeatGrade extends BaseEntity {
 
@@ -31,12 +34,40 @@ public class SeatGrade extends BaseEntity {
     @Column(name = "color_hex", length = 10)
     private String colorHex;
 
-    @Column(name = "display_order", nullable = false)
-    private int displayOrder;
+    // ==================================================
+    // 사용자 기능
+    // ==================================================
+    // (현재 정의된 메서드 없음 — 추후 추가)
 
-    /** 좌석 등급 가격 변경 (관리자 기능) */
-    public void changePrice(int newPrice) {
-        // TODO: 음수/0 검증은 Service 또는 여기서 직접
-        this.price = newPrice;
+    // ==================================================
+    // 관리자 기능
+    // ==================================================
+
+    /**
+     * 좌석 등급 생성
+     * - admin/seatgrade Service에서 호출
+     */
+    public static SeatGrade create(Event event, String gradeCode,
+                                   int price, String colorHex) {
+        SeatGrade g = new SeatGrade();
+        g.event = event;
+        g.gradeCode = gradeCode;
+        g.price = price;
+        g.colorHex = colorHex;
+        return g;
+    }
+
+    /**
+     * 좌석 등급 부분 수정 (PATCH)
+     * - null이 아닌 필드만 갱신
+     * - admin/seatgrade Service에서 호출
+     */
+    public void update(Integer price, String colorHex) {
+        if (price != null) {
+            this.price = price;
+        }
+        if (colorHex != null) {
+            this.colorHex = colorHex;
+        }
     }
 }
