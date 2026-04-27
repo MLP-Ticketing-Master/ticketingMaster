@@ -1,8 +1,10 @@
 package com.ticketmaster.backend.domain.event.entity;
 
+import com.ticketmaster.backend.admin.event.dto.request.AdminEventUpdateRequest;
 import com.ticketmaster.backend.global.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -14,7 +16,6 @@ import java.time.LocalDateTime;
 @Table(name = "events")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Event extends BaseEntity {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -72,6 +73,35 @@ public class Event extends BaseEntity {
     @Column(nullable = false, length = 20)
     private EventStatus status;
 
+    /**
+     * 생성자 (빌더)
+     */
+    @Builder
+    public Event(String title, SportType sportType, String place, String thumbnailUrl,
+                 String detailImageUrl, String description, LocalDate startDate,
+                 LocalDate endDate, String matchDurationText, String ageRating,
+                 LocalDateTime bookingOpenAt, LocalDateTime bookingCloseAt,
+                 String bookingNotice, int maxTicketsPerUser,
+                 LocalDateTime cancelAvailableUntil, int cancelFee, EventStatus status) {
+        this.title = title;
+        this.sportType = sportType;
+        this.place = place;
+        this.thumbnailUrl = thumbnailUrl;
+        this.detailImageUrl = detailImageUrl;
+        this.description = description;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.matchDurationText = matchDurationText;
+        this.ageRating = ageRating;
+        this.bookingOpenAt = bookingOpenAt;
+        this.bookingCloseAt = bookingCloseAt;
+        this.bookingNotice = bookingNotice;
+        this.maxTicketsPerUser = maxTicketsPerUser;
+        this.cancelAvailableUntil = cancelAvailableUntil;
+        this.cancelFee = cancelFee;
+        this.status = status;
+    }
+
     // TODO: SeatGrade, Section, Match 와의 양방향 컬렉션이 필요하면
     //       @OneToMany(mappedBy = "event") 로 추가
 
@@ -91,5 +121,30 @@ public class Event extends BaseEntity {
         return status == EventStatus.OPEN
                 && !now.isBefore(bookingOpenAt)
                 && !now.isAfter(bookingCloseAt);
+    }
+
+    /**
+     * 이벤트 정보 수정 (PATCH 방식 대응: null이 아닌 필드만 업데이트)
+     */
+    public void update(AdminEventUpdateRequest request) {
+        if (request.getTitle() != null) this.title = request.getTitle();
+        if (request.getSportType() != null) this.sportType = request.getSportType();
+        if (request.getPlace() != null) this.place = request.getPlace();
+        if (request.getThumbnailUrl() != null) this.thumbnailUrl = request.getThumbnailUrl();
+        if (request.getDetailImageUrl() != null) this.detailImageUrl = request.getDetailImageUrl();
+        if (request.getDescription() != null) this.description = request.getDescription();
+        if (request.getStartDate() != null) this.startDate = request.getStartDate();
+        if (request.getEndDate() != null) this.endDate = request.getEndDate();
+        if (request.getMatchDurationText() != null) this.matchDurationText = request.getMatchDurationText();
+        if (request.getAgeRating() != null) this.ageRating = request.getAgeRating();
+        if (request.getBookingOpenAt() != null) this.bookingOpenAt = request.getBookingOpenAt();
+        if (request.getBookingCloseAt() != null) this.bookingCloseAt = request.getBookingCloseAt();
+        if (request.getBookingNotice() != null) this.bookingNotice = request.getBookingNotice();
+
+        // 주의: DTO에서 숫자형 데이터는 반드시
+        // int가 아닌 Integer(래퍼 클래스)로 선언되어 있어야 아래처럼 null 체크가 가능
+        if (request.getMaxTicketsPerUser() != null) this.maxTicketsPerUser = request.getMaxTicketsPerUser();
+        if (request.getCancelAvailableUntil() != null) this.cancelAvailableUntil = request.getCancelAvailableUntil();
+        if (request.getCancelFee() != null) this.cancelFee = request.getCancelFee();
     }
 }

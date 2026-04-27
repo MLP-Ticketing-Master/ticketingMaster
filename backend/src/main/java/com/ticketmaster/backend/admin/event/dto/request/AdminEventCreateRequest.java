@@ -1,11 +1,14 @@
 package com.ticketmaster.backend.admin.event.dto.request;
 
+import com.ticketmaster.backend.domain.event.entity.Event;
+import com.ticketmaster.backend.domain.event.entity.EventStatus;
 import com.ticketmaster.backend.domain.event.entity.SportType;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -14,7 +17,7 @@ import java.time.LocalDateTime;
 // 대회 등록 (POST /admin/events)
 // ==========================================
 @Getter
-@Builder
+@NoArgsConstructor
 public class AdminEventCreateRequest {
     @NotBlank(message = "타이틀은 필수입니다.")
     private String title;
@@ -51,4 +54,27 @@ public class AdminEventCreateRequest {
 
     private LocalDateTime cancelAvailableUntil;
     private int cancelFee;
+
+    // DTO -> Entity 변환 메소드
+    public Event toEntity() {
+        return Event.builder()
+                .title(this.title)
+                .sportType(this.sportType)
+                .place(this.place)
+                .thumbnailUrl(this.thumbnailUrl)
+                .detailImageUrl(this.detailImageUrl)
+                .description(this.description)
+                .startDate(this.startDate)
+                .endDate(this.endDate)
+                .matchDurationText(this.matchDurationText)
+                .ageRating(this.ageRating)
+                .bookingOpenAt(this.bookingOpenAt)
+                .bookingCloseAt(this.bookingCloseAt)
+                .bookingNotice(this.bookingNotice)
+                .maxTicketsPerUser(this.maxTicketsPerUser)
+                .cancelAvailableUntil(this.cancelAvailableUntil)
+                .cancelFee(this.cancelFee)
+                .status(EventStatus.UPCOMING) // 디폴트 status 설정
+                .build();
+    }
 }
