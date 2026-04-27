@@ -2,11 +2,12 @@ package com.ticketmaster.backend.domain.auth.dto.response;
 
 import com.ticketmaster.backend.domain.user.entity.Role;
 import com.ticketmaster.backend.domain.user.entity.User;
-import lombok.Builder;
-import lombok.Getter;
+import lombok.*;
 
 @Getter
 @Builder
+@NoArgsConstructor(access = AccessLevel.PRIVATE)	// 기본 생성자
+@AllArgsConstructor  // 모든 필드 생성사(테스트 및 빌더용)
 public class AuthSignupResponse {
 	private Long userId;
 	private String email;

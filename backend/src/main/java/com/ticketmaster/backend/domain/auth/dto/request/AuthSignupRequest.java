@@ -1,11 +1,11 @@
 package com.ticketmaster.backend.domain.auth.dto.request;
 
 import jakarta.validation.constraints.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
-@Setter
+@NoArgsConstructor(access = AccessLevel.PRIVATE)	// 기본 생성자
+@AllArgsConstructor	// 모든 필드 생성사(테스트 및 빌더용)
 public class AuthSignupRequest {
 
 	@NotBlank(message = "이메일은 필수 입력값입니다.")
