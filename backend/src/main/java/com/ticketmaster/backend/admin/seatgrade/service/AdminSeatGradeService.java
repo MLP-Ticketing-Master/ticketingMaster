@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -43,6 +44,8 @@ public class AdminSeatGradeService {
     /**
      * 좌석 등급 등록
      * 검증 순서: 대회 존재 → 같은 대회 내 등급 코드 중복
+     * - 동일 코드의 soft-deleted 행이 있으면 복구(restore) + 값 갱신으로 재활용
+     *   (DB unique 제약은 deleted_at 무관이라 신규 INSERT 시 충돌 → 복구 전략 채택)
      */
     @Transactional
     public AdminSeatGradeResponse create(Long eventId, AdminSeatGradeCreateRequest req) {
@@ -50,9 +53,20 @@ public class AdminSeatGradeService {
         // Event event = eventRepository.findById(eventId)
         //     .orElseThrow(() -> new BusinessException(ErrorCode.EVENT_NOT_FOUND));
 
-        // 같은 대회 내 동일 gradeCode 차단
-        if (seatGradeRepository.existsByEventIdAndGradeCode(eventId, req.getGradeCode())) {
-            throw new BusinessException(ErrorCode.DUPLICATE_GRADE_CODE);
+        Optional<SeatGrade> existing =
+                seatGradeRepository.findByEventIdAndGradeCodeIncludingDeleted(
+                        eventId, req.getGradeCode());
+
+        if (existing.isPresent()) {
+            SeatGrade grade = existing.get();
+            if (!grade.isDeleted()) {
+                // 활성 상태면 진짜 중복
+                throw new BusinessException(ErrorCode.DUPLICATE_GRADE_CODE);
+            }
+            // 삭제된 행 → 복구 + 가격/색상 갱신
+            grade.restore();
+            grade.update(req.getPrice(), req.getColorHex());
+            return AdminSeatGradeResponse.from(grade);
         }
 
         // 정적 팩토리로 생성
@@ -77,7 +91,11 @@ public class AdminSeatGradeService {
         return AdminSeatGradeResponse.from(grade);
     }
 
-    /** 삭제 — 좌석에 배정된 등급은 차단 (가격이 사라지면 결제 정합성 깨짐) */
+    /**
+     * 삭제 (soft delete) — 좌석에 배정된 등급은 차단 (가격이 사라지면 결제 정합성 깨짐)
+     * - 실제 row 삭제 대신 deleted_at 만 채움
+     * - @SQLRestriction("deleted_at IS NULL") 덕분에 이후 일반 조회에서 자동 제외됨
+     */
     @Transactional
     public void delete(Long seatGradeId) {
         SeatGrade grade = seatGradeRepository.findById(seatGradeId)
@@ -85,6 +103,6 @@ public class AdminSeatGradeService {
         if (seatRepository.existsBySeatGradeId(seatGradeId)) {
             throw new BusinessException(ErrorCode.SEAT_GRADE_IN_USE);
         }
-        seatGradeRepository.delete(grade);
+        grade.softDelete();
     }
 }
