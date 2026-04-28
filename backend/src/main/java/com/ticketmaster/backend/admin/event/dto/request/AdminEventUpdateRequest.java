@@ -5,6 +5,7 @@ import com.ticketmaster.backend.domain.event.entity.EventStatus;
 import com.ticketmaster.backend.domain.event.entity.SportType;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -13,7 +14,7 @@ import java.time.LocalDateTime;
 // 대회 수정 (PATCH /admin/events/{eventId})
 // ==========================================
 @Getter
-@Builder
+@NoArgsConstructor
 public class AdminEventUpdateRequest {
     private String title;
     private SportType sportType;

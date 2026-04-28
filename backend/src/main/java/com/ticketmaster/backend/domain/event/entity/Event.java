@@ -7,6 +7,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -15,6 +16,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "events")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@SQLRestriction("deleted_at IS NULL")
 public class Event extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -66,7 +68,7 @@ public class Event extends BaseEntity {
     @Column(name = "cancel_available_until")
     private LocalDateTime cancelAvailableUntil;
 
-    @Column(name = "cancel_fee")
+    @Column(name = "cancel_fee", nullable = false)
     private int cancelFee;
 
     @Enumerated(EnumType.STRING)
@@ -140,6 +142,7 @@ public class Event extends BaseEntity {
         if (request.getBookingOpenAt() != null) this.bookingOpenAt = request.getBookingOpenAt();
         if (request.getBookingCloseAt() != null) this.bookingCloseAt = request.getBookingCloseAt();
         if (request.getBookingNotice() != null) this.bookingNotice = request.getBookingNotice();
+        if (request.getStatus() != null) this.status = request.getStatus();
 
         // 주의: DTO에서 숫자형 데이터는 반드시
         // int가 아닌 Integer(래퍼 클래스)로 선언되어 있어야 아래처럼 null 체크가 가능

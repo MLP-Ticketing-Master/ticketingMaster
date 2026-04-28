@@ -3,6 +3,7 @@ package com.ticketmaster.backend.admin.event.dto.request;
 import com.ticketmaster.backend.domain.event.entity.Event;
 import com.ticketmaster.backend.domain.event.entity.EventStatus;
 import com.ticketmaster.backend.domain.event.entity.SportType;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -48,12 +49,14 @@ public class AdminEventCreateRequest {
 
     private String bookingNotice;
 
+    @NotNull(message = "1인당 최대 예매 수량은 필수입니다.")
     @Min(value = 1, message = "최소 1장 이상이어야 합니다.")
+    @Max(value = 4, message = "최대 4장까지 가능합니다.")
     private int maxTicketsPerUser; // 등록 시에는 필수 입력이므로 기본형 int 사용 가능
 
     private LocalDateTime cancelAvailableUntil;
 
-    @Min(0)
+    @NotNull(message = "취소 수수료는 필수입니다.")
     private int cancelFee;
 
     // DTO -> Entity 변환 메소드
