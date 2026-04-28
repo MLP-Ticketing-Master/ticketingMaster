@@ -13,79 +13,77 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AdminTeamService {
+
     private final AdminTeamRepository teamRepository;
 
-    @Transactional
-    public AdminTeamResponse createTeam(AdminTeamCreateRequest request) {
-        // 동일한 팀명이 이미 존재하는지 확인
-        if (teamRepository.existsByName(request.getName())) {
-            throw new BusinessException(ErrorCode.DUPLICATE_TEAM_NAME);
-        }
-
-        // DTO → Entity 변환 후 저장
-        Team team = teamRepository.save(request.toEntity());
-
-        // Entity → Response DTO 변환 후 반환
-        return AdminTeamResponse.from(team);
-    }
-
-
-
-
+    /** 팀 목록 조회 (sportType이 null이면 전체 조회, 삭제되지 않은 팀만) */
     public List<AdminTeamResponse> getTeams(SportType sportType) {
-        // 종목 필터 유무에 따라 다른 쿼리 메서드 호출
         List<Team> teams = (sportType == null)
                 ? teamRepository.findAllByOrderByCreatedAtDesc()
                 : teamRepository.findAllBySportTypeOrderByCreatedAtDesc(sportType);
 
-        // 엔티티 리스트를 응답 DTO 리스트로 변환
         return teams.stream()
                 .map(AdminTeamResponse::from)
                 .toList();
     }
 
-
-
+    /** 팀 등록 */
     @Transactional
-    public AdminTeamResponse updateTeam(Long teamId, AdminTeamUpdateRequest request) {
-        // 대상 팀 조회
-        Team team = teamRepository.findById(teamId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_NOT_FOUND));
+    public AdminTeamResponse createTeam(AdminTeamCreateRequest req) {
+        // 삭제된 행까지 포함하여 동일 이름 조회
+        Optional<Team> existing = teamRepository.findByNameIncludingDeleted(req.getName());
 
-        // 이름을 변경하려는 경우에만 중복 체크
-        // (현재 자기 이름과 동일한 이름으로 수정 요청 시에는 체크 스킵)
-        if (request.getName() != null && !request.getName().equals(team.getName())) {
-            if (teamRepository.existsByName(request.getName())) {
+        if (existing.isPresent()) {
+            Team team = existing.get();
+            if (!team.isDeleted()) {
+                // 활성 상태면 진짜 중복
                 throw new BusinessException(ErrorCode.DUPLICATE_TEAM_NAME);
             }
+            // 삭제된 행 → 복구 + 값 갱신
+            team.restore();
+            team.update(req.getName(), req.getLogoImageUrl(), req.getSportType());
+            return AdminTeamResponse.from(team);
         }
-        team.update(request.getName(), request.getLogoImageUrl(), request.getSportType());
 
+        // 신규 생성
+        Team team = teamRepository.save(req.toEntity());
         return AdminTeamResponse.from(team);
     }
 
+    /** 팀 부분 수정 (null이 아닌 필드만 변경) */
+    @Transactional
+    public AdminTeamResponse updateTeam(Long teamId, AdminTeamUpdateRequest req) {
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_NOT_FOUND));
 
+        // 이름을 변경하려는 경우에만 중복 체크 (자기 자신과 동일한 이름은 허용)
+        if (req.getName() != null && !req.getName().equals(team.getName())) {
+            if (teamRepository.existsByName(req.getName())) {
+                throw new BusinessException(ErrorCode.DUPLICATE_TEAM_NAME);
+            }
+        }
 
-    /** 팀 삭제 (소프트 삭제) - 이벤트 대상 팀 조회 후 없으면 예외처리*/
+        team.update(req.getName(), req.getLogoImageUrl(), req.getSportType());
+        return AdminTeamResponse.from(team);
+    }
+
+    /** 팀 삭제 (soft delete)*/
     @Transactional
     public void deleteTeam(Long teamId) {
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_NOT_FOUND));
 
         // TODO [MatchRepository 머지 후 활성화]
-        // if (matchRepository.existsByTeamAndStatusInProgress(team)) {
+        // if (matchRepository.existsByTeamIdAndStatusInProgress(teamId)) {
         //     throw new BusinessException(ErrorCode.TEAM_IN_USE);
         // }
 
-        // @SQLDelete 어노테이션 덕분에 실제로는 UPDATE 쿼리가 실행됨
-        // (deleted_at 컬럼에 현재 시각이 기록됨)
-
-        teamRepository.delete(team);
+        team.softDelete();
     }
-
 }
