@@ -47,6 +47,8 @@ public enum ErrorCode {
     SEAT_GRADE_NOT_FOUND(HttpStatus.NOT_FOUND, "SEAT_GRADE_NOT_FOUND", "존재하지 않는 좌석 등급입니다."),
     SEAT_GRADE_IN_USE(HttpStatus.CONFLICT, "SEAT_GRADE_IN_USE", "좌석에 배정된 등급은 삭제할 수 없습니다."),
     DUPLICATE_GRADE_CODE(HttpStatus.CONFLICT, "DUPLICATE_GRADE_CODE", "이미 존재하는 등급 코드입니다."),
+    DUPLICATE_SECTION_NAME(HttpStatus.CONFLICT, "DUPLICATE_SECTION_NAME", "동일한 이름의 구역이 이미 존재합니다."),
+    DUPLICATE_SECTION_DISPLAY_ORDER(HttpStatus.CONFLICT, "DUPLICATE_SECTION_DISPLAY_ORDER", "동일한 표시 순서의 구역이 이미 존재합니다."),
 
     // ====== QUEUE ======
     QUEUE_NOT_FOUND(HttpStatus.NOT_FOUND, "QUEUE_NOT_FOUND", "대기열 정보를 찾을 수 없습니다."),

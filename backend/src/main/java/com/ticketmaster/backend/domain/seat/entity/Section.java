@@ -11,7 +11,8 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "sections",
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_section_event_name", columnNames = {"event_id", "name"})
+                @UniqueConstraint(name = "uk_section_event_name", columnNames = {"event_id", "name"}),
+                @UniqueConstraint(name = "uk_section_event_display_order", columnNames = {"event_id", "display_order"})
         })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Section extends BaseEntity {
