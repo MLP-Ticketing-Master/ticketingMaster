@@ -54,7 +54,7 @@ public class AdminEventController {
     @PatchMapping("/{eventId}")
     public ResponseEntity<AdminEventResponse> updateEvent(
             @PathVariable Long eventId,
-            AdminEventUpdateRequest request) {
+            @Valid @RequestBody AdminEventUpdateRequest request) {
         AdminEventResponse response = eventService.updateEvent(eventId, request);
 
         return ResponseEntity.ok(response);
@@ -63,7 +63,7 @@ public class AdminEventController {
     /**
      * 이벤트 삭제
      */
-    @DeleteMapping("/admin/events/{eventId}")
+    @DeleteMapping("/{eventId}")
     public ResponseEntity<Void> deleteEvent(@PathVariable Long eventId) {
         eventService.deleteEvent(eventId);
 

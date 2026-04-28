@@ -19,8 +19,8 @@ public class AdminEventListResponse {
     private String title;
     private SportType sportType;
     private String place;
-    private LocalDate start_date;
-    private LocalDate end_date;
+    private LocalDate startDate;
+    private LocalDate endDate;
     private EventStatus status;
 
     // Entity -> DTO 변환 메소드

@@ -15,9 +15,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Optional;
-
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true) // 기본적으로 읽기 전용 트랜잭션 적용 (성능 향상)
@@ -69,6 +66,7 @@ public class AdminEventService {
     /**
      * 이벤트 삭제
      */
+    @Transactional
     public void deleteEvent(Long id) {
         Event event = eventRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EVENT_NOT_FOUND));
@@ -76,7 +74,7 @@ public class AdminEventService {
         // 1. 연관 Match 존재 여부 확인
 //        boolean isMatchExists = matchRepo.existsByEventIdAndDeletedAtIsNull(id);
 //        if (isMatchExists) {
-//            throw new RuntimeException("EVENT_IN_USE"); // 추후 Custom Exception으로 교체
+//            throw new BusinessException(ErrorCode.EVENT_IN_USE); // 추후 Custom Exception으로 교체
 //        }
 
         // 2. 존재하지 않으면 소프트 삭제

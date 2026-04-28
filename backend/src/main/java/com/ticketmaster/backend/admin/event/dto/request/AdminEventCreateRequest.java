@@ -6,7 +6,6 @@ import com.ticketmaster.backend.domain.event.entity.SportType;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -53,6 +52,8 @@ public class AdminEventCreateRequest {
     private int maxTicketsPerUser; // 등록 시에는 필수 입력이므로 기본형 int 사용 가능
 
     private LocalDateTime cancelAvailableUntil;
+
+    @Min(0)
     private int cancelFee;
 
     // DTO -> Entity 변환 메소드
