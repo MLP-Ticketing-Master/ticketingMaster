@@ -21,6 +21,11 @@ spring:
       hibernate:
         format_sql: true # SQL 예쁘게 출력
         highlight_sql: true # SQL 색상 하이라이팅 (콘솔에서 보기 편함)
+        jdbc:
+          batch_size: 100              # 100건씩 묶어서 INSERT
+          batch_versioned_data: true
+        order_inserts: true            # INSERT 문 정렬 (배치 효율 ↑)
+        order_updates: true
 
   jackson:
     time-zone: Asia/Seoul
