@@ -1,8 +1,8 @@
 package com.ticketmaster.backend.admin.section.service;
 
-import com.ticketmaster.backend.admin.section.dto.request.SectionCreateRequest;
-import com.ticketmaster.backend.admin.section.dto.request.SectionUpdateRequest;
-import com.ticketmaster.backend.admin.section.dto.response.SectionResponse;
+import com.ticketmaster.backend.admin.section.dto.request.AdminSectionCreateRequest;
+import com.ticketmaster.backend.admin.section.dto.request.AdminSectionUpdateRequest;
+import com.ticketmaster.backend.admin.section.dto.response.AdminSectionResponse;
 import com.ticketmaster.backend.domain.seat.entity.Section;
 import com.ticketmaster.backend.domain.seat.repository.SeatRepository;
 import com.ticketmaster.backend.domain.seat.repository.SectionRepository;
@@ -26,7 +26,7 @@ public class AdminSectionService {
     /**
      * 대회별 구역 목록 조회 — displayOrder 오름차순
      */
-    public List<SectionResponse> findAllByEvent(Long eventId) {
+    public List<AdminSectionResponse> findAllByEvent(Long eventId) {
         // TODO [EventRepository 머지 후 활성화]
         // if (!eventRepository.existsById(eventId)) {
         //     throw new BusinessException(ErrorCode.EVENT_NOT_FOUND);
@@ -34,7 +34,7 @@ public class AdminSectionService {
 
         return sectionRepository.findAllByEventIdOrderByDisplayOrderAsc(eventId)
                 .stream()
-                .map(SectionResponse::from)
+                .map(AdminSectionResponse::from)
                 .toList();
     }
 
@@ -46,7 +46,7 @@ public class AdminSectionService {
      * - 이름/순서가 충돌하면 예외 → 통과 시 신규 INSERT
      */
     @Transactional
-    public SectionResponse create(Long eventId, SectionCreateRequest req) {
+    public AdminSectionResponse create(Long eventId, AdminSectionCreateRequest req) {
         // TODO [EventRepository 머지 후 활성화]
         // Event event = eventRepository.findById(eventId)
         //     .orElseThrow(() -> new BusinessException(ErrorCode.EVENT_NOT_FOUND));
@@ -68,7 +68,7 @@ public class AdminSectionService {
         Section saved = sectionRepository.save(
                 Section.create(/* event */ null, name, req.getDisplayOrder(), description)
         );
-        return SectionResponse.from(saved);
+        return AdminSectionResponse.from(saved);
     }
 
     /**
@@ -76,7 +76,7 @@ public class AdminSectionService {
      * - 이름/순서를 변경하려는 경우에만 같은 event 내 중복 체크
      */
     @Transactional
-    public SectionResponse update(Long sectionId, SectionUpdateRequest req) {
+    public AdminSectionResponse update(Long sectionId, AdminSectionUpdateRequest req) {
         Section section = sectionRepository.findById(sectionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SECTION_NOT_FOUND));
 
@@ -102,7 +102,7 @@ public class AdminSectionService {
         }
 
         section.update(name, req.getDisplayOrder(), description);
-        return SectionResponse.from(section);
+        return AdminSectionResponse.from(section);
     }
 
     /**

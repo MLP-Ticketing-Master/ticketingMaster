@@ -9,15 +9,15 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class SectionResponse {
+public class AdminSectionResponse {
 
     private Long sectionId;
     private String name;
     private Integer displayOrder;
     private String description;
 
-    public static SectionResponse from(Section s) {
-        return new SectionResponse(
+    public static AdminSectionResponse from(Section s) {
+        return new AdminSectionResponse(
                 s.getId(),
                 s.getName(),
                 s.getDisplayOrder(),
