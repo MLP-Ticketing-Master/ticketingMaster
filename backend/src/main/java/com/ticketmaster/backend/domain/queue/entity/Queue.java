@@ -24,7 +24,8 @@ import java.time.LocalDateTime;
 public class Queue extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "queue_seq")
+    @SequenceGenerator(name = "queue_seq", sequenceName = "QUEUE_SEQ", allocationSize = 50)
     private Long id;
 
     /** 한 사용자가 여러 대기열에 입장 가능 (대회별/재시도별로 레코드 누적) */

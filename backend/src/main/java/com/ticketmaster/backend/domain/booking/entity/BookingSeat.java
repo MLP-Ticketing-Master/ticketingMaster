@@ -14,7 +14,8 @@ import lombok.NoArgsConstructor;
 public class BookingSeat extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "booking_seat_seq")
+    @SequenceGenerator(name = "booking_seat_seq", sequenceName = "BOOKING_SEAT_SEQ", allocationSize = 50)
     private Long id;
 
     /** 어느 예매에 속한 좌석인지 */

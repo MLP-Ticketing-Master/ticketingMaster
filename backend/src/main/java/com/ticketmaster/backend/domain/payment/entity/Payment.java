@@ -31,7 +31,8 @@ import java.time.LocalDateTime;
 public class Payment extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "payment_seq")
+    @SequenceGenerator(name = "payment_seq", sequenceName = "PAYMENT_SEQ", allocationSize = 50)
     private Long id;
 
     /** Booking ↔ Payment = 1:1, Payment 쪽이 FK 보유 */

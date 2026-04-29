@@ -18,7 +18,8 @@ import lombok.NoArgsConstructor;
 public class Section extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "section_seq")
+    @SequenceGenerator(name = "section_seq", sequenceName = "SECTION_SEQ", allocationSize = 50)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
