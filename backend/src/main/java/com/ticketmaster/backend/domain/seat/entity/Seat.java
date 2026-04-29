@@ -32,7 +32,8 @@ import java.time.LocalDateTime;
 public class Seat extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seat_seq")
+    @SequenceGenerator(name = "seat_seq", sequenceName = "SEAT_SEQ", allocationSize = 50)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

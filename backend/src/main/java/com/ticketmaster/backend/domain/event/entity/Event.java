@@ -19,7 +19,8 @@ import java.time.LocalDateTime;
 @SQLRestriction("deleted_at IS NULL")
 public class Event extends BaseEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "event_seq")
+    @SequenceGenerator(name = "event_seq", sequenceName = "EVENT_SEQ", allocationSize = 50)
     private Long id;
 
     @Column(nullable = false, length = 200)

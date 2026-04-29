@@ -20,7 +20,8 @@ public class Team extends BaseEntity {
 
     /** 팀 고유 ID (PK) */
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "team_seq")
+    @SequenceGenerator(name = "team_seq", sequenceName = "TEAM_SEQ", allocationSize = 50)
     private Long id;
 
     /** 팀명 (예: T1, Gen.G) — 필수, 최대 100자 */

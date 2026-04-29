@@ -22,7 +22,8 @@ import java.time.LocalDateTime;
 public class Match extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "match_seq")
+    @SequenceGenerator(name = "match_seq", sequenceName = "MATCH_SEQ", allocationSize = 50)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

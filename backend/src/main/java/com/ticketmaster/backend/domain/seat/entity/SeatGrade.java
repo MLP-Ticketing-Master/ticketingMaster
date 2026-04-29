@@ -19,7 +19,8 @@ import org.hibernate.annotations.SQLRestriction;
 public class SeatGrade extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seat_grade_seq")
+    @SequenceGenerator(name = "seat_grade_seq", sequenceName = "SEAT_GRADE_SEQ", allocationSize = 50)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

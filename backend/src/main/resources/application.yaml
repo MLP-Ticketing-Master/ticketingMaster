@@ -1,12 +1,15 @@
 spring:
+  config:
+    import: optional:file:../.env[.properties]
   application:
     name: backend
 
   datasource:
-    url: jdbc:mysql://localhost:3308/ticketing_master?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: ticketmaster
-    password: 1234
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    # 호스트 포트는 docker-compose에 고정(1522)
+    url: jdbc:oracle:thin:@localhost:1522/FREEPDB1
+    username: ${ORACLE_USER}
+    password: ${ORACLE_PASSWORD}
+    driver-class-name: oracle.jdbc.OracleDriver
 
   data:
     redis:
@@ -14,6 +17,7 @@ spring:
       port: 6380
 
   jpa:
+    database-platform: org.hibernate.dialect.OracleDialect
     hibernate:
       ddl-auto: update   # 개발용: 엔티티 변경 시 테이블 자동 반영
     show-sql: true       # 콘솔에 SQL 출력
@@ -36,3 +40,5 @@ server:
 logging:
   level:
     com.ticketmaster.backend: DEBUG
+    org.hibernate.SQL: debug
+    org.hibernate.orm.jdbc.bind: trace
