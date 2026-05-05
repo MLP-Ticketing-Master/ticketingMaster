@@ -1,10 +1,12 @@
 package com.ticketmaster.backend.domain.match.entity;
 
+import com.ticketmaster.backend.admin.match.dto.request.AdminMatchUpdateRequest;
 import com.ticketmaster.backend.domain.event.entity.Event;
 import com.ticketmaster.backend.domain.team.entity.Team;
 import com.ticketmaster.backend.global.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -52,4 +54,31 @@ public class Match extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private MatchStatus status;
+
+    /**
+     * 생성자 (빌더)
+     */
+    @Builder
+    public Match(Event event, String roundLabel, Team homeTeam, Team awayTeam,
+                 LocalDate matchDate, LocalDateTime startAt, LocalDateTime endAt,
+                 MatchStatus status) {
+        this.event = event;
+        this.roundLabel = roundLabel;
+        this.homeTeam = homeTeam;
+        this.awayTeam = awayTeam;
+        this.matchDate = matchDate;
+        this.startAt = startAt;
+        this.endAt = endAt;
+        this.status = (status != null) ? status : MatchStatus.SCHEDULED; // Default value logic
+    }
+
+    public void update(AdminMatchUpdateRequest request, Team homeTeam, Team awayTeam) {
+        if (request.getRoundLabel() != null) this.roundLabel = request.getRoundLabel();
+        if (request.getMatchDate() != null) this.matchDate = request.getMatchDate();
+        if (request.getStartAt() != null) this.startAt = request.getStartAt();
+        if (request.getEndAt() != null) this.endAt = request.getEndAt();
+        if (request.getStatus() != null) this.status = request.getStatus();
+        if (request.getHomeTeamId() != null) this.homeTeam = homeTeam;
+        if (request.getAwayTeamId() != null) this.awayTeam = awayTeam;
+    }
 }

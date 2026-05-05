@@ -1,5 +1,7 @@
 package com.ticketmaster.backend.admin.match.dto.request;
 
+import com.ticketmaster.backend.domain.match.entity.Match;
+import com.ticketmaster.backend.domain.match.entity.MatchStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
@@ -15,6 +17,9 @@ import java.time.LocalDateTime;
  */
 @Getter
 public class AdminMatchCreateRequest {
+    @NotNull(message = "이벤트 ID는 필수입니다.")
+    private Long eventId;
+
     @NotBlank(message = "회차 라벨(=매치 타이틀)은 필수입니다.")
     private String roundLabel;
 
