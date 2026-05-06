@@ -17,9 +17,6 @@ import java.time.LocalDateTime;
  */
 @Getter
 public class AdminMatchCreateRequest {
-    @NotNull(message = "이벤트 ID는 필수입니다.")
-    private Long eventId;
-
     @NotBlank(message = "회차 라벨(=매치 타이틀)은 필수입니다.")
     private String roundLabel;
 

@@ -33,8 +33,8 @@ public class AdminMatchResponse {
                 m.getId(),
                 m.getEvent().getId(),
                 m.getRoundLabel(),
-                m.getHomeTeam().getId(),
-                m.getAwayTeam().getId(),
+                (m.getHomeTeam() != null ? m.getHomeTeam().getId() : null), // 널처리
+                (m.getAwayTeam() != null ? m.getAwayTeam().getId() : null), // 널처리
                 m.getMatchDate(),
                 m.getStartAt(),
                 m.getEndAt(),

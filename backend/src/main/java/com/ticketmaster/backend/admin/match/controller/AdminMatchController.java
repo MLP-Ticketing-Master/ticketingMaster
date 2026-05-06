@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+@RestController
 @RequestMapping("/admin")
 @PreAuthorize("hasRole('ADMIN')")
 @RequiredArgsConstructor
@@ -31,8 +32,10 @@ public class AdminMatchController {
      * 매치 등록
      */
     @PostMapping("/events/{eventId}/matches")
-    public ResponseEntity<AdminMatchResponse> createMatch(@Valid @RequestBody AdminMatchCreateRequest request) {
-        AdminMatchResponse response = matchService.createMatch(request);
+    public ResponseEntity<AdminMatchResponse> createMatch(
+            @PathVariable Long eventId,
+            @Valid @RequestBody AdminMatchCreateRequest request) {
+        AdminMatchResponse response = matchService.createMatch(eventId, request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

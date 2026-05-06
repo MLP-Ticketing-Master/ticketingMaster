@@ -20,7 +20,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 @WebMvcTest(AuthController.class)
 @Import(SecurityConfig.class)
 @WithMockUser
-public class AuthControllerTest {
+public class  AuthControllerTest {
 	@Autowired private MockMvc mockMvc;
 	@Autowired private ObjectMapper objectMapper;
 	@MockitoBean private AuthService authService;

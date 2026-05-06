@@ -7,6 +7,8 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -17,7 +19,9 @@ import java.time.LocalDateTime;
 // 대회 등록 (POST /admin/events)
 // ==========================================
 @Getter
+@Builder // 테스트 코드에서 객체를 쉽게 생성하기 위해 추가!
 @NoArgsConstructor
+@AllArgsConstructor // @Builder를 클래스 레벨에 쓰려면 이 어노테이션이 세트로 필요합니다.
 public class AdminEventCreateRequest {
     @NotBlank(message = "타이틀은 필수입니다.")
     private String title;

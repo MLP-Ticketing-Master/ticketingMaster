@@ -19,6 +19,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -40,9 +42,9 @@ public class AdminMatchService {
      * 매치 등록
      */
     @Transactional
-    public AdminMatchResponse createMatch(AdminMatchCreateRequest request) {
+    public AdminMatchResponse createMatch(Long eventId, AdminMatchCreateRequest request) {
         // 예외-1) 없는 이벤트인 경우
-        Event event = eventRepo.findById(request.getEventId())
+        Event event = eventRepo.findById(eventId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EVENT_NOT_FOUND));
 
         // 예외-2) 존재하지 않는 팀인 경우
@@ -60,7 +62,7 @@ public class AdminMatchService {
 
         // 예외-3) 시간 오류 (ex: 끝나는 시간이 시작 시간보다 앞선 경우)
         if (request.getEndAt() != null && request.getEndAt().isBefore(request.getStartAt())) {
-            throw new IllegalArgumentException("종료 시간은 시작 시간보다 앞설 수 없습니다.");
+            throw new BusinessException(ErrorCode.INVALID_TIME_RANGE);
         }
         // TODO: INVALID_MATCH_DATE (대회 기간을 벗어난 회차 예외 추가)
 
@@ -90,6 +92,9 @@ public class AdminMatchService {
         Match match = matchRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MATCH_NOT_FOUND));
 
+        // 이미 삭제된 것에 대한 수정 방지 처리
+        if (match.getDeletedAt() != null) { throw new BusinessException(ErrorCode.MATCH_ALREADY_DELETED); }
+
         // 예외-1) 존재하지 않는 팀인 경우
         Team homeTeam = null;
         if (request.getHomeTeamId() != null) {
@@ -104,10 +109,14 @@ public class AdminMatchService {
         }
 
         // 예외-2) 시간 오류 (ex: 끝나는 시간이 시작 시간보다 앞선 경우)
-        if (request.getEndAt() != null && request.getEndAt().isBefore(request.getStartAt())) {
-            throw new IllegalArgumentException("종료 시간은 시작 시간보다 앞설 수 없습니다.");
+        LocalDateTime newStart = request.getStartAt() != null ? request.getStartAt() : match.getStartAt();
+        LocalDateTime newEnd = request.getEndAt() != null ? request.getEndAt() : match.getEndAt();
+
+        if (newEnd != null && newEnd.isBefore(newStart)) {
+            throw new BusinessException(ErrorCode.INVALID_TIME_RANGE);
         }
         // TODO: INVALID_MATCH_DATE (대회 기간을 벗어난 회차 예외 추가)
+
 
         match.update(request, homeTeam, awayTeam); // ← pass resolved teams in
         return AdminMatchResponse.from(match);
@@ -137,6 +146,9 @@ public class AdminMatchService {
     public void deleteMatch(Long id) {
         Match match = matchRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MATCH_NOT_FOUND));
+
+        // 이미 삭제된 것에 대한 중복 삭제 방지 처리
+        if (match.getDeletedAt() != null) { throw new BusinessException(ErrorCode.MATCH_ALREADY_DELETED); }
 
         // 예외-1) 예매 이력이 존재하는 매치인 경우
 

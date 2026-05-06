@@ -4,6 +4,8 @@ import com.ticketmaster.backend.admin.match.dto.request.AdminMatchUpdateRequest;
 import com.ticketmaster.backend.domain.event.entity.Event;
 import com.ticketmaster.backend.domain.team.entity.Team;
 import com.ticketmaster.backend.global.common.BaseEntity;
+import com.ticketmaster.backend.global.exception.BusinessException;
+import com.ticketmaster.backend.global.exception.ErrorCode;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -31,8 +33,8 @@ public class Match extends BaseEntity {
     @JoinColumn(name = "event_id", nullable = false)
     private Event event;
 
-    @Column(name = "round_label", length = 50)
-    private String roundLabel; // NULL 허용
+    @Column(name = "round_label", length = 50, nullable = false)
+    private String roundLabel;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "home_team_id")
@@ -48,11 +50,11 @@ public class Match extends BaseEntity {
     @Column(name = "start_at", nullable = false)
     private LocalDateTime startAt;
 
-    @Column(name = "end_at")
+    @Column(name = "end_at", nullable = false)
     private LocalDateTime endAt;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(length = 20, nullable = false)
     private MatchStatus status;
 
     /**
@@ -68,7 +70,7 @@ public class Match extends BaseEntity {
         this.awayTeam = awayTeam;
         this.matchDate = matchDate;
         this.startAt = startAt;
-        this.endAt = endAt;
+        this.endAt = (endAt != null) ? endAt : startAt.plusHours(2);
         this.status = (status != null) ? status : MatchStatus.SCHEDULED; // Default value logic
     }
 
@@ -77,8 +79,17 @@ public class Match extends BaseEntity {
         if (request.getMatchDate() != null) this.matchDate = request.getMatchDate();
         if (request.getStartAt() != null) this.startAt = request.getStartAt();
         if (request.getEndAt() != null) this.endAt = request.getEndAt();
-        if (request.getStatus() != null) this.status = request.getStatus();
+        if (request.getStatus() != null) changeStatus(request.getStatus());
         if (request.getHomeTeamId() != null) this.homeTeam = homeTeam;
         if (request.getAwayTeamId() != null) this.awayTeam = awayTeam;
+    }
+
+    public void changeStatus(MatchStatus newStatus) {
+        if (this.status == newStatus) return;  // 같은 상태면 무시
+
+        if (this.status == MatchStatus.FINISHED) {
+            throw new BusinessException(ErrorCode.CANNOT_CHANGE_FINISHED_MATCH);
+        }
+        this.status = newStatus;
     }
 }
