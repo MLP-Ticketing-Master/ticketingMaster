@@ -24,6 +24,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
         LEFT JOIN FETCH m.homeTeam
         LEFT JOIN FETCH m.awayTeam
         WHERE (:status IS NULL OR b.status = :status)
+        ORDER BY b.id DESC
     """)
     Page<Booking> findAllForAdmin(@Param("status") BookingStatus status, Pageable pageable);
 
