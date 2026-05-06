@@ -3,6 +3,8 @@ package com.ticketmaster.backend.admin.section.service;
 import com.ticketmaster.backend.admin.section.dto.request.AdminSectionCreateRequest;
 import com.ticketmaster.backend.admin.section.dto.request.AdminSectionUpdateRequest;
 import com.ticketmaster.backend.admin.section.dto.response.AdminSectionResponse;
+import com.ticketmaster.backend.domain.event.entity.Event;
+import com.ticketmaster.backend.domain.event.repository.EventRepository;
 import com.ticketmaster.backend.domain.seat.entity.Section;
 import com.ticketmaster.backend.domain.seat.repository.SeatRepository;
 import com.ticketmaster.backend.domain.seat.repository.SectionRepository;
@@ -21,16 +23,15 @@ public class AdminSectionService {
 
     private final SectionRepository sectionRepository;
     private final SeatRepository seatRepository;
-//    private final EventRepository eventRepository;
+    private final EventRepository eventRepository;
 
     /**
      * 대회별 구역 목록 조회 — displayOrder 오름차순
      */
     public List<AdminSectionResponse> findAllByEvent(Long eventId) {
-        // TODO [EventRepository 머지 후 활성화]
-        // if (!eventRepository.existsById(eventId)) {
-        //     throw new BusinessException(ErrorCode.EVENT_NOT_FOUND);
-        // }
+        if (!eventRepository.existsById(eventId)) {
+            throw new BusinessException(ErrorCode.EVENT_NOT_FOUND);
+        }
 
         return sectionRepository.findAllByEventIdOrderByDisplayOrderAsc(eventId)
                 .stream()
@@ -40,16 +41,15 @@ public class AdminSectionService {
 
     /**
      * 구역 등록
-     *
+     * <p>
      * 정책:
      * - 같은 event 내에서 (name), (displayOrder) 각각 unique
      * - 이름/순서가 충돌하면 예외 → 통과 시 신규 INSERT
      */
     @Transactional
     public AdminSectionResponse create(Long eventId, AdminSectionCreateRequest req) {
-        // TODO [EventRepository 머지 후 활성화]
-        // Event event = eventRepository.findById(eventId)
-        //     .orElseThrow(() -> new BusinessException(ErrorCode.EVENT_NOT_FOUND));
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.EVENT_NOT_FOUND));
 
         // 입력 정규화: 앞뒤 공백 제거 ("VIP "와 "VIP"가 다른 이름으로 취급되지 않도록)
         String name = trim(req.getName());
@@ -66,7 +66,7 @@ public class AdminSectionService {
         }
 
         Section saved = sectionRepository.save(
-                Section.create(/* event */ null, name, req.getDisplayOrder(), description)
+                Section.create(event, name, req.getDisplayOrder(), description)
         );
         return AdminSectionResponse.from(saved);
     }
@@ -119,7 +119,9 @@ public class AdminSectionService {
         sectionRepository.delete(section);
     }
 
-    /** 앞뒤 공백 제거. null-safe — null이면 그대로 null 반환 */
+    /**
+     * 앞뒤 공백 제거. null-safe — null이면 그대로 null 반환
+     */
     private static String trim(String s) {
         return s == null ? null : s.trim();
     }
