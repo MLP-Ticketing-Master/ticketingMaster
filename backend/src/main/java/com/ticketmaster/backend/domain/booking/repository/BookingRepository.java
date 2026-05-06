@@ -17,14 +17,14 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
      */
     @Query("""
         SELECT DISTINCT b FROM Booking b
-        LEFT JOIN FETCH b.user
-        LEFT JOIN FETCH b.match m
-        LEFT JOIN FETCH m.event
-        LEFT JOIN FETCH m.homeTeam
-        LEFT JOIN FETCH m.awayTeam
-        LEFT JOIN FETCH b.bookingSeats bs
-        LEFT JOIN FETCH bs.seat s
-        LEFT JOIN FETCH s.seatGrade
+        JOIN FETCH b.user
+        JOIN FETCH b.match m
+        JOIN FETCH m.event
+        JOIN FETCH m.homeTeam
+        JOIN FETCH m.awayTeam
+        JOIN FETCH b.bookingSeats bs
+        JOIN FETCH bs.seat s
+        JOIN FETCH s.seatGrade
         WHERE (:status IS NULL OR b.status = :status)
         ORDER BY b.id DESC
     """)
@@ -35,14 +35,14 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
      */
     @Query("""
         SELECT DISTINCT b FROM Booking b
-        LEFT JOIN FETCH b.user
-        LEFT JOIN FETCH b.match m
-        LEFT JOIN FETCH m.event
-        LEFT JOIN FETCH m.homeTeam
-        LEFT JOIN FETCH m.awayTeam
-        LEFT JOIN FETCH b.bookingSeats bs
-        LEFT JOIN FETCH bs.seat s
-        LEFT JOIN FETCH s.seatGrade
+        JOIN FETCH b.user
+        JOIN FETCH b.match m
+        JOIN FETCH m.event
+        JOIN FETCH m.homeTeam
+        JOIN FETCH m.awayTeam
+        JOIN FETCH b.bookingSeats bs
+        JOIN FETCH bs.seat s
+        JOIN FETCH s.seatGrade
         WHERE b.id = :id
     """)
     Optional<Booking> findDetailById(@Param("id") Long id);

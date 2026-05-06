@@ -21,14 +21,14 @@ public class AdminBookingController {
 
     /** 예매 전체 조회 (status 필터) — 200 OK */
     @GetMapping("/bookings")
-    public ResponseEntity<List<AdminBookingListResponse>> findAll(
+    public ResponseEntity<List<AdminBookingListResponse>> getAllListBooking(
             @RequestParam(required = false) BookingStatus status) {
-        return ResponseEntity.ok(service.findAll(status));
+        return ResponseEntity.ok(service.getAllListBooking(status));
     }
 
     /** 예매 상세 조회 — 200 OK */
     @GetMapping("/bookings/{bookingId}")
-    public ResponseEntity<AdminBookingDetailResponse> findById(@PathVariable Long bookingId) {
-        return ResponseEntity.ok(service.findById(bookingId));
+    public ResponseEntity<AdminBookingDetailResponse> getDetailBooking(@PathVariable Long bookingId) {
+        return ResponseEntity.ok(service.getDetailBooking(bookingId));
     }
 }

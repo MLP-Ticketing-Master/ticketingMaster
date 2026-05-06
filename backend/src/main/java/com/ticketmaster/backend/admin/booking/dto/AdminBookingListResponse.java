@@ -20,7 +20,7 @@ public class AdminBookingListResponse {
     // 고객 정보
     private Long userId;
     private String userNickname;     // ex) 홍길동
-    private String userEmail;        // ex) hong@example.com
+    private String userEmail;        // ex) qwe@aa.com
 
     // 대회/회차 정보
     private String eventTitle;       // ex) LOL 챔피언스 코리아 2026 스프링 결승

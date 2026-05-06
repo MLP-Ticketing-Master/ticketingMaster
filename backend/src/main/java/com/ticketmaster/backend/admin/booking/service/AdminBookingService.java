@@ -24,7 +24,7 @@ public class AdminBookingService {
      * {@code status}가 null이면 전체 예매 조회
      * 최신 등록순(id DESC)으로 정렬됨
      */
-    public List<AdminBookingListResponse> findAll(BookingStatus status) {
+    public List<AdminBookingListResponse> getAllListBooking(BookingStatus status) {
         return bookingRepository.findAllForAdmin(status).stream()
                 .map(AdminBookingListResponse::from)
                 .toList();
@@ -34,7 +34,7 @@ public class AdminBookingService {
      * 예매 상세 조회
      * 존재하지 않으면 {@code BOOKING_NOT_FOUND} 예외 발생
      */
-    public AdminBookingDetailResponse findById(Long bookingId) {
+    public AdminBookingDetailResponse getDetailBooking(Long bookingId) {
         Booking booking = bookingRepository.findDetailById(bookingId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BOOKING_NOT_FOUND));
 
