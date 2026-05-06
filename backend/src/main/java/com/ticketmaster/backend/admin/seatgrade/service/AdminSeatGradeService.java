@@ -3,6 +3,8 @@ package com.ticketmaster.backend.admin.seatgrade.service;
 import com.ticketmaster.backend.admin.seatgrade.dto.request.AdminSeatGradeCreateRequest;
 import com.ticketmaster.backend.admin.seatgrade.dto.request.AdminSeatGradeUpdateRequest;
 import com.ticketmaster.backend.admin.seatgrade.dto.response.AdminSeatGradeResponse;
+import com.ticketmaster.backend.domain.event.entity.Event;
+import com.ticketmaster.backend.domain.event.repository.EventRepository;
 import com.ticketmaster.backend.domain.seat.entity.SeatGrade;
 import com.ticketmaster.backend.domain.seat.repository.SeatGradeRepository;
 import com.ticketmaster.backend.domain.seat.repository.SeatRepository;
@@ -22,7 +24,7 @@ public class AdminSeatGradeService {
 
     private final SeatGradeRepository seatGradeRepository;
     private final SeatRepository seatRepository;
-    // private final EventRepository eventRepository;
+    private final EventRepository eventRepository;
 
     /**
      * 대회별 좌석 등급 목록 조회 — 가격 내림차순 (VIP가 가장 위)
@@ -30,10 +32,9 @@ public class AdminSeatGradeService {
      * - readOnly 트랜잭션 (클래스 레벨 적용됨)
      */
     public List<AdminSeatGradeResponse> findAllByEvent(Long eventId) {
-        // TODO [EventRepository 머지 후 활성화]
-        // if (!eventRepository.existsById(eventId)) {
-        //     throw new BusinessException(ErrorCode.EVENT_NOT_FOUND);
-        // }
+        if (!eventRepository.existsById(eventId)) {
+            throw new BusinessException(ErrorCode.EVENT_NOT_FOUND);
+        }
 
         return seatGradeRepository.findAllByEventIdOrderByPriceDesc(eventId)
                 .stream()
@@ -45,13 +46,12 @@ public class AdminSeatGradeService {
      * 좌석 등급 등록
      * 검증 순서: 대회 존재 → 같은 대회 내 등급 코드 중복
      * - 동일 코드의 soft-deleted 행이 있으면 복구(restore) + 값 갱신으로 재활용
-     *   (DB unique 제약은 deleted_at 무관이라 신규 INSERT 시 충돌 → 복구 전략 채택)
+     * (DB unique 제약은 deleted_at 무관이라 신규 INSERT 시 충돌 → 복구 전략 채택)
      */
     @Transactional
     public AdminSeatGradeResponse create(Long eventId, AdminSeatGradeCreateRequest req) {
-        // TODO [EventRepository 머지 후 활성화]
-        // Event event = eventRepository.findById(eventId)
-        //     .orElseThrow(() -> new BusinessException(ErrorCode.EVENT_NOT_FOUND));
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.EVENT_NOT_FOUND));
 
         Optional<SeatGrade> existing =
                 seatGradeRepository.findByEventIdAndGradeCodeIncludingDeleted(
@@ -70,9 +70,8 @@ public class AdminSeatGradeService {
         }
 
         // 정적 팩토리로 생성
-        // 머지 후엔 SeatGrade.create(event, ...) 로 변경
         SeatGrade saved = seatGradeRepository.save(
-                SeatGrade.create(/* event */ null,
+                SeatGrade.create(event,
                         req.getGradeCode(),
                         req.getPrice(),
                         req.getColorHex())
@@ -81,7 +80,9 @@ public class AdminSeatGradeService {
         return AdminSeatGradeResponse.from(saved);
     }
 
-    /** 부분 수정 — null 아닌 것만 반영, 더티 체킹으로 자동 갱신 */
+    /**
+     * 부분 수정 — null 아닌 것만 반영, 더티 체킹으로 자동 갱신
+     */
     @Transactional
     public AdminSeatGradeResponse update(Long seatGradeId, AdminSeatGradeUpdateRequest req) {
         SeatGrade grade = seatGradeRepository.findById(seatGradeId)
