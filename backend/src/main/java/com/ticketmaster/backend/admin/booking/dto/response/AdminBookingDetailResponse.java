@@ -1,4 +1,4 @@
-package com.ticketmaster.backend.admin.booking.dto;
+package com.ticketmaster.backend.admin.booking.dto.response;
 
 import com.ticketmaster.backend.domain.booking.entity.Booking;
 import com.ticketmaster.backend.domain.booking.entity.BookingSeat;
@@ -38,12 +38,16 @@ public class AdminBookingDetailResponse {
 
     private LocalDateTime createdAt;
 
+    // TODO: 결제수단 응답 필드 추가 예정
+
     public static AdminBookingDetailResponse from(Booking entity) {
         Match match = entity.getMatch();
 
         List<SeatInfo> seatInfos = entity.getBookingSeats().stream()
                 .map(SeatInfo::from)
                 .toList();
+
+        // TODO: entity.getPaymentMethod() 매핑 추가 예정
 
         return new AdminBookingDetailResponse(
                 entity.getId(),

@@ -1,17 +1,17 @@
 package com.ticketmaster.backend.admin.booking.service;
 
-import com.ticketmaster.backend.admin.booking.dto.AdminBookingDetailResponse;
-import com.ticketmaster.backend.admin.booking.dto.AdminBookingListResponse;
+import com.ticketmaster.backend.admin.booking.dto.response.AdminBookingDetailResponse;
+import com.ticketmaster.backend.admin.booking.dto.response.AdminBookingListResponse;
 import com.ticketmaster.backend.domain.booking.entity.Booking;
 import com.ticketmaster.backend.domain.booking.entity.BookingStatus;
 import com.ticketmaster.backend.domain.booking.repository.BookingRepository;
 import com.ticketmaster.backend.global.exception.BusinessException;
 import com.ticketmaster.backend.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -24,10 +24,10 @@ public class AdminBookingService {
      * {@code status}가 null이면 전체 예매 조회
      * 최신 등록순(id DESC)으로 정렬됨
      */
-    public List<AdminBookingListResponse> getAllListBooking(BookingStatus status) {
-        return bookingRepository.findAllForAdmin(status).stream()
-                .map(AdminBookingListResponse::from)
-                .toList();
+    public Page<AdminBookingListResponse> getAllListBooking(BookingStatus status, Pageable pageable) {
+        return bookingRepository.findAllForAdmin(status,pageable)
+                .map(AdminBookingListResponse::from);
+
     }
 
     /**

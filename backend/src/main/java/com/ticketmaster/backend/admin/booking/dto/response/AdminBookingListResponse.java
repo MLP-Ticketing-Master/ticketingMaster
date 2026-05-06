@@ -1,4 +1,4 @@
-package com.ticketmaster.backend.admin.booking.dto;
+package com.ticketmaster.backend.admin.booking.dto.response;
 
 import com.ticketmaster.backend.domain.booking.entity.Booking;
 import com.ticketmaster.backend.domain.booking.entity.BookingStatus;
@@ -36,6 +36,9 @@ public class AdminBookingListResponse {
     private BookingStatus status;
 
     private LocalDateTime createdAt;
+
+    // TODO: 결제수단 응답 필드 추가 예정
+    // private String paymentMethod;
 
     /**
      * Booking 엔티티를 목록 응답 DTO로 변환
