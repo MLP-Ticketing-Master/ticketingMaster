@@ -19,13 +19,23 @@ import java.util.List;
 public class AdminBookingDetailResponse {
     private Long bookingId;
     private String bookingNumber;
+
+    // 고객 정보
     private Long userId;
+    private String userNickname;
     private String userEmail;
+
+    // 대회 정보
     private String eventTitle;
     private MatchInfo matchInfo;
+
+    // 좌석 정보
     private List<SeatInfo> seats;
+
+    // 결제/상태
     private int totalPrice;
     private BookingStatus status;
+
     private LocalDateTime createdAt;
 
     public static AdminBookingDetailResponse from(Booking entity) {
@@ -39,6 +49,7 @@ public class AdminBookingDetailResponse {
                 entity.getId(),
                 entity.getBookingNumber(),
                 entity.getUser().getId(),
+                entity.getUser().getNickname(),
                 entity.getUser().getEmail(),
                 match.getEvent().getTitle(),
                 MatchInfo.from(match),
@@ -51,8 +62,6 @@ public class AdminBookingDetailResponse {
 
     /**
      * 회차 정보 중첩 DTO
-     *
-     * 홈/원정 팀은 nullable (대진 미정 가능)
      */
     @Getter
     @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -60,6 +69,7 @@ public class AdminBookingDetailResponse {
     public static class MatchInfo {
         private Long matchId;
         private LocalDateTime startAt;
+        private String roundLabel;       // ex) 결승 1경기
         private String homeTeamName;
         private String awayTeamName;
 
@@ -67,6 +77,7 @@ public class AdminBookingDetailResponse {
             return new MatchInfo(
                     match.getId(),
                     match.getStartAt(),
+                    match.getRoundLabel(),
                     teamNameOrNull(match.getHomeTeam()),
                     teamNameOrNull(match.getAwayTeam())
             );
@@ -79,10 +90,7 @@ public class AdminBookingDetailResponse {
     }
 
     /**
-     * 좌석 정보 중첩 DTO.
-     *
-     * <p>가격은 BookingSeat의 스냅샷 가격을 사용한다.
-     * (SeatGrade의 현재 가격과 다를 수 있음 — 결제 정합성 보호)</p>
+     * 좌석 정보 중첩 DTO
      */
     @Getter
     @NoArgsConstructor(access = AccessLevel.PROTECTED)

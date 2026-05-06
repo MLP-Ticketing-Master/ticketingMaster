@@ -35,7 +35,7 @@ public class AdminBookingService {
      * 존재하지 않으면 {@code BOOKING_NOT_FOUND} 예외 발생
      */
     public AdminBookingDetailResponse findById(Long bookingId) {
-        Booking booking = bookingRepository.findWithDetailsById(bookingId)
+        Booking booking = bookingRepository.findDetailById(bookingId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BOOKING_NOT_FOUND));
 
         return AdminBookingDetailResponse.from(booking);
