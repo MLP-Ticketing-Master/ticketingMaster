@@ -49,7 +49,7 @@ public class AdminEventController {
     }
 
     /**
-     * 이벤트 수정
+     * 이벤트 수정 요청
      */
     @PatchMapping("/{eventId}")
     public ResponseEntity<AdminEventResponse> updateEvent(

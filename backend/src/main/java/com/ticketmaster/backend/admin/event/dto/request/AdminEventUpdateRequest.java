@@ -3,6 +3,7 @@ package com.ticketmaster.backend.admin.event.dto.request;
 import com.ticketmaster.backend.domain.event.entity.Event;
 import com.ticketmaster.backend.domain.event.entity.EventStatus;
 import com.ticketmaster.backend.domain.event.entity.SportType;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,7 +15,9 @@ import java.time.LocalDateTime;
 // 대회 수정 (PATCH /admin/events/{eventId})
 // ==========================================
 @Getter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class AdminEventUpdateRequest {
     private String title;
     private SportType sportType;

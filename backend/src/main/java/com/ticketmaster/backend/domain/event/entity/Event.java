@@ -80,12 +80,13 @@ public class Event extends BaseEntity {
      * 생성자 (빌더)
      */
     @Builder
-    public Event(String title, SportType sportType, String place, String thumbnailUrl,
+    public Event(Long id, String title, SportType sportType, String place, String thumbnailUrl,
                  String detailImageUrl, String description, LocalDate startDate,
                  LocalDate endDate, String matchDurationText, String ageRating,
                  LocalDateTime bookingOpenAt, LocalDateTime bookingCloseAt,
                  String bookingNotice, int maxTicketsPerUser,
                  LocalDateTime cancelAvailableUntil, int cancelFee, EventStatus status) {
+        this.id = id;
         this.title = title;
         this.sportType = sportType;
         this.place = place;
