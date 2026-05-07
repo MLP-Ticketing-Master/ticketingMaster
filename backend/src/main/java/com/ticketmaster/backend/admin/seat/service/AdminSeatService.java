@@ -5,6 +5,7 @@ import com.ticketmaster.backend.admin.seat.dto.request.AdminSeatCreateRequest;
 import com.ticketmaster.backend.admin.seat.dto.request.AdminSeatUpdateRequest;
 import com.ticketmaster.backend.admin.seat.dto.response.AdminSeatResponse;
 import com.ticketmaster.backend.domain.match.entity.Match;
+import com.ticketmaster.backend.domain.match.repository.MatchRepository;
 import com.ticketmaster.backend.domain.seat.entity.Seat;
 import com.ticketmaster.backend.domain.seat.entity.SeatGrade;
 import com.ticketmaster.backend.domain.seat.entity.Section;
@@ -28,7 +29,7 @@ public class AdminSeatService {
     private final SeatRepository seatRepository;
     private final SectionRepository sectionRepository;
     private final SeatGradeRepository seatGradeRepository;
-    // private final MatchRepository matchRepository;
+    private final MatchRepository matchRepository;
 
     // 좌석 단건 등록
     @Transactional
@@ -124,8 +125,8 @@ public class AdminSeatService {
      * - fetch join 으로 section/seatGrade 까지 한 번에 로딩 → N+1 차단
      */
     public List<AdminSeatResponse> findAllByMatch(Long matchId) {
-        // if (!matchRepository.existsById(matchId))
-        //     throw new BusinessException(ErrorCode.MATCH_NOT_FOUND);
+        if (!matchRepository.existsById(matchId))
+            throw new BusinessException(ErrorCode.MATCH_NOT_FOUND);
         return seatRepository.findAllWithSectionAndGradeByMatchId(matchId)
                 .stream()
                 .map(AdminSeatResponse::from)
@@ -167,9 +168,8 @@ public class AdminSeatService {
     }
 
     private Match findMatch(Long matchId) {
-        // return matchRepository.findById(matchId)
-        //     .orElseThrow(() -> new BusinessException(ErrorCode.MATCH_NOT_FOUND));
-        return null; // MatchRepository 머지 후 활성화
+        return matchRepository.findById(matchId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MATCH_NOT_FOUND));
     }
 
     private Section findSection(Long id) {
