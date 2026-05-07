@@ -25,6 +25,7 @@ spring:
       hibernate:
         format_sql: true # SQL 예쁘게 출력
         highlight_sql: true # SQL 색상 하이라이팅 (콘솔에서 보기 편함)
+        default_batch_fetch_size: 100 # 조회 시 lazy 로딩을 IN 쿼리로 묶어 N+1 방지 (SELECT 최적화)
         jdbc:
           batch_size: 100              # 100건씩 묶어서 INSERT
           batch_versioned_data: true
