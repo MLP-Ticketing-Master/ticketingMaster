@@ -30,9 +30,11 @@ public enum ErrorCode {
     MATCH_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "MATCH_ALREADY_DELETED", "이미 삭제된 회차입니다"),
     TEAM_NOT_FOUND(HttpStatus.NOT_FOUND, "TEAM_NOT_FOUND", "존재하지 않는 팀입니다."),
     TEAM_IN_USE(HttpStatus.CONFLICT, "TEAM_IN_USE", "진행 중인 회차에 배정된 팀은 삭제할 수 없습니다."),
+    DUPLICATE_EVENT_TITLE(HttpStatus.CONFLICT, "DUPLICATE_EVENT_TITLE", "이미 존재하는 이벤트 타이틀입니다."),
     DUPLICATE_TEAM_NAME(HttpStatus.CONFLICT, "DUPLICATE_TEAM_NAME", "이미 존재하는 팀명입니다."),
-    INVALID_MATCH_DATE(HttpStatus.BAD_REQUEST, "INVALID_MATCH_DATE", "대회 기간을 벗어난 회차입니다"),
+    INVALID_DATE_RANGE(HttpStatus.BAD_REQUEST, "INVALID_DATE_RANGE", "종료일은 시작일보다 앞설 수 없습니다."),
     INVALID_TIME_RANGE(HttpStatus.BAD_REQUEST, "INVALID_TIME_RANGE", "종료 시간은 시작 시간보다 앞설 수 없습니다."),
+    INVALID_MATCH_DATE(HttpStatus.BAD_REQUEST, "INVALID_MATCH_DATE", "대회 기간을 벗어난 회차입니다"),
     CANNOT_CHANGE_FINISHED_MATCH(HttpStatus.BAD_REQUEST, "CANNOT_CHANGE_FINISHED_MATCH", "이미 종료된 매치는 상태를 변경할 수 없습니다."),
 
     // ====== SEAT / SECTION / GRADE ======

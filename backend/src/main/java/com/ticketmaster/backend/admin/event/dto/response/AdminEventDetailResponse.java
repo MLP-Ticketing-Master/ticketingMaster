@@ -5,6 +5,7 @@ import com.ticketmaster.backend.domain.event.entity.EventStatus;
 import com.ticketmaster.backend.domain.event.entity.SportType;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDate;
@@ -14,9 +15,10 @@ import java.time.LocalDateTime;
  * 이벤트 상세 관리 페이지용 모든 정보 응답
  */
 @Getter
+@Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class AdminEventDetailResponse {
-    private Long id;
+    private Long eventId;
     private String title;
     private SportType sportType;
     private String place;
