@@ -138,7 +138,7 @@ public class AdminEventControllerTest {
         List<AdminEventListResponse> fakeList = List.of(
                 AdminEventListResponse.builder().eventId(1L).title("2026 LCK 스프링 결승").sportType(SportType.LOL).place("LOL Park").startDate(LocalDate.of(2026, 3, 24)).endDate(LocalDate.of(2026, 5, 11)).status(EventStatus.OPEN).build(),
                 AdminEventListResponse.builder().eventId(2L).title("2026 리그오브레전드 월드 챔피언십").sportType(SportType.LOL).place("LOL Park").startDate(LocalDate.of(2026, 5, 24)).endDate(LocalDate.of(2026, 6, 15)).status(EventStatus.OPEN).build(),
-                AdminEventListResponse.builder().eventId(2L).title("발로란트 챔피언스 투어 코리아").sportType(SportType.VALORANT).place("코엑스 컨벤션홀").startDate(LocalDate.of(2026, 4, 25)).endDate(LocalDate.of(2026, 5, 15)).status(EventStatus.OPEN).build()
+                AdminEventListResponse.builder().eventId(3L).title("발로란트 챔피언스 투어 코리아").sportType(SportType.VALORANT).place("코엑스 컨벤션홀").startDate(LocalDate.of(2026, 4, 25)).endDate(LocalDate.of(2026, 5, 15)).status(EventStatus.OPEN).build()
         );
         Page<AdminEventListResponse> fakePage = new PageImpl<>(fakeList);
 
@@ -161,7 +161,7 @@ public class AdminEventControllerTest {
     @Test
     @WithMockUser(roles = "USER")
     @DisplayName("이벤트 목록 조회 실패 - 접근 권한 에러")
-    void 이벤트_목록조회_접근권한에러() throws Exception {
+    void 이벤트_목록조회_접근권한에러_403() throws Exception {
         // When & Then
         mockMvc.perform(get("/admin/events")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -173,7 +173,7 @@ public class AdminEventControllerTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     @DisplayName("이벤트 상세 조회 성공 - 정상 케이스")
-    void 이벤트_상세조회_정상() throws Exception {
+    void 이벤트_상세조회_정상_200() throws Exception {
         // Given: 조회할 이벤트 ID와 가짜 서비스가 반환할 응답 객체(DTO) 준비
         Long targetEventId = 1L;
 
@@ -215,7 +215,7 @@ public class AdminEventControllerTest {
     @Test
     @WithMockUser(roles = "USER") // 🌟 핵심: ADMIN이 아닌 USER 권한으로 세팅!
     @DisplayName("이벤트 상세 조회 실패 - 접근 권한 에러")
-    void 이벤트_상세조회_접근권한에러() throws Exception {
+    void 이벤트_상세조회_접근권한에러_403() throws Exception {
         // Given: 조회하려는 임의의 이벤트 ID
         Long targetEventId = 1L;
 
@@ -233,7 +233,7 @@ public class AdminEventControllerTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     @DisplayName("이벤트 수정 요청 성공 - 일부 필드만 변경")
-    void 이벤트_수정요청_정상() throws Exception {
+    void 이벤트_수정요청_정상_200() throws Exception {
         // Given: 수정할 대상 ID와 "일부" 변경할 데이터 준비
         Long targetEventId = 1L;
 
@@ -273,7 +273,7 @@ public class AdminEventControllerTest {
     @Test
     @WithMockUser(roles = "USER") // 🌟 핵심: ADMIN이 아닌 일반 USER 권한으로 접근 시도!
     @DisplayName("이벤트 수정 요청 실패 - 접근 권한 에러")
-    void 이벤트_수정요청_접근권한에러() throws Exception {
+    void 이벤트_수정요청_접근권한에러_403() throws Exception {
         // Given: 타겟 ID와 대충 만든(?) 수정 요청 데이터
         Long targetEventId = 1L;
 
@@ -296,7 +296,7 @@ public class AdminEventControllerTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     @DisplayName("이벤트 소프트 삭제 성공 - 정상 케이스")
-    void 이벤트_소프트삭제_정상() throws Exception {
+    void 이벤트_소프트삭제_정상_204() throws Exception {
         // Given: 삭제할 이벤트 ID
         Long targetEventId = 1L;
 
@@ -319,7 +319,7 @@ public class AdminEventControllerTest {
     @Test
     @WithMockUser(roles = "USER")
     @DisplayName("이벤트 소프트 삭제 실패 - 접근 권한 에러")
-    void 이벤트_소프트삭제_접근권한에러() throws Exception {
+    void 이벤트_소프트삭제_접근권한에러_403() throws Exception {
         // Given: 삭제 시도할 이벤트 ID
         Long targetEventId = 1L;
 

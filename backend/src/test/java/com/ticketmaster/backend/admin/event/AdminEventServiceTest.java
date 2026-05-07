@@ -83,7 +83,7 @@ public class AdminEventServiceTest {
         assertThat(response.getEventId()).isEqualTo(1L);
 
         // 3. 타이틀이 원본 요청과 똑같이 저장되었는지 확인
-        // assertThat(response.getTitle()).isEqualTo("2026 LCK 스프링 결승");
+        assertThat(response.getTitle()).isEqualTo("2026 LCK 스프링 결승");
 
         // ⭐️ 추가 팁: 레포지토리의 save 메서드가 정확히 1번 호출되었는지 확인 (비즈니스 로직이 DB 저장을 빼먹지 않았는지 검증)
         verify(eventRepository, times(1)).save(any(Event.class));
@@ -536,7 +536,7 @@ public class AdminEventServiceTest {
                 .status(EventStatus.OPEN)
                 .build();
 
-        // When & Then: 상태 변경 불가 예외(INVALID_STATUS_TRANSITION)가 터져야 정상
+        // When & Then: 상태 변경 불가 예외(CANNOT_CHANGE_FINISHED_MATCH)가 터져야 정상
         BusinessException exception = assertThrows(BusinessException.class, () -> {
             adminEventService.updateEvent(targetEventId, updateRequest);
         });
