@@ -7,6 +7,8 @@ import com.ticketmaster.backend.domain.auth.dto.request.AuthSignupRequest;
 import com.ticketmaster.backend.domain.auth.dto.response.AuthSignupResponse;
 import com.ticketmaster.backend.domain.user.entity.User;
 import com.ticketmaster.backend.domain.user.repository.UserRepository;
+import com.ticketmaster.backend.global.exception.BusinessException;
+import com.ticketmaster.backend.global.exception.ErrorCode;
 import com.ticketmaster.backend.global.security.jwt.JwtTokenProvider;
 import com.ticketmaster.backend.global.util.MailService;
 import lombok.RequiredArgsConstructor;
@@ -31,11 +33,11 @@ public class AuthService {
 	public TokenResponse login(LoginRequest request) {
 		// 1. 이메일로 사용자 조회
 		User user = userRepository.findByEmail(request.getEmail())
-			.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+			.orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
 
 		// 2. 비밀번호 일치 여부 확인
 		if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-			throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+			throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
 		}
 
 		// 3. Access/Refresh 토큰 생성
@@ -62,7 +64,7 @@ public class AuthService {
 			redisTemplate.delete(redisKey);
 		} else {
 			// 이미 로그아웃 되었거나 토큰이 없는 경우 예외 처리
-			throw new IllegalArgumentException("유효하지 않은 로그아웃 요청입니다.");
+			throw new BusinessException(ErrorCode.INVALID_TOKEN);
 		}
 	}
 
@@ -70,7 +72,7 @@ public class AuthService {
 	public AuthSignupResponse signup(AuthSignupRequest request) {
 		// 이메일 중복 검증
 		if (userRepository.existsByEmail(request.getEmail())) {
-			throw new DuplicateEmailException();
+			throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
 		}
 
 		// 비밀번호 BCrypt 암호화 및 엔티티 생성
@@ -92,7 +94,7 @@ public class AuthService {
 	public TokenResponse refresh(String refreshToken) {
 		// 1. 토큰 자체의 유효성 검사 (만료 여부 등)
 		if (!jwtTokenProvider.validateToken(refreshToken)) {
-			throw new IllegalArgumentException("유효하지 않거나 만료된 REFresh Token입니다.");
+			throw new BusinessException(ErrorCode.EXPIRED_TOKEN);
 		}
 
 		// 2. 토큰에서 이메일 추출
@@ -103,13 +105,13 @@ public class AuthService {
 
 		// 4. Redis에 토큰이 없거나 전달받은 토큰과 일치하지 않으면 예외 발생
 		if (savedRefreshToken == null || !savedRefreshToken.equals(refreshToken)) {
-			throw new IllegalArgumentException("로그인 정보가 일치하지 않습니다. 다시 로그인해주세요.");
+			throw new BusinessException(ErrorCode.INVALID_TOKEN);
 		}
 
 		// 5. 새로운 Access Token 생성 (Refresh Token은 그대로 유지하거나 같이 갱신 가능)
 		// 보안 유지를 위해 유저 정보를 다시 조회하여 최신 Role 반영
 		User user = userRepository.findByEmail(email)
-			.orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+			.orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
 		String newAccessToken= jwtTokenProvider.generateAccessToken(user.getEmail(), user.getRole().name());
 
@@ -121,7 +123,7 @@ public class AuthService {
 	@Transactional
 	public void requestPasswordReset(String email) {
 		userRepository.findByEmail(email)
-			.orElseThrow(() -> new IllegalArgumentException("해당 이메일로 가입된 사용자가 없습니다."));
+			.orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
 		String resetToken = UUID.randomUUID().toString();
 
@@ -141,11 +143,11 @@ public class AuthService {
 		String email = redisTemplate.opsForValue().get(redisKey);
 
 		if (email == null) {
-			throw new IllegalArgumentException("만료되었거나 유효하지 않은 토큰입니다.");
+			throw new BusinessException(ErrorCode.INVALID_RESET_TOKEN);
 		}
 
 		User user = userRepository.findByEmail(email)
-			.orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+			.orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
 		// 비밀번호 암호화 후 업데이트
 		user.changePassword(passwordEncoder.encode(request.newPassword()));

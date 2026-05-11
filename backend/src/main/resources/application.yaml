@@ -35,8 +35,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ticketingmaster7@gmail.com
-    password: doawgfouzvcjuylx
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -57,6 +57,6 @@ logging:
     org.hibernate.orm.jdbc.bind: trace
 
 jwt:
-  secret: v7St9K8X6z3B5n8v7St9K8X6z3B5n8v7St9K8X6z3B5n8v7St9K8X6z3B5n8
+  secret: ${JWT_SECRET}
   access-expiration: 1800000
   refresh-expiration: 1209600000
