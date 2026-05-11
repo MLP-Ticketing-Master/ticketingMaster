@@ -16,7 +16,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.ticketmaster.backend.global.exception.DuplicateEmailException;
 
 import java.util.concurrent.TimeUnit;
 import java.util.UUID;
