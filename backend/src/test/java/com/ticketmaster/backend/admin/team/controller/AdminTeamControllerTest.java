@@ -5,13 +5,17 @@ import com.ticketmaster.backend.admin.team.dto.response.AdminTeamResponse;
 import com.ticketmaster.backend.admin.team.service.AdminTeamService;
 import com.ticketmaster.backend.domain.event.entity.SportType;
 import com.ticketmaster.backend.domain.team.entity.Team;
+import com.ticketmaster.backend.global.config.SecurityConfig;
 import com.ticketmaster.backend.global.exception.BusinessException;
 import com.ticketmaster.backend.global.exception.ErrorCode;
+import com.ticketmaster.backend.global.security.auth.CustomUserDetailsService;
+import com.ticketmaster.backend.global.security.jwt.JwtTokenProvider;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -37,6 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AdminTeamController.class)
+@Import(SecurityConfig.class)
 @WithMockUser(roles = "ADMIN")
 class AdminTeamControllerTest {
 
@@ -48,6 +53,14 @@ class AdminTeamControllerTest {
 
     @MockitoBean
     private AdminTeamService service;
+
+    // JWT 머지 후 JwtAuthenticationFilter(@Component)가 슬라이스 테스트에 자동 스캔됨
+    // → 그 안의 JwtTokenProvider/CustomUserDetailsService를 mock으로 채워야 컨텍스트 로드 성공
+    @MockitoBean
+    private JwtTokenProvider jwtTokenProvider;
+
+    @MockitoBean
+    private CustomUserDetailsService customUserDetailsService;
 
     private static final Long TEAM_ID = 1L;
 
@@ -240,7 +253,6 @@ class AdminTeamControllerTest {
     }
 
     @Test
-    @Disabled("SecurityConfig (@EnableMethodSecurity) 머지 후 활성화")
     @WithMockUser(roles = "USER")
     @DisplayName("ADMIN_권한_없음_403")
     void 권한없음_403() throws Exception {
