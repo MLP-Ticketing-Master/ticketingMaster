@@ -32,6 +32,18 @@ spring:
         order_inserts: true            # INSERT 문 정렬 (배치 효율 ↑)
         order_updates: true
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true  # 보안 연결(TLS) 활성화
+
   jackson:
     time-zone: Asia/Seoul
 
@@ -43,3 +55,8 @@ logging:
     com.ticketmaster.backend: DEBUG
     org.hibernate.SQL: debug
     org.hibernate.orm.jdbc.bind: trace
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-expiration: 1800000
+  refresh-expiration: 1209600000
