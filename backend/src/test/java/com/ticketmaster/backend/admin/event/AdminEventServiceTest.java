@@ -56,7 +56,7 @@ public class AdminEventServiceTest {
                 .endDate(LocalDate.of(2026, 4, 26))
                 .bookingOpenAt(LocalDateTime.of(2026, 4, 20, 20, 0))
                 .bookingCloseAt(LocalDateTime.of(2026, 4, 26, 22, 0))
-                .maxTicketsPerUser(4)
+                .maxTicketsPerUser(2)
                 .cancelFee(1000)
                 .build();
 
@@ -101,7 +101,7 @@ public class AdminEventServiceTest {
                 .endDate(LocalDate.of(2026, 4, 26))
                 .bookingOpenAt(LocalDateTime.of(2026, 4, 20, 20, 0))
                 .bookingCloseAt(LocalDateTime.of(2026, 4, 26, 22, 0))
-                .maxTicketsPerUser(4)
+                .maxTicketsPerUser(2)
                 .cancelFee(1000)
                 .build();
 
@@ -131,7 +131,7 @@ public class AdminEventServiceTest {
                 .endDate(LocalDate.of(2026, 3, 26)) // 끝나는 날짜가 시작하는 날짜보다 앞섬
                 .bookingOpenAt(LocalDateTime.of(2026, 4, 20, 20, 0))
                 .bookingCloseAt(LocalDateTime.of(2026, 4, 26, 22, 0))
-                .maxTicketsPerUser(4)
+                .maxTicketsPerUser(2)
                 .cancelFee(1000)
                 .build();
 
@@ -155,7 +155,7 @@ public class AdminEventServiceTest {
                 .endDate(LocalDate.of(2026, 4, 26))
                 .bookingOpenAt(LocalDateTime.of(2026, 4, 25, 20, 0)) // 예매 시작일이 이벤트 시작일보다 늦음
                 .bookingCloseAt(LocalDateTime.of(2026, 4, 26, 22, 0))
-                .maxTicketsPerUser(4)
+                .maxTicketsPerUser(2)
                 .cancelFee(1000)
                 .build();
 
@@ -237,7 +237,7 @@ public class AdminEventServiceTest {
                 .sportType(SportType.LOL)
                 .place("LoL Park")
                 .description("LCK 스프링 결승전입니다.")
-                .maxTicketsPerUser(4)
+                .maxTicketsPerUser(2)
                 .cancelFee(1000)
                 .status(EventStatus.UPCOMING)
                 .build();
@@ -256,7 +256,7 @@ public class AdminEventServiceTest {
         assertThat(response.getSportType()).isEqualTo(SportType.LOL);
         assertThat(response.getPlace()).isEqualTo("LoL Park");
         assertThat(response.getDescription()).isEqualTo("LCK 스프링 결승전입니다.");
-        assertThat(response.getMaxTicketsPerUser()).isEqualTo(4);
+        assertThat(response.getMaxTicketsPerUser()).isEqualTo(2);
         assertThat(response.getStatus()).isEqualTo(EventStatus.UPCOMING);
 
         // 추가 검증: 레포지토리의 findById가 1L을 파라미터로 정확히 1번 호출되었는지 확인
@@ -297,7 +297,7 @@ public class AdminEventServiceTest {
                 .startDate(LocalDate.of(2025, 1, 1))
                 .endDate(LocalDate.of(2025, 1, 31))
                 .status(EventStatus.UPCOMING)
-                .maxTicketsPerUser(4)
+                .maxTicketsPerUser(2)
                 .cancelFee(0)
                 .build();
 
@@ -316,7 +316,7 @@ public class AdminEventServiceTest {
                 .bookingOpenAt(LocalDateTime.of(2026, 4, 20, 20, 0))
                 .bookingCloseAt(LocalDateTime.of(2026, 4, 26, 22, 0))
                 .bookingNotice("취소 수수료가 변경되었습니다.")
-                .maxTicketsPerUser(2) // 4장에서 2장으로 변경
+                .maxTicketsPerUser(1) // 2장에서 1장으로 변경
                 .cancelAvailableUntil(LocalDateTime.of(2026, 4, 25, 23, 59))
                 .cancelFee(2000) // 0원에서 2000원으로 변경
                 .status(EventStatus.OPEN) // UPCOMING에서 OPEN으로 변경
@@ -337,7 +337,7 @@ public class AdminEventServiceTest {
 
         // 2. ⭐️ 핵심: AdminEventResponse에 없는 필드들도 실제 엔티티(existingEvent) 내부에서 잘 바뀌었는지 확인
         // (자바는 객체의 주소를 참조하므로, 서비스에서 event.update()를 호출하면 existingEvent의 내용물이 바뀝니다)
-        assertThat(existingEvent.getMaxTicketsPerUser()).isEqualTo(2);
+        assertThat(existingEvent.getMaxTicketsPerUser()).isEqualTo(1);
         assertThat(existingEvent.getCancelFee()).isEqualTo(2000);
         assertThat(existingEvent.getDescription()).isEqualTo("장소 및 일정이 변경되었습니다.");
         assertThat(existingEvent.getAgeRating()).isEqualTo("12세 이상");
@@ -360,7 +360,7 @@ public class AdminEventServiceTest {
                 .sportType(SportType.LOL)
                 .place("LoL Park")
                 .description("기존 상세 설명입니다.")
-                .maxTicketsPerUser(4)
+                .maxTicketsPerUser(2)
                 .status(EventStatus.UPCOMING)
                 .startDate(LocalDate.of(2026, 4, 24))
                 .endDate(LocalDate.of(2026, 4, 26))
@@ -391,7 +391,7 @@ public class AdminEventServiceTest {
 
         // 엔티티 내부 값도 확인 (DTO에 없는 description 등)
         assertThat(existingEvent.getDescription()).isEqualTo("기존 상세 설명입니다.");
-        assertThat(existingEvent.getMaxTicketsPerUser()).isEqualTo(4);
+        assertThat(existingEvent.getMaxTicketsPerUser()).isEqualTo(2);
 
         verify(eventRepository).findById(targetEventId);
     }

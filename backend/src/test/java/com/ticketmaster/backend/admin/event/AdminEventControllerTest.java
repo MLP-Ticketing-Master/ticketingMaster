@@ -65,7 +65,7 @@ public class AdminEventControllerTest {
                 .endDate(LocalDate.of(2026, 4, 26))
                 .bookingOpenAt(LocalDateTime.of(2026, 4, 20, 20, 0))
                 .bookingCloseAt(LocalDateTime.of(2026, 4, 26, 22, 0))
-                .maxTicketsPerUser(4)
+                .maxTicketsPerUser(2)
                 .cancelFee(1000)
                 .build();
 
@@ -91,7 +91,7 @@ public class AdminEventControllerTest {
                 .endDate(LocalDate.of(2026, 4, 26))
                 .bookingOpenAt(LocalDateTime.of(2026, 4, 20, 20, 0))
                 .bookingCloseAt(LocalDateTime.of(2026, 4, 26, 22, 0))
-                .maxTicketsPerUser(4)
+                .maxTicketsPerUser(2)
                 .cancelFee(1000)
                 .build();
 
@@ -116,7 +116,7 @@ public class AdminEventControllerTest {
                 .endDate(LocalDate.of(2026, 4, 26))
                 .bookingOpenAt(LocalDateTime.of(2026, 4, 20, 20, 0))
                 .bookingCloseAt(LocalDateTime.of(2026, 4, 26, 22, 0))
-                .maxTicketsPerUser(4)
+                .maxTicketsPerUser(2)
                 .cancelFee(1000)
                 .build();
 
@@ -191,8 +191,8 @@ public class AdminEventControllerTest {
                 .ageRating("전체관람가")
                 .bookingOpenAt(LocalDateTime.of(2026, 3, 10, 20, 0)) // 추가
                 .bookingCloseAt(LocalDateTime.of(2026, 3, 23, 23, 59)) // 추가
-                .bookingNotice("예매는 1인당 최대 4매까지 가능하며, 취소 기한을 꼭 확인해주세요.") // 추가
-                .maxTicketsPerUser(4)
+                .bookingNotice("예매는 1인당 최대 2매까지 가능하며, 취소 기한을 꼭 확인해주세요.") // 추가
+                .maxTicketsPerUser(2)
                 .cancelAvailableUntil(LocalDateTime.of(2026, 3, 23, 23, 59)) // 추가
                 .cancelFee(1000) // 추가
                 .status(EventStatus.OPEN)
