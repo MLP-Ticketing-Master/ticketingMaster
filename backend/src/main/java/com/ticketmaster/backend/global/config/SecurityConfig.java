@@ -52,8 +52,8 @@ public class SecurityConfig {
 	public CorsConfigurationSource corsConfigurationSource() {
 		CorsConfiguration configuration = new CorsConfiguration();
 
-		// 허용할 프론트엔드 주소 (로컬 테스트용 3000 포트)
-		configuration.addAllowedOrigin("http://localhost:3000");
+		// 허용할 프론트엔드 주소 (로컬 테스트용 5173 포트)
+		configuration.addAllowedOrigin("http://localhost:5173");
 
 		// 허용할 HTTP 메소드
 		configuration.addAllowedMethod("*");
