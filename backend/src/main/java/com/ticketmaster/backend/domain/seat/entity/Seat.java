@@ -14,6 +14,11 @@ import java.time.LocalDateTime;
 /**
  * 회차 단위 좌석
  * 상태 전이: AVAILABLE → RESERVED → SOLD (또는 RESERVED → AVAILABLE)
+ *
+ * 좌석 동시성 설계
+ *  - 모든 상태(AVAILABLE/RESERVED/SOLD)를 DB로 관리
+ *  - 점유: JPA @Version 낙관적 락으로 처리
+ *  - 만료: 스케줄러가 30초 주기로 reservedUntil 경과 좌석 자동 복구
  */
 @Getter
 @Entity
@@ -61,9 +66,18 @@ public class Seat extends BaseEntity {
     @Column(nullable = false, length = 20)
     private SeatStatus status;
 
-    /** RESERVED 상태일 때만 의미 있음 */
+    /** RESERVED 상태일 때 만료 시각. 스케줄러가 이 값을 보고 만료 처리. */
     @Column(name = "reserved_until")
     private LocalDateTime reservedUntil;
+
+    /** RESERVED 상태일 때 점유한 사용자 ID. 해제 시 본인 검증용. */
+    @Column(name = "reserved_by")
+    private Long reservedBy;
+
+    /** JPA 낙관적 락 — 점유 충돌 감지용. 트랜잭션 커밋 시 자동 증가. */
+    @Version
+    @Column(nullable = false)
+    private Long version;
 
     // ==================================================
     // 사용자 기능
