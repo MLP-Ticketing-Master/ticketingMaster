@@ -11,6 +11,8 @@ import com.ticketmaster.backend.admin.event.service.AdminEventService;
 import com.ticketmaster.backend.domain.event.entity.EventStatus;
 import com.ticketmaster.backend.domain.event.entity.SportType;
 import com.ticketmaster.backend.global.config.SecurityConfig;
+import com.ticketmaster.backend.global.security.auth.CustomUserDetailsService;
+import com.ticketmaster.backend.global.security.jwt.JwtTokenProvider;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +53,14 @@ public class AdminEventControllerTest {
 
     @MockitoBean // 스프링 컨테이너에 가짜(Mock) 서비스를 띄워줍니다.
     private AdminEventService adminEventService;
+
+    // JWT 머지 후 JwtAuthenticationFilter(@Component)가 슬라이스 테스트에 자동 스캔됨
+    // → 그 안의 JwtTokenProvider/CustomUserDetailsService를 mock으로 채워야 컨텍스트 로드 성공
+    @MockitoBean
+    private JwtTokenProvider jwtTokenProvider;
+
+    @MockitoBean
+    private CustomUserDetailsService customUserDetailsService;
 
     @Test
     @WithMockUser(roles = "ADMIN") // ADMIN 권한의 가짜 유저로 로그인한 상태를 가정
