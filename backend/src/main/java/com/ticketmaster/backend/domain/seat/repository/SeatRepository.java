@@ -10,6 +10,10 @@ import java.util.List;
 
 public interface SeatRepository extends JpaRepository<Seat, Long> {
 
+    // -------------------------------------------------------
+    // 관리자 기능
+    // -------------------------------------------------------
+
     /** 회차 내 좌석 코드 중복 체크 — 단건 등록 시 */
     boolean existsByMatchIdAndSeatCode(Long matchId, String seatCode);
 
@@ -36,4 +40,33 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
     /** SEAT_GRADE_IN_USE / SECTION_IN_USE 검증용 */
     boolean existsBySeatGradeId(Long seatGradeId);
     boolean existsBySectionId(Long sectionId);
+
+    // -------------------------------------------------------
+    // 좌석 조회 (사용자 기능)
+    // -------------------------------------------------------
+
+    /**
+     * 1단계 잔여 카운트용 — 매치 좌석의 ID/구역ID/등급ID/상태만 조회
+     * Entity 전체 로딩 대신 필요 컬럼만 가져와 메모리 집계 (N+1 방지)
+     * <p>
+     * 반환: Object[]{seatId, sectionId, gradeId, status}
+     */
+    @Query("""
+           SELECT s.id, s.section.id, s.seatGrade.id, s.status
+           FROM Seat s
+           WHERE s.match.id = :matchId
+           """)
+    List<Object[]> findIdAndGroupingByMatchId(@Param("matchId") Long matchId);
+
+    /**
+     * 2단계 구역 내 좌석 조회 — SeatGrade fetch join 으로 등급 정보 함께 로딩
+     */
+    @Query("""
+           SELECT s FROM Seat s
+           JOIN FETCH s.seatGrade
+           WHERE s.match.id = :matchId AND s.section.id = :sectionId
+           ORDER BY s.rowLabel ASC, s.seatNo ASC
+           """)
+    List<Seat> findBySectionAndMatch(@Param("matchId") Long matchId,
+                                     @Param("sectionId") Long sectionId);
 }
