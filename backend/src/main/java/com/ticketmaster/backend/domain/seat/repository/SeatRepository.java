@@ -5,6 +5,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -81,4 +82,19 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
        """)
     List<Seat> findByMatchAndIdIn(@Param("matchId") Long matchId,
                                   @Param("seatIds") Collection<Long> seatIds);
+
+
+    /**
+     * 만료 시간이 지난 점유 좌석을 찾아 반환
+     *
+     * - 조건: 현재 RESERVED 상태이면서, 점유 만료 시각이 지금보다 과거인 좌석
+     * - SOLD(판매 완료) 좌석은 조건에 안 걸려서 자동 제외
+     * - 사용자가 본인 해제한 좌석도 이미 AVAILABLE 이라 제외
+     */
+    @Query("""
+           SELECT s FROM Seat s
+           WHERE s.status = 'RESERVED'
+           AND s.reservedUntil < :now
+            """)
+    List<Seat> findExpiredReservedSeats(@Param("now") LocalDateTime now);
 }

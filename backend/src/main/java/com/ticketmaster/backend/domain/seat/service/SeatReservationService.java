@@ -12,12 +12,12 @@ import com.ticketmaster.backend.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,8 +42,9 @@ import java.util.concurrent.ThreadLocalRandom;
 @RequiredArgsConstructor
 public class SeatReservationService {
 
-    /** 점유 TTL — 7분 */
-    private static final Duration RESERVATION_TTL = Duration.ofMinutes(7);
+    /** 점유 TTL (초) — application.yaml 의 seat.reservation-ttl-seconds 값 주입 */
+    @Value("${seat.reservation-ttl-seconds}")
+    private long reservationTtlSeconds;
 
     /** 재시도 최대 횟수 (최초 1회 포함) */
     private static final int MAX_ATTEMPTS = 3;
@@ -138,7 +139,7 @@ public class SeatReservationService {
         }
 
         // 5. 점유 처리 (트랜잭션 커밋 시 @Version 체크 → 충돌 시 OptimisticLockingFailure)
-        LocalDateTime until = LocalDateTime.now().plus(RESERVATION_TTL);
+        LocalDateTime until = LocalDateTime.now().plusSeconds(reservationTtlSeconds);
         int totalPrice = 0;
         List<Long> reservedSeatIds = new ArrayList<>(seats.size());
 
@@ -174,6 +175,28 @@ public class SeatReservationService {
             }
         }
         return SeatReleaseResponse.of(released);
+    }
+
+    // -------- 만료 처리 -----------------------------------------
+
+    /**
+     * 점유 시간이 지난 좌석을 풀어줌 (RESERVED → AVAILABLE)
+     * <p>
+     * - 좌석 상태 변경은 Seat.expireReservation() 메서드로만 함 (점유/해제와 같은 방식)
+     * - 같은 좌석을 동시에 다른 사용자가 만지면 @Version 이 충돌을 잡아서 한쪽이 실패함
+     * (스케줄러가 실패한 거면 30초 뒤에 자연스럽게 다시 시도하면 됨)
+     *
+     * @return 풀어준 좌석 수
+     */
+    @Transactional
+    public int expireOverdueReservations() {
+        LocalDateTime now = LocalDateTime.now();
+        List<Seat> expired = seatRepository.findExpiredReservedSeats(now);
+
+        for (Seat seat : expired) {
+            seat.expireReservation();
+        }
+        return expired.size();
     }
 
     // -------- 헬퍼 ----------------------------------------------
