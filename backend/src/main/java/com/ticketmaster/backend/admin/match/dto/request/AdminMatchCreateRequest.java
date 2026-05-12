@@ -4,10 +4,7 @@ import com.ticketmaster.backend.domain.match.entity.Match;
 import com.ticketmaster.backend.domain.match.entity.MatchStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -16,6 +13,7 @@ import java.time.LocalDateTime;
  * 매치 등록 DTO (POST /admin/events/{eventId}/matches)
  */
 @Getter
+@Builder
 public class AdminMatchCreateRequest {
     @NotBlank(message = "회차 라벨(=매치 타이틀)은 필수입니다.")
     private String roundLabel;

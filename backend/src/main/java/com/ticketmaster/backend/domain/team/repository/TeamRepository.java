@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
-public interface AdminTeamRepository extends JpaRepository<Team, Long> {
+public interface TeamRepository extends JpaRepository<Team, Long> {
     /** 팀명 중복 체크 - 팀 등록/수정 시 동일한 이름이 이미 존재하는지 확인할 때 사용 */
     boolean existsByName(String name);
 
