@@ -29,9 +29,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleBusiness(BusinessException e) {
         ErrorCode code = e.getErrorCode();
         log.warn("[BusinessException] {} - {}", code.getCode(), e.getMessage());
+
+        ErrorResponse body = (e.getConflictSeatIds() != null)
+                ? ErrorResponse.ofConflict(code, e.getConflictSeatIds())
+                : ErrorResponse.of(code, e.getMessage());
+
         return ResponseEntity
                 .status(code.getHttpStatus())
-                .body(ErrorResponse.of(code, e.getMessage()));
+                .body(body);
     }
 
     /** 2) @Valid 검증 실패 (RequestBody) - 첫 번째 에러 메시지만 응답 */
