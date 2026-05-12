@@ -1,40 +1,66 @@
 package com.ticketmaster.backend.domain.seat.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ticketmaster.backend.domain.seat.dto.response.SeatReleaseResponse;
+import com.ticketmaster.backend.domain.seat.dto.response.SeatReserveResponse;
 import com.ticketmaster.backend.domain.seat.dto.response.SeatSectionListResponse;
 import com.ticketmaster.backend.domain.seat.dto.response.SectionSeatListResponse;
 import com.ticketmaster.backend.domain.seat.entity.Seat;
 import com.ticketmaster.backend.domain.seat.entity.SeatGrade;
 import com.ticketmaster.backend.domain.seat.entity.SeatStatus;
+import com.ticketmaster.backend.domain.seat.service.SeatReservationService;
 import com.ticketmaster.backend.domain.seat.service.SeatService;
+import com.ticketmaster.backend.domain.user.entity.Role;
+import com.ticketmaster.backend.domain.user.entity.User;
+import com.ticketmaster.backend.global.config.SecurityConfig;
 import com.ticketmaster.backend.global.exception.BusinessException;
 import com.ticketmaster.backend.global.exception.ErrorCode;
+import com.ticketmaster.backend.global.security.auth.CustomUserDetails;
 import com.ticketmaster.backend.global.security.auth.CustomUserDetailsService;
 import com.ticketmaster.backend.global.security.jwt.JwtTokenProvider;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(SeatController.class)
+@Import(SecurityConfig.class)
 class SeatControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private ObjectMapper om;
+
     @MockitoBean
     private SeatService seatService;
+
+    @MockitoBean
+    private SeatReservationService seatReservationService;
 
     @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
@@ -42,9 +68,12 @@ class SeatControllerTest {
     @MockitoBean
     private CustomUserDetailsService customUserDetailsService;
 
+    private static final Long MATCH_ID = 10L;
+    private static final Long USER_ID = 99L;
+
     @Test
     @WithMockUser(roles = "USER")
-    @DisplayName("1단계 정상 응답 (200) — 구역 목록 + 등급별 잔여 JSON 포맷")
+    @DisplayName("[1단계] 구역 목록 조회 - 성공 (200)")
     void 구역목록_조회_정상() throws Exception {
         // given
         SeatSectionListResponse response = SeatSectionListResponse.of(
@@ -74,7 +103,7 @@ class SeatControllerTest {
     }
 
     @Test
-    @DisplayName("1단계 비로그인 → 401 (인증 필수)")
+    @DisplayName("[1단계] 구역 목록 조회 - 비로그인 (401)")
     void 구역목록_조회_비로그인() throws Exception {
         // given: @WithMockUser 없음 → 비인증 요청
 
@@ -85,7 +114,7 @@ class SeatControllerTest {
 
     @Test
     @WithMockUser(roles = "USER")
-    @DisplayName("1단계 매치 없음 → 404 MATCH_NOT_FOUND")
+    @DisplayName("[1단계] 구역 목록 조회 - 매치 없음 (404)")
     void 구역목록_조회_매치없음() throws Exception {
         // given
         given(seatService.findSectionsByMatch(999L))
@@ -99,7 +128,7 @@ class SeatControllerTest {
 
     @Test
     @WithMockUser(roles = "USER")
-    @DisplayName("2단계 정상 응답 (200) — 좌석 목록 JSON 포맷")
+    @DisplayName("[2단계] 좌석 목록 조회 - 성공 (200)")
     void 좌석목록_조회_정상() throws Exception {
         // given
         SeatGrade grade = SeatGrade.create(null, "VIP", 100000, "#FFD700");
@@ -125,7 +154,7 @@ class SeatControllerTest {
     }
 
     @Test
-    @DisplayName("2단계 비로그인 → 401")
+    @DisplayName("[2단계] 좌석 목록 조회 - 비로그인 (401)")
     void 좌석목록_조회_비로그인() throws Exception {
         // given: @WithMockUser 없음 → 비인증 요청
 
@@ -136,7 +165,7 @@ class SeatControllerTest {
 
     @Test
     @WithMockUser(roles = "USER")
-    @DisplayName("2단계 구역 없음 → 404 SECTION_NOT_FOUND")
+    @DisplayName("[2단계] 좌석 목록 조회 - 구역 없음 (404)")
     void 좌석목록_조회_구역없음() throws Exception {
         // given
         given(seatService.findSeatsBySection(10L, 999L))
@@ -146,5 +175,116 @@ class SeatControllerTest {
         mockMvc.perform(get("/matches/10/sections/999/seats"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("SECTION_NOT_FOUND"));
+    }
+
+    @Test
+    @DisplayName("좌석 점유 - 성공 (200)")
+    void 점유_정상() throws Exception {
+        // given
+        SeatReserveResponse response = SeatReserveResponse.of(
+                List.of(1L, 2L), LocalDateTime.of(2026, 5, 11, 18, 0), 200_000);
+        given(seatReservationService.reserve(eq(MATCH_ID), eq(USER_ID), any()))
+                .willReturn(response);
+
+        // when & then
+        mockMvc.perform(post("/matches/{matchId}/seats/reserve", MATCH_ID)
+                        .with(csrf())
+                        .with(authentication(userAuth(USER_ID)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(Map.of("seatIds", List.of(1, 2)))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.reservedSeatIds.length()").value(2))
+                .andExpect(jsonPath("$.reservedSeatIds[0]").value(1))
+                .andExpect(jsonPath("$.totalPrice").value(200000));
+    }
+
+    @Test
+    @DisplayName("좌석 점유 - 충돌 (409)")
+    void 점유_충돌() throws Exception {
+        // given — 서비스가 conflictSeatIds 가 포함된 BusinessException 던짐
+        given(seatReservationService.reserve(eq(MATCH_ID), eq(USER_ID), any()))
+                .willThrow(new BusinessException(
+                        ErrorCode.SEAT_ALREADY_RESERVED, List.of(2L)));
+
+        // when & then
+        mockMvc.perform(post("/matches/{matchId}/seats/reserve", MATCH_ID)
+                        .with(csrf())
+                        .with(authentication(userAuth(USER_ID)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(Map.of("seatIds", List.of(1, 2)))))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("SEAT_ALREADY_RESERVED"))
+                .andExpect(jsonPath("$.conflictSeatIds.length()").value(1))
+                .andExpect(jsonPath("$.conflictSeatIds[0]").value(2));
+    }
+
+    @Test
+    @DisplayName("좌석 점유 - 비로그인 (401)")
+    void 점유_비로그인() throws Exception {
+        // given: authentication() 없음
+
+        // when & then
+        mockMvc.perform(post("/matches/{matchId}/seats/reserve", MATCH_ID)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(Map.of("seatIds", List.of(1)))))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("좌석 점유 - 빈 배열 (400)")
+    void 점유_검증실패() throws Exception {
+        // when & then
+        mockMvc.perform(post("/matches/{matchId}/seats/reserve", MATCH_ID)
+                        .with(csrf())
+                        .with(authentication(userAuth(USER_ID)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(Map.of("seatIds", List.of()))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"));
+    }
+
+    @Test
+    @DisplayName("좌석 해제 - 성공 (200)")
+    void 해제_정상() throws Exception {
+        // given
+        SeatReleaseResponse response = SeatReleaseResponse.of(List.of(1L, 2L));
+        given(seatReservationService.release(eq(MATCH_ID), eq(USER_ID), any()))
+                .willReturn(response);
+
+        // when & then
+        mockMvc.perform(delete("/matches/{matchId}/seats/reserve", MATCH_ID)
+                        .with(csrf())
+                        .with(authentication(userAuth(USER_ID)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(Map.of("seatIds", List.of(1, 2)))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.releasedSeatIds.length()").value(2))
+                .andExpect(jsonPath("$.releasedSeatIds[0]").value(1));
+    }
+
+    @Test
+    @DisplayName("좌석 해제 - 비로그인 (401)")
+    void 해제_비로그인() throws Exception {
+        // when & then
+        mockMvc.perform(delete("/matches/{matchId}/seats/reserve", MATCH_ID)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(Map.of("seatIds", List.of(1)))))
+                .andExpect(status().isUnauthorized());
+    }
+
+    // ----- 헬퍼 --------------------------------------------------------------
+
+    /** @AuthenticationPrincipal CustomUserDetails 주입용 — @WithMockUser 로는 NPE */
+    private Authentication userAuth(Long userId) {
+        User user = BeanUtils.instantiateClass(User.class);  // protected 생성자 통과
+        ReflectionTestUtils.setField(user, "id", userId);
+        ReflectionTestUtils.setField(user, "email", "u" + userId + "@test.com");
+        ReflectionTestUtils.setField(user, "role", Role.USER);
+
+        CustomUserDetails principal = new CustomUserDetails(user);
+        return new UsernamePasswordAuthenticationToken(
+                principal, null, principal.getAuthorities());
     }
 }

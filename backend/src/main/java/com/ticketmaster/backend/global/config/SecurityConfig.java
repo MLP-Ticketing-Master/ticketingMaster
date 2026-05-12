@@ -1,6 +1,7 @@
 package com.ticketmaster.backend.global.config;
 
 import com.ticketmaster.backend.global.security.jwt.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,6 +38,10 @@ public class SecurityConfig {
 			.formLogin(AbstractHttpConfigurer::disable)
 			.httpBasic(AbstractHttpConfigurer::disable)
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+			.exceptionHandling(ex -> ex
+				.authenticationEntryPoint((req, res, e) ->
+					res.sendError(HttpServletResponse.SC_UNAUTHORIZED))
+			)
 			.authorizeHttpRequests(auth -> auth
 				.requestMatchers("/auth/logout").authenticated()						// 로그아웃은 인증 필요
 				.requestMatchers("/auth/**").permitAll()										// 로그인, 회원가입, 토큰 재발급은 전체 허용

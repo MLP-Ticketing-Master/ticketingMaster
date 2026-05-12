@@ -1,7 +1,7 @@
 package com.ticketmaster.backend.domain.seat.repository;
 
 import com.ticketmaster.backend.domain.seat.entity.Seat;
-import io.lettuce.core.dynamic.annotation.Param;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -69,4 +69,16 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
            """)
     List<Seat> findBySectionAndMatch(@Param("matchId") Long matchId,
                                      @Param("sectionId") Long sectionId);
+
+    /**
+     * 특정 경기의 좌석들을 ID로 일괄 조회 (좌석 점유/해제 처리 시 사용)
+     * SeatGrade를 fetch join하여 totalPrice 계산 시 N+1 방지
+     */
+    @Query("""
+       SELECT s FROM Seat s
+       JOIN FETCH s.seatGrade
+       WHERE s.match.id = :matchId AND s.id IN :seatIds
+       """)
+    List<Seat> findByMatchAndIdIn(@Param("matchId") Long matchId,
+                                  @Param("seatIds") Collection<Long> seatIds);
 }
