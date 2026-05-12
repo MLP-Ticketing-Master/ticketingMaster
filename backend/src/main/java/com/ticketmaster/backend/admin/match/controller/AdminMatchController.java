@@ -21,11 +21,13 @@ public class AdminMatchController {
     private final AdminMatchService matchService;
 
     /**
-     * 전체 매치 목록 조회
+     * 전체 매치 목록 조회 (이벤트별 필터링 옵션 추가)
      */
     @GetMapping("/matches")
-    public ResponseEntity<Page<AdminMatchResponse>> getMatchList(Pageable pageable) {
-        return ResponseEntity.ok(matchService.getMatchList(pageable));
+    public ResponseEntity<Page<AdminMatchResponse>> getMatchList(
+            @RequestParam(required = false) Long eventId, // 👈 필수값이 아니도록 설정 (null 허용)
+            Pageable pageable) {
+        return ResponseEntity.ok(matchService.getMatchList(eventId, pageable));
     }
 
     /**

@@ -3,6 +3,8 @@ spring:
     import: optional:file:../.env[.properties]
   application:
     name: backend
+  profiles:
+    active: dev
 
   datasource:
     # 호스트 포트는 docker-compose에 고정(1522)
