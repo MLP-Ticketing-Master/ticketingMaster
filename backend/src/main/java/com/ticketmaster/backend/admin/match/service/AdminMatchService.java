@@ -9,10 +9,9 @@ import com.ticketmaster.backend.domain.match.entity.Match;
 import com.ticketmaster.backend.domain.match.entity.MatchStatus;
 import com.ticketmaster.backend.domain.match.repository.MatchRepository;
 import com.ticketmaster.backend.domain.team.entity.Team;
-import com.ticketmaster.backend.domain.team.repository.AdminTeamRepository;
+import com.ticketmaster.backend.domain.team.repository.TeamRepository;
 import com.ticketmaster.backend.global.exception.BusinessException;
 import com.ticketmaster.backend.global.exception.ErrorCode;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,7 +27,7 @@ import java.time.LocalDateTime;
 public class AdminMatchService {
     private final MatchRepository matchRepo;
     private final EventRepository eventRepo;
-    private final AdminTeamRepository teamRepo;
+    private final TeamRepository teamRepo;
 
     /**
      * 전체 매치 목록 조회

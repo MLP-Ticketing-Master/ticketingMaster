@@ -9,14 +9,14 @@ import com.ticketmaster.backend.domain.match.entity.MatchStatus;
 import com.ticketmaster.backend.domain.match.repository.MatchRepository;
 import com.ticketmaster.backend.domain.seat.entity.Seat;
 import com.ticketmaster.backend.domain.seat.entity.SeatGrade;
-import com.ticketmaster.backend.domain.seat.entity.SeatStatus;
 import com.ticketmaster.backend.domain.seat.entity.Section;
 import com.ticketmaster.backend.domain.seat.repository.SeatGradeRepository;
 import com.ticketmaster.backend.domain.seat.repository.SeatRepository;
 import com.ticketmaster.backend.domain.seat.repository.SectionRepository;
 import com.ticketmaster.backend.domain.team.entity.Team;
-import com.ticketmaster.backend.domain.team.repository.AdminTeamRepository;
+import com.ticketmaster.backend.domain.team.repository.TeamRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -27,12 +27,13 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Configuration
 @RequiredArgsConstructor
 @Profile("dev") // 개발 환경에서만 실행
 public class SeedData implements CommandLineRunner {
     private final EventRepository eventRepository;
-    private final AdminTeamRepository teamRepository;
+    private final TeamRepository teamRepository;
     private final MatchRepository matchRepository;
     private final SeatGradeRepository seatGradeRepository;
     private final SectionRepository sectionRepository;
@@ -60,7 +61,7 @@ public class SeedData implements CommandLineRunner {
         teamRepository.save(awayTeam);
 
         // Match 생성
-        match = creaeMatch(event, homeTeam, awayTeam);
+        match = createMatch(event, homeTeam, awayTeam);
         matchRepository.save(match);
 
         // SeatGrade 생성
@@ -81,13 +82,13 @@ public class SeedData implements CommandLineRunner {
         sectionRepository.save(sectionC);
         sectionRepository.save(sectionD);
 
-        // TODO: Seat 생성
+        // Seat 생성
         createSeat(sectionA);
         createSeat(sectionB);
         createSeat(sectionC);
         createSeat(sectionD);
 
-        System.out.println("✅ 시드 데이터 삽입 완료!");
+        log.info("[SeedData] ✅ 시드 데이터 삽입 완료!");
     }
 
     /**
@@ -98,8 +99,8 @@ public class SeedData implements CommandLineRunner {
                 .title("2026 LCK Spring 결승전")
                 .sportType(SportType.LOL)
                 .place("LOL Park")
-                .thumbnailUrl("https://example.com/lck_thumb.jpg")
-                .detailImageUrl("https://example.com/lck_detail.jpg")
+                .thumbnailUrl("lck_thumb.png")
+                .detailImageUrl("lck_detail.png")
                 .description("2026 LoL 챔피언스 코리아 스프링 시즌의 대미를 장식할 결승전!")
                 .startDate(LocalDate.of(2026, 4, 25))
                 .endDate(LocalDate.of(2026, 4, 25))
@@ -123,7 +124,7 @@ public class SeedData implements CommandLineRunner {
     private Team createTeam(String name) {
         Team team = Team.builder()
                 .name(name)
-                .logoImageUrl("https://example.com/" + name.toLowerCase().replace('.', ' ').strip() + "_logo.png")
+                .logoImageUrl(name.toLowerCase().replace('.', ' ').strip() + "_logo.png")
                 .sportType(SportType.LOL)
                 .build();
 
@@ -133,7 +134,7 @@ public class SeedData implements CommandLineRunner {
     /**
      * Match 엔티티 생성 및 반환 메소드
      */
-    private Match creaeMatch(Event event, Team homeTeam, Team awayTeam) {
+    private Match createMatch(Event event, Team homeTeam, Team awayTeam) {
         Match match = Match.builder()
                 .event(event)
                 .roundLabel("플레이오프 제 3 경기")
@@ -212,7 +213,7 @@ public class SeedData implements CommandLineRunner {
 
                 seatList.add(seat);
 
-                System.out.println(seat.getSeatCode() + " 좌석 생성 완료!");
+                log.info(seat.getSeatCode() + " 좌석 생성 완료!");
             }
         }
 

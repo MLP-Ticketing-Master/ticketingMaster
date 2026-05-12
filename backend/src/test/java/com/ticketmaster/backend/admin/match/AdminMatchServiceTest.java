@@ -10,7 +10,7 @@ import com.ticketmaster.backend.domain.match.entity.Match;
 import com.ticketmaster.backend.domain.match.entity.MatchStatus;
 import com.ticketmaster.backend.domain.match.repository.MatchRepository;
 import com.ticketmaster.backend.domain.team.entity.Team;
-import com.ticketmaster.backend.domain.team.repository.AdminTeamRepository;
+import com.ticketmaster.backend.domain.team.repository.TeamRepository;
 import com.ticketmaster.backend.global.exception.BusinessException;
 import com.ticketmaster.backend.global.exception.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
@@ -43,7 +43,7 @@ public class AdminMatchServiceTest {
     @Mock
     private EventRepository eventRepo;
     @Mock
-    private AdminTeamRepository teamRepo;
+    private TeamRepository teamRepo;
 
     @InjectMocks
     private AdminMatchService adminMatchService;

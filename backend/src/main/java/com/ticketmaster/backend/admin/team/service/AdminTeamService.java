@@ -5,7 +5,7 @@ import com.ticketmaster.backend.admin.team.dto.request.AdminTeamUpdateRequest;
 import com.ticketmaster.backend.admin.team.dto.response.AdminTeamResponse;
 import com.ticketmaster.backend.domain.event.entity.SportType;
 import com.ticketmaster.backend.domain.team.entity.Team;
-import com.ticketmaster.backend.domain.team.repository.AdminTeamRepository;
+import com.ticketmaster.backend.domain.team.repository.TeamRepository;
 import com.ticketmaster.backend.global.exception.BusinessException;
 import com.ticketmaster.backend.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ import java.util.Optional;
 @Transactional(readOnly = true)
 public class AdminTeamService {
 
-    private final AdminTeamRepository teamRepository;
+    private final TeamRepository teamRepository;
 
     /** 팀 목록 조회 (sportType이 null이면 전체 조회, 삭제되지 않은 팀만) */
     public List<AdminTeamResponse> getTeams(SportType sportType) {
