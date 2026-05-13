@@ -4,7 +4,7 @@ import { Footer } from "./Footer";
 
 export function PublicLayout() {
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col bg-background bg-color-blue">
       <Header />
       <main className="flex-1">
         <Outlet />
