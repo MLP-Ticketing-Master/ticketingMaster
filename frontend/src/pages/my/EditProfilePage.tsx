@@ -65,7 +65,7 @@ export default function EditProfilePage() {
             type="submit"
             size="lg"
             disabled={update.isPending}
-            className="flex-1 bg-[#FF6B47] hover:bg-[#E5532E]"
+            className="flex-1 bg-[#054EFD] hover:bg-[#3C76FE]"
           >
             저장하기
           </Button>
@@ -74,7 +74,7 @@ export default function EditProfilePage() {
             size="lg"
             variant="outline"
             onClick={onWithdraw}
-            className="border-red-400 text-red-500 hover:bg-red-50"
+            className="border-blue-400 text-blue-500 hover:bg-blue-50"
           >
             회원탈퇴
           </Button>

@@ -121,7 +121,7 @@ export default function BookingsAdminPage() {
               key={i}
               variant={page === i ? "default" : "outline"}
               onClick={() => setPage(i)}
-              className={page === i ? "bg-[#FF6B47] hover:bg-[#E5532E]" : ""}
+              className={page === i ? "bg-[#054EFD] hover:bg-[#3C76FE]" : ""}
             >
               {i + 1}
             </Button>

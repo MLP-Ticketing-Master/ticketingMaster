@@ -2,18 +2,28 @@ import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useEventFilterStore } from "@/store";
+import backgroundImage from "@/image/background.png";
 
 export function HeroSection() {
   const keyword = useEventFilterStore((s) => s.keyword);
   const setKeyword = useEventFilterStore((s) => s.setKeyword);
 
   return (
-    <section className="bg-gradient-to-br from-orange-50 via-white to-orange-50 px-6 py-20">
-      <div className="mx-auto max-w-7xl">
-        <h2 className="text-4xl font-bold leading-tight md:text-5xl">
-          최고의 E스포츠 경기를
+    <section className="relative px-6 py-20 overflow-hidden">
+      <div
+      className="absolute inset-0 bg-cover bg-center"
+      style={{
+        backgroundImage: `url(${backgroundImage})`,
+      }}
+    />
+    <div className="absolute inset-0 bg-gradient-to-br from-gray-900/90 via-black/50 to-gray-800/90" />
+    
+      <div className="mx-auto max-w-7xl relative z-10">
+        <h2 className="text-4xl font-bold leading-tight md:text-5xl text-white">
+          광클 없이,
+
           <br />
-          바로 예매하세요
+          원하는 자리를 빠르게!
         </h2>
         <p className="mt-4 text-muted-foreground">
           LOL, 발로란트, 오버워치 등 모든 E스포츠 경기 티켓을 간편하게 예매할
@@ -32,7 +42,7 @@ export function HeroSection() {
           </div>
           <Button
             size="lg"
-            className="h-12 bg-[#FF6B47] px-8 text-base hover:bg-[#E5532E]"
+            className="h-12 bg-[#054EFD] px-8 text-base hover:bg-[#316DFD]"
           >
             검색
           </Button>

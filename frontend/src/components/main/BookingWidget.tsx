@@ -35,7 +35,7 @@ export function BookingWidget({ event, onProceed }: Props) {
       <div className="space-y-2">
         <Badge
           variant="secondary"
-          className="bg-orange-100 text-[#FF6B47]"
+          className="bg-blue-100 text-[#3C76FE]"
         >
           {GAME_LABEL[game]}
         </Badge>
@@ -57,7 +57,7 @@ export function BookingWidget({ event, onProceed }: Props) {
               className={cn(
                 "rounded-lg border px-4 py-2 text-sm font-medium transition-colors",
                 selectedDate === d
-                  ? "border-[#FF6B47] bg-orange-50 text-[#FF6B47]"
+                  ? "border-[#054EFD] bg-blue-50 text-[#3C76FE]"
                   : "border-gray-200 bg-white hover:bg-gray-50",
               )}
             >
@@ -90,7 +90,7 @@ export function BookingWidget({ event, onProceed }: Props) {
         size="lg"
         disabled={!selectedRoundId}
         onClick={() => selectedRoundId && onProceed(selectedRoundId)}
-        className="w-full bg-[#FF6B47] hover:bg-[#E5532E] disabled:bg-gray-200 disabled:text-gray-400"
+        className="w-full bg-[#054EFD] hover:bg-[#3C76FE] disabled:bg-gray-200 disabled:text-gray-400"
       >
         예매하기
         <ChevronRight className="ml-1 h-4 w-4" />
@@ -115,7 +115,7 @@ function RoundButton({
       className={cn(
         "flex w-full items-center justify-between rounded-lg border px-4 py-3 text-sm font-medium transition-colors",
         selected
-          ? "border-[#FF6B47] bg-orange-50"
+          ? "border-[#3C76FE] bg-blue-50"
           : "border-gray-200 bg-white hover:bg-gray-50",
       )}
     >

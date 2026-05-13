@@ -31,6 +31,6 @@ export const SEAT_GRADE_BG_SOFT: Record<string, string> = {
 
 export const BRAND = {
   primary: "#FF6B47",
-  primaryDark: "#E5532E",
+  primaryDark: "#ff5328",
   headerBg: "#2D2F3E",
 } as const;

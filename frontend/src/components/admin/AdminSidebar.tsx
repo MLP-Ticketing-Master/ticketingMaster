@@ -40,7 +40,7 @@ export function AdminSidebar() {
                   cn(
                     "flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors",
                     isActive
-                      ? "bg-[#FF6B47] text-white"
+                      ? "bg-[#3C76FE] text-white"
                       : "text-gray-700 hover:bg-gray-100",
                   )
                 }

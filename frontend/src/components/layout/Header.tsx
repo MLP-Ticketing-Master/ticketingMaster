@@ -3,6 +3,7 @@ import { User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store";
 import { cn } from "@/lib/utils";
+import logo from "@/image/logo1.png";
 
 const NAV = [
   { to: "/", label: "홈", end: true },
@@ -22,8 +23,12 @@ export function Header() {
     <header className="sticky top-0 z-40 border-b bg-white">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
         <div className="flex items-center gap-10">
-          <Link to="/" className="text-xl font-bold text-[#FF6B47]">
-            티켓팅마스터
+          <Link to="/" className="flex items-center gap-2">
+            <img
+              src={logo}
+              alt="티켓팅마스터"
+              className="h-20 w-auto scale-80"
+            />
           </Link>
           <nav className="hidden items-center gap-6 md:flex">
             {NAV.map((item) => (
@@ -33,7 +38,7 @@ export function Header() {
                 end={item.end}
                 className={({ isActive }) =>
                   cn(
-                    "text-sm transition-colors hover:text-[#FF6B47]",
+                    "text-sm transition-colors hover:text-[#1C5EFD]",
                     isActive ? "text-foreground" : "text-muted-foreground",
                   )
                 }
@@ -59,7 +64,7 @@ export function Header() {
             <Button
               size="sm"
               onClick={() => navigate("/login")}
-              className="bg-[#FF6B47] hover:bg-[#E5532E]"
+              className="bg-[#054EFD] hover:bg-[#1C5EFD]"
             >
               로그인
             </Button>

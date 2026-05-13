@@ -46,7 +46,7 @@ export default function EventDetailPage() {
 
 function BookingNotice() {
   return (
-    <div className="rounded-2xl bg-orange-50 p-5 text-sm">
+    <div className="rounded-2xl bg-blue-50 p-5 text-sm">
       <h4 className="font-semibold">예매 안내</h4>
       <ul className="mt-2 list-disc space-y-1 pl-5 text-muted-foreground">
         <li>1인당 최대 4매까지 예매 가능</li>
