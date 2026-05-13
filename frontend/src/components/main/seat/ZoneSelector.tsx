@@ -35,7 +35,7 @@ export function ZoneSelector({ sections, onSelect }: Props) {
             <Button
               onClick={() => onSelect(homeSection.id)}
               className="absolute
-              left-[30px]
+              left-[40px]
               top-[40%]
               -translate-y-1/2
 
@@ -57,13 +57,35 @@ export function ZoneSelector({ sections, onSelect }: Props) {
             <Button
               onClick={() => onSelect(stageSection.id)}
               className=" absolute
-              left-1/2
-              top-[82%]
-              -translate-x-1/2
+              left-[609px]
+              top-[87%]
+              -translate-x-2/2
               -translate-y-1/2
 
               flex flex-col items-center justify-center
-              w-50 h-30
+              w-50 h-25
+              bg-purple-600 hover:bg-purple-700
+              text-white text-center
+              rounded-2xl shadow-xl
+              hover:scale-110 active:scale-95
+              transition-all duration-300"
+            >
+              <span className="text-sm font-semibold text-white/90">STAGE</span>
+              <span className="text-2xl font-bold">{sectionLabel(stageSection.name)}</span>
+            </Button>
+          )}
+          {/* 중앙 구역 (스테이지) */}
+          {stageSection && (
+            <Button
+              onClick={() => onSelect(stageSection.id)}
+              className=" absolute
+              left-[170px]
+              top-[87%]
+              -translate-x-0/20
+              -translate-y-1/2
+
+              flex flex-col items-center justify-center
+              w-50 h-25
               bg-purple-600 hover:bg-purple-700
               text-white text-center
               rounded-2xl shadow-xl
@@ -80,7 +102,7 @@ export function ZoneSelector({ sections, onSelect }: Props) {
             <Button
               onClick={() => onSelect(awaySection.id)}
               className="absolute
-              right-[30px]
+              right-[35px]
               top-[40%]
               -translate-y-1/2
 
@@ -103,8 +125,15 @@ export function ZoneSelector({ sections, onSelect }: Props) {
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-blue-500 shadow-md"></div>
           <div>
-            <div className="text-sm font-bold text-gray-900">BLUE HOME</div>
+            <div className="text-sm font-bold text-gray-900">BLUE AWAY</div>
             <div className="text-xs text-gray-600">좌측</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-purple-600 shadow-md"></div>
+          <div>
+            <div className="text-sm font-bold text-gray-900">STAGE</div>
+            <div className="text-xs text-gray-600">중앙</div>
           </div>
         </div>
         <div className="flex items-center gap-3">
