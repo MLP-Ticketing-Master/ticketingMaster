@@ -62,3 +62,10 @@ jwt:
   secret: ${JWT_SECRET}
   access-expiration: 1800000
   refresh-expiration: 1209600000
+
+# 좌석 점유 정책
+seat:
+  # 점유 TTL — 결제 안 하면 이 시간 뒤 자동 해제 (7분)
+  reservation-ttl-seconds: 420
+  # 만료 좌석 스캐너 실행 간격 (30초)
+  expiry-scan-interval-ms: 30000

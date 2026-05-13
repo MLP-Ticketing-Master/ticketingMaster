@@ -31,6 +31,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
@@ -272,6 +273,64 @@ class SeatReservationServiceTest {
 
             // then
             assertThat(response.getReleasedSeatIds()).isEmpty();
+        }
+    }
+
+    // ----- 만료 (expireOverdueReservations) ------------------
+
+    @Nested
+    @DisplayName("좌석 만료 — expireOverdueReservations")
+    class Expire {
+
+        @Test
+        @DisplayName("TC-11: 만료 시각 지난 RESERVED 좌석 → AVAILABLE 전환 + reservedUntil/reservedBy 초기화")
+        void 만료_좌석_전환() {
+            // given — reserved_until 이 30초 전인 RESERVED 좌석
+            Seat s1 = createSeat(1L, match, section, vip, "A", 1, "VIP-A-1", SeatStatus.RESERVED, USER_ID);
+            ReflectionTestUtils.setField(s1, "reservedUntil", LocalDateTime.now().minusSeconds(30));
+
+            given(seatRepository.findExpiredReservedSeats(any())).willReturn(List.of(s1));
+
+            // when
+            int expired = seatReservationService.expireOverdueReservations();
+
+            // then
+            assertThat(expired).isEqualTo(1);
+            assertThat(s1.getStatus()).isEqualTo(SeatStatus.AVAILABLE);
+            assertThat(s1.getReservedBy()).isNull();
+            assertThat(s1.getReservedUntil()).isNull();
+        }
+
+        @Test
+        @DisplayName("TC-12: 만료 대상 없음 → 0 반환")
+        void 만료_대상_없음() {
+            // given
+            given(seatRepository.findExpiredReservedSeats(any())).willReturn(List.of());
+
+            // when
+            int expired = seatReservationService.expireOverdueReservations();
+
+            // then
+            assertThat(expired).isEqualTo(0);
+        }
+
+        @Test
+        @DisplayName("TC-13: 다수 좌석 일괄 만료 — 모두 AVAILABLE 전환")
+        void 다수_좌석_만료() {
+            // given — RESERVED 3개
+            Seat s1 = createSeat(1L, match, section, vip, "A", 1, "VIP-A-1", SeatStatus.RESERVED, USER_ID);
+            Seat s2 = createSeat(2L, match, section, vip, "A", 2, "VIP-A-2", SeatStatus.RESERVED, OTHER_USER_ID);
+            Seat s3 = createSeat(3L, match, section, vip, "A", 3, "VIP-A-3", SeatStatus.RESERVED, USER_ID);
+            given(seatRepository.findExpiredReservedSeats(any())).willReturn(List.of(s1, s2, s3));
+
+            // when
+            int expired = seatReservationService.expireOverdueReservations();
+
+            // then
+            assertThat(expired).isEqualTo(3);
+            assertThat(s1.getStatus()).isEqualTo(SeatStatus.AVAILABLE);
+            assertThat(s2.getStatus()).isEqualTo(SeatStatus.AVAILABLE);
+            assertThat(s3.getStatus()).isEqualTo(SeatStatus.AVAILABLE);
         }
     }
 
