@@ -168,12 +168,11 @@ public class AdminMatchServiceTest {
     @Test
     @DisplayName("매치 등록 성공 - 정상 케이스")
     void 매치_등록_정상() {
-        // Given
+        // given
         Long eventId = 100L;
         Long homeTeamId = 10L;
         Long awayTeamId = 20L;
 
-        // 1. 요청 파라미터 준비
         AdminMatchCreateRequest request = AdminMatchCreateRequest.builder()
                 .roundLabel("결승전")
                 .matchDate(LocalDate.of(2026, 4, 26))
@@ -183,20 +182,22 @@ public class AdminMatchServiceTest {
                 .awayTeamId(awayTeamId)
                 .build();
 
-        // 2. 조회될 가짜 엔티티 준비 및 레포지토리 동작 설정 (Event, Team)
+        // 이벤트 mock — 매치 날짜를 포함하는 기간으로 설정
         Event mockEvent = mock(Event.class);
         given(mockEvent.getId()).willReturn(eventId);
+        given(mockEvent.getStartDate()).willReturn(LocalDate.of(2026, 4, 25));
+        given(mockEvent.getEndDate()).willReturn(LocalDate.of(2026, 4, 27));
         given(eventRepo.findById(eventId)).willReturn(Optional.of(mockEvent));
 
+        // 팀 mock
         Team mockHomeTeam = mock(Team.class);
         given(mockHomeTeam.getId()).willReturn(homeTeamId);
         given(teamRepo.findById(homeTeamId)).willReturn(Optional.of(mockHomeTeam));
-
         Team mockAwayTeam = mock(Team.class);
         given(mockAwayTeam.getId()).willReturn(awayTeamId);
         given(teamRepo.findById(awayTeamId)).willReturn(Optional.of(mockAwayTeam));
 
-        // 3. save() 되었을 때 반환될 가짜 Match 엔티티 준비
+        // 저장 후 반환될 가짜 Match (PK는 ReflectionTestUtils로 강제 주입)
         Match savedMatch = Match.builder()
                 .event(mockEvent)
                 .roundLabel(request.getRoundLabel())
@@ -205,19 +206,15 @@ public class AdminMatchServiceTest {
                 .matchDate(request.getMatchDate())
                 .startAt(request.getStartAt())
                 .endAt(request.getEndAt())
-                .status(MatchStatus.SCHEDULED) // 기본 상태
+                .status(MatchStatus.SCHEDULED)
                 .build();
-        ReflectionTestUtils.setField(savedMatch, "id", 1L); // DB에서 자동 생성되는 PK 강제 주입
-
-        // 레포지토리의 save 동작 설정
+        ReflectionTestUtils.setField(savedMatch, "id", 1L);
         given(matchRepo.save(any(Match.class))).willReturn(savedMatch);
 
-        // When
-        // 실제 테스트 대상인 서비스 메서드 호출
+        // when
         AdminMatchResponse response = adminMatchService.createMatch(eventId, request);
 
-        // Then
-        // 1. 반환된 DTO 데이터 검증
+        // then
         assertThat(response).isNotNull();
         assertThat(response.getId()).isEqualTo(1L);
         assertThat(response.getEventId()).isEqualTo(eventId);
@@ -226,71 +223,58 @@ public class AdminMatchServiceTest {
         assertThat(response.getAwayTeamId()).isEqualTo(awayTeamId);
         assertThat(response.getStatus()).isEqualTo(MatchStatus.SCHEDULED);
 
-        // 2. 레포지토리가 정확히 호출되었는지 흐름 검증
-        verify(eventRepo).findById(eventId); // 이벤트 조회가 발생했는가?
-        verify(teamRepo).findById(homeTeamId); // 홈팀 조회가 발생했는가?
-        verify(teamRepo).findById(awayTeamId); // 원정팀 조회가 발생했는가?
-        verify(matchRepo).save(any(Match.class)); // 최종적으로 저장이 발생했는가?
+        verify(eventRepo).findById(eventId);
+        verify(teamRepo).findById(homeTeamId);
+        verify(teamRepo).findById(awayTeamId);
+        verify(matchRepo).save(any(Match.class));
     }
 
     // 매치 등록 - 대진 미정(homeTeam/awayTeam null)으로 생성
     @Test
     @DisplayName("매치 등록 성공 - 대진 미정으로 생성")
     void 매치_등록_대진미정() {
-        // Given
+        // given
         Long eventId = 100L;
-
-        // 1. 요청 파라미터 준비 (팀 ID를 null로 세팅)
         AdminMatchCreateRequest request = AdminMatchCreateRequest.builder()
                 .roundLabel("결승전 (대진 미정)")
                 .matchDate(LocalDate.of(2026, 4, 26))
                 .startAt(LocalDateTime.of(2026, 4, 26, 17, 0))
                 .endAt(LocalDateTime.of(2026, 4, 26, 21, 0))
-                .homeTeamId(null) // 👈 대진 미정
-                .awayTeamId(null) // 👈 대진 미정
+                .homeTeamId(null) // 대진 미정
+                .awayTeamId(null) // 대진 미정
                 .build();
 
-        // 2. 조회될 가짜 엔티티 준비 (Event만 필요함)
         Event mockEvent = mock(Event.class);
         given(mockEvent.getId()).willReturn(eventId);
+        given(mockEvent.getStartDate()).willReturn(LocalDate.of(2026, 4, 25));
+        given(mockEvent.getEndDate()).willReturn(LocalDate.of(2026, 4, 27));
         given(eventRepo.findById(eventId)).willReturn(Optional.of(mockEvent));
 
-        // ★ 팀 ID가 null이므로 teamRepo.findById()는 호출되지 않음! (Mocking 생략)
-
-        // 3. save() 되었을 때 반환될 가짜 Match 엔티티 준비 (팀은 null)
         Match savedMatch = Match.builder()
                 .event(mockEvent)
                 .roundLabel(request.getRoundLabel())
-                .homeTeam(null) // 엔티티에도 null 반영
-                .awayTeam(null) // 엔티티에도 null 반영
+                .homeTeam(null)
+                .awayTeam(null)
                 .matchDate(request.getMatchDate())
                 .startAt(request.getStartAt())
                 .endAt(request.getEndAt())
                 .status(MatchStatus.SCHEDULED)
                 .build();
         ReflectionTestUtils.setField(savedMatch, "id", 1L);
-
         given(matchRepo.save(any(Match.class))).willReturn(savedMatch);
 
-        // When
-        // 실제 테스트 대상 호출
+        // when
         AdminMatchResponse response = adminMatchService.createMatch(eventId, request);
 
-        // Then
-        // 1. 반환된 DTO 데이터 검증
+        // then
         assertThat(response).isNotNull();
-        assertThat(response.getId()).isEqualTo(1L);
         assertThat(response.getRoundLabel()).isEqualTo("결승전 (대진 미정)");
-
-        // 핵심 검증: 응답 DTO에도 팀 ID가 null로 잘 들어있는가?
         assertThat(response.getHomeTeamId()).isNull();
         assertThat(response.getAwayTeamId()).isNull();
 
-        // 2. 레포지토리 호출 흐름 검증
-        verify(eventRepo).findById(eventId); // 이벤트는 조회되어야 함
-        verify(matchRepo).save(any(Match.class)); // 저장은 되어야 함
-
-        // ★ 이 테스트의 꽃! 팀 레포지토리의 findById는 '절대로(never)' 호출되지 않았어야 함!
+        verify(eventRepo).findById(eventId);
+        verify(matchRepo).save(any(Match.class));
+        // 팀 ID 가 null 이라 teamRepo 는 호출되지 않아야 함
         verify(teamRepo, never()).findById(anyLong());
     }
 
@@ -331,38 +315,36 @@ public class AdminMatchServiceTest {
     @Test
     @DisplayName("매치 등록 실패 - 존재하지 않는 팀")
     void 매치_등록_존재하지않는팀() {
-        // Given
+        // given
         Long eventId = 100L;
-        Long invalidHomeTeamId = 999L; // 존재하지 않는 가짜 팀 ID
+        Long invalidHomeTeamId = 999L;
         Long awayTeamId = 20L;
 
         AdminMatchCreateRequest request = AdminMatchCreateRequest.builder()
                 .roundLabel("결승전")
                 .matchDate(LocalDate.of(2026, 4, 26))
                 .startAt(LocalDateTime.of(2026, 4, 26, 17, 0))
+                .endAt(LocalDateTime.of(2026, 4, 26, 21, 0))
                 .homeTeamId(invalidHomeTeamId)
                 .awayTeamId(awayTeamId)
                 .build();
 
-        // 1. 이벤트는 정상적으로 존재한다고 가정 (통과해야 함)
+        // 이벤트는 정상
         Event mockEvent = mock(Event.class);
+        given(mockEvent.getStartDate()).willReturn(LocalDate.of(2026, 4, 25));
+        given(mockEvent.getEndDate()).willReturn(LocalDate.of(2026, 4, 27));
         given(eventRepo.findById(eventId)).willReturn(Optional.of(mockEvent));
 
-        // 2. ★ 핵심: 홈팀 조회 시 DB에 데이터가 없음을 시뮬레이션
+        // 홈팀 조회 실패
         given(teamRepo.findById(invalidHomeTeamId)).willReturn(Optional.empty());
 
-        // When & Then
-        // 예외가 발생하는지 검증
+        // when & then
         assertThatThrownBy(() -> adminMatchService.createMatch(eventId, request))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.TEAM_NOT_FOUND);
 
-        // 💡 호출 흐름 검증
-        verify(eventRepo).findById(eventId); // 이벤트 조회는 정상적으로 실행됨
-        verify(teamRepo).findById(invalidHomeTeamId); // 홈팀 조회도 실행됨 (여기서 예외 발생)
-
-        // 예외 발생으로 로직이 중단되었으므로,
-        // 아래에 있는 원정팀(AwayTeam) 조회나 매치 저장은 단 한 번도 실행되지 않아야 함!
+        // 홈팀 조회 시점에 예외 → 원정팀 조회 / save 는 호출되면 안 됨
+        verify(teamRepo).findById(invalidHomeTeamId);
         verify(teamRepo, never()).findById(awayTeamId);
         verify(matchRepo, never()).save(any(Match.class));
     }
@@ -733,21 +715,93 @@ public class AdminMatchServiceTest {
     @Test
     @DisplayName("매치 수정 실패 - 존재하지 않는 팀")
     void 매치_수정_존재하지않는팀() {
+        // given
+        Long matchId = 1L;
+        Long invalidHomeTeamId = 999L;
 
+        AdminMatchUpdateRequest request = AdminMatchUpdateRequest.builder()
+                .matchDate(LocalDate.of(2026, 4, 26))
+                .homeTeamId(invalidHomeTeamId)
+                .build();
+
+        // 정상 매치 (deletedAt null), 이벤트 기간도 valid
+        Event mockEvent = mock(Event.class);
+        given(mockEvent.getStartDate()).willReturn(LocalDate.of(2026, 4, 25));
+        given(mockEvent.getEndDate()).willReturn(LocalDate.of(2026, 4, 27));
+        Match mockMatch = mock(Match.class);
+        given(mockMatch.getDeletedAt()).willReturn(null);
+        given(mockMatch.getEvent()).willReturn(mockEvent);
+        given(matchRepo.findById(matchId)).willReturn(Optional.of(mockMatch));
+
+        // 홈팀 조회 실패
+        given(teamRepo.findById(invalidHomeTeamId)).willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> adminMatchService.updateMatch(matchId, request))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.TEAM_NOT_FOUND);
+
+        verify(matchRepo).findById(matchId);
+        verify(teamRepo).findById(invalidHomeTeamId);
     }
 
     // 매치 수정 - 시작 시간이 종료 시간보다 늦는 경우
     @Test
     @DisplayName("매치 수정 실패 - 시작 시간이 종료 시간보다 늦음")
     void 매치_수정_시작시간오류() {
+        // given
+        Long matchId = 1L;
+        // endAt 이 startAt 보다 앞선 잘못된 데이터
+        AdminMatchUpdateRequest request = AdminMatchUpdateRequest.builder()
+                .matchDate(LocalDate.of(2026, 4, 26))
+                .startAt(LocalDateTime.of(2026, 4, 26, 21, 0))
+                .endAt(LocalDateTime.of(2026, 4, 26, 17, 0))
+                .build();
 
+        Event mockEvent = mock(Event.class);
+        given(mockEvent.getStartDate()).willReturn(LocalDate.of(2026, 4, 25));
+        given(mockEvent.getEndDate()).willReturn(LocalDate.of(2026, 4, 27));
+        Match mockMatch = mock(Match.class);
+        given(mockMatch.getDeletedAt()).willReturn(null);
+        given(mockMatch.getEvent()).willReturn(mockEvent);
+        given(matchRepo.findById(matchId)).willReturn(Optional.of(mockMatch));
+
+        // when & then
+        assertThatThrownBy(() -> adminMatchService.updateMatch(matchId, request))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_TIME_RANGE);
+
+        verify(matchRepo).findById(matchId);
+        // 팀 ID 가 없어서 teamRepo 도 호출되면 안 됨
+        verify(teamRepo, never()).findById(anyLong());
     }
 
     // 매치 수정 - 매치 기간이 이벤트 기간을 벗어난 경우
     @Test
     @DisplayName("매치 수정 실패 - 매치 기간이 이벤트 기간을 벗어남")
     void 매치_수정_매치기간오류() {
+        // given
+        Long matchId = 1L;
+        // 이벤트 기간(4/25 ~ 4/27)을 벗어난 매치 날짜
+        AdminMatchUpdateRequest request = AdminMatchUpdateRequest.builder()
+                .matchDate(LocalDate.of(2026, 5, 1))
+                .build();
 
+        Event mockEvent = mock(Event.class);
+        given(mockEvent.getStartDate()).willReturn(LocalDate.of(2026, 4, 25));
+        given(mockEvent.getEndDate()).willReturn(LocalDate.of(2026, 4, 27));
+        Match mockMatch = mock(Match.class);
+        given(mockMatch.getDeletedAt()).willReturn(null);
+        given(mockMatch.getEvent()).willReturn(mockEvent);
+        given(matchRepo.findById(matchId)).willReturn(Optional.of(mockMatch));
+
+        // when & then
+        assertThatThrownBy(() -> adminMatchService.updateMatch(matchId, request))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_MATCH_DATE);
+
+        verify(matchRepo).findById(matchId);
+        verify(teamRepo, never()).findById(anyLong());
     }
 
     //--------- 특정 매치 삭제 요청 --------------------------
@@ -756,27 +810,62 @@ public class AdminMatchServiceTest {
     @Test
     @DisplayName("매치 삭제 성공 - 정상 케이스")
     void 매치_삭제_정상() {
+        // given
+        Long matchId = 1L;
+        Match mockMatch = mock(Match.class);
+        given(mockMatch.getDeletedAt()).willReturn(null);
+        given(matchRepo.findById(matchId)).willReturn(Optional.of(mockMatch));
 
+        // when
+        adminMatchService.deleteMatch(matchId);
+
+        // then
+        verify(matchRepo).findById(matchId);
+        verify(mockMatch).softDelete();  // 엔티티의 softDelete 가 호출되어야 함
     }
 
     // 매치 삭제 - 존재하지 않는 매치
     @Test
     @DisplayName("매치 삭제 실패 - 존재하지 않는 매치")
     void 매치_삭제_존재하지않는매치() {
+        // given
+        Long invalidMatchId = 999L;
+        given(matchRepo.findById(invalidMatchId)).willReturn(Optional.empty());
 
+        // when & then
+        assertThatThrownBy(() -> adminMatchService.deleteMatch(invalidMatchId))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.MATCH_NOT_FOUND);
+
+        verify(matchRepo).findById(invalidMatchId);
     }
 
     // 매치 삭제 - 이미 삭제된 매치
     @Test
     @DisplayName("매치 삭제 실패 - 이미 삭제된 매치")
     void 매치_삭제_삭제된매치() {
+        // given
+        Long matchId = 1L;
+        Match deletedMatch = mock(Match.class);
+        // deletedAt 이 null 이 아닌 상태 = 이미 삭제된 매치
+        given(deletedMatch.getDeletedAt()).willReturn(LocalDateTime.now().minusDays(1));
+        given(matchRepo.findById(matchId)).willReturn(Optional.of(deletedMatch));
 
+        // when & then
+        assertThatThrownBy(() -> adminMatchService.deleteMatch(matchId))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.MATCH_ALREADY_DELETED);
+
+        // 이미 삭제된 매치라 softDelete 는 호출되면 안 됨
+        verify(deletedMatch, never()).softDelete();
     }
 
     // 매치 삭제 - 예매 이력이 존재하는 매치
     @Test
     @DisplayName("매치 삭제 실패 - 예매 이력이 존재하는 매치")
     void 매치_삭제_예매이력존재() {
-
+        // TODO: AdminMatchService.deleteMatch 의 "예매 이력 검증" 로직이 아직 미구현
+        //       (서비스 코드에 // 예외-1) 예매 이력이 존재하는 매치인 경우 주석만 있음)
+        //       BookingRepository 같은 의존성이 추가되면 그때 작성
     }
 }
