@@ -20,7 +20,7 @@ public enum ErrorCode {
     INVALID_RESET_TOKEN(HttpStatus.BAD_REQUEST, "INVALID_RESET_TOKEN", "유효하지 않은 재설정 토큰입니다."),
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "INVALID_PASSWORD", "현재 비밀번호가 일치하지 않습니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", "존재하지 않는 사용자입니다."),
-    DELETED_USER(HttpStatus.UNAUTHORIZED, "DELETED_USER", "탈퇴 처리된 회원입니다."),
+    DELETED_USER(HttpStatus.FORBIDDEN, "DELETED_USER", "탈퇴 처리된 회원입니다."),
 
     // ====== EVENT / MATCH / TEAM ======
     EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "EVENT_NOT_FOUND", "존재하지 않는 대회입니다."),

@@ -31,11 +31,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 			throw new BusinessException(ErrorCode.DELETED_USER);
 		}
 
-		// 3. UserDetails 객체로 변환 (권한에 ROLE_ 접두사 추가)
-		return org.springframework.security.core.userdetails.User.builder()
-			.username(user.getEmail())
-			.password(user.getPassword())
-			.authorities(Collections.singleton(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())))
-			.build();
+		// 3. UserDetails 객체로 변환
+		return new CustomUserDetails(user);
 	}
 }
