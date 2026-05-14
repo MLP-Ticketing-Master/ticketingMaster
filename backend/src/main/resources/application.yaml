@@ -69,3 +69,11 @@ seat:
   reservation-ttl-seconds: 420
   # 만료 좌석 스캐너 실행 간격 (30초)
   expiry-scan-interval-ms: 30000
+
+queue:
+  # 대기열 토큰 만료(초) — 좌석 진입까지 충분한 시간 + 비정상 종료 시 자동 청소
+  token-ttl-seconds: 1800       # 30분
+  # 한 번에 처리하는 입장 인원
+  admission-batch-size: 200
+  # 입장 승격 스케줄러 주기(초)
+  admission-interval-seconds: 30

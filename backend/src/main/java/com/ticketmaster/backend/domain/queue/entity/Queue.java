@@ -56,4 +56,27 @@ public class Queue extends BaseEntity {
 
     @Column(name = "expires_at")
     private LocalDateTime expiresAt;
+
+    /**
+     * 새 대기열 진입 이력을 만드는 팩토리 메서드
+     * new 대신 이 메서드로만 만들게 해서, 필수 필드가 빠진 채로 객체가 생기는 걸 방지
+     */
+    public static Queue createWaiting(
+            User user,
+            Match match,
+            String queueToken,
+            long queueNumber,
+            LocalDateTime enteredAt,
+            LocalDateTime expiresAt
+    ) {
+        Queue q = new Queue();
+        q.user = user;
+        q.match = match;
+        q.queueToken = queueToken;
+        q.queueNumber = queueNumber;
+        q.status = QueueStatus.WAITING;
+        q.enteredAt = enteredAt;
+        q.expiresAt = expiresAt;
+        return q;
+    }
 }
