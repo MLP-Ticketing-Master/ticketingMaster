@@ -39,8 +39,18 @@ public class SecurityConfig {
 			.httpBasic(AbstractHttpConfigurer::disable)
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.exceptionHandling(ex -> ex
-				.authenticationEntryPoint((req, res, e) ->
-					res.sendError(HttpServletResponse.SC_UNAUTHORIZED))
+				// 1. 인증 실패 처리 (401 Unauthorized)
+				.authenticationEntryPoint((req, res, e) -> {
+					res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+					res.setContentType("application/json;charset=UTF-8");
+					res.getWriter().write("{\"code\":\"UNAUTHORIZED\", \"message\":\"로그인이 필요합니다.\"}");
+				})
+				// 2. 권한 부족 처리 (403 Forbidden)
+				.accessDeniedHandler((req, res, e) -> {
+					res.setStatus(HttpServletResponse.SC_FORBIDDEN);
+					res.setContentType("application/json;charset=UTF-8");
+					res.getWriter().write("{\"code\":\"FORBIDDEN\", \"message\":\"접근 권한이 없습니다.\"}");
+				})
 			)
 			.authorizeHttpRequests(auth -> auth
 				.requestMatchers("/auth/logout").authenticated()						// 로그아웃은 인증 필요
