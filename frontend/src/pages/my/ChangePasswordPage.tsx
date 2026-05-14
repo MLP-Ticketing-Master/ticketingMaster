@@ -51,7 +51,7 @@ export default function ChangePasswordPage() {
           onChange={(v) => setForm({ ...form, newPasswordConfirm: v })}
         />
 
-        <div className="rounded-lg bg-orange-50 p-4 text-sm">
+        <div className="rounded-lg bg-blue-50 p-4 text-sm">
           <h4 className="font-semibold">비밀번호 설정 조건</h4>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-muted-foreground">
             <li>영문, 숫자를 포함하여 8자 이상</li>
@@ -64,7 +64,7 @@ export default function ChangePasswordPage() {
           type="submit"
           size="lg"
           disabled={change.isPending}
-          className="w-full bg-[#FF6B47] hover:bg-[#E5532E]"
+          className="w-full bg-[#054EFD] hover:bg-[#3C76FE]"
         >
           비밀번호 변경
         </Button>

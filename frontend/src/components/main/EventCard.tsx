@@ -26,7 +26,7 @@ export function EventCard({ event }: { event: EventSummary }) {
       <div className="space-y-3 p-5">
         <Badge
           variant="secondary"
-          className="bg-orange-100 font-medium text-[#FF6B47]"
+          className="bg-blue-100 font-medium text-[#FF6B47]"
         >
           {GAME_LABEL[game]}
         </Badge>

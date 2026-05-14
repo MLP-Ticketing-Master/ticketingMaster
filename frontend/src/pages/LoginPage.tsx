@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useLoginMutation } from "@/hooks";
 import { toast } from "sonner";
+import logo from "@/image/logoNuki.png";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -33,7 +34,13 @@ export default function LoginPage() {
   return (
     <div className="w-full max-w-md">
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-[#FF6B47]">티켓팅마스터</h1>
+        <div className="flex justify-center">
+          <img
+            src={logo}
+            alt="티켓팅마스터"
+            className="h-40 w-auto scale-80"
+          />
+      </div>
         <p className="mt-2 text-sm text-muted-foreground">
           로그인하여 E스포츠 경기 티켓을 예매하세요
         </p>
@@ -68,7 +75,7 @@ export default function LoginPage() {
               />
               로그인 상태 유지
             </label>
-            <Link to="#" className="font-medium text-[#FF6B47]">
+            <Link to="#" className="font-medium text-[#054EFD]">
               비밀번호 찾기
             </Link>
           </div>
@@ -77,7 +84,7 @@ export default function LoginPage() {
             type="submit"
             size="lg"
             disabled={login.isPending}
-            className="w-full bg-[#FF6B47] hover:bg-[#E5532E]"
+            className="w-full bg-[#1C5EFD] hover:bg-[#316DFD]"
           >
             로그인
           </Button>
@@ -85,7 +92,7 @@ export default function LoginPage() {
 
         <div className="border-t pt-4 text-center text-sm text-muted-foreground">
           아직 회원이 아니신가요?{" "}
-          <Link to="/signup" className="font-semibold text-[#FF6B47]">
+          <Link to="/signup" className="font-semibold text-[#054EFD]">
             회원가입
           </Link>
         </div>

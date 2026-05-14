@@ -21,7 +21,7 @@ export function GameFilter({ value, onChange }: Props) {
           onClick={() => onChange(g)}
           className={cn(
             "rounded-full",
-            value === g && "bg-[#FF6B47] hover:bg-[#E5532E]",
+            value === g && "bg-[#316DFD] hover:bg-[#1C5EFD]",
           )}
         >
           {GAME_FILTER_LABEL[g]}

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Lock, Mail, Phone, User } from "lucide-react";
+import { Lock, LogOutIcon, Mail, Phone, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useSignupMutation } from "@/hooks";
 import { toast } from "sonner";
+import logo from "@/image/logoNuki.png";
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -40,7 +41,13 @@ export default function SignupPage() {
   return (
     <div className="-mt-16 w-full max-w-md">
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-[#FF6B47]">티켓팅마스터</h1>
+        <div className="flex justify-center">
+          <img
+            src={logo}
+            alt="티켓팅마스터"
+            className="h-40 w-auto scale-80"
+          />
+      </div>
         <p className="mt-2 text-sm text-muted-foreground">
           간편하게 가입하고 E스포츠 경기 티켓을 예매하세요
         </p>
@@ -99,11 +106,11 @@ export default function SignupPage() {
               onCheckedChange={(v) => setAgreed(!!v)}
             />
             <span>
-              <Link to="#" className="font-semibold text-[#FF6B47]">
+              <Link to="#" className="font-semibold text-[#054EFD]">
                 이용약관
               </Link>{" "}
               및{" "}
-              <Link to="#" className="font-semibold text-[#FF6B47]">
+              <Link to="#" className="font-semibold text-[#054EFD]">
                 개인정보처리방침
               </Link>
               에 동의합니다
@@ -114,7 +121,7 @@ export default function SignupPage() {
             type="submit"
             size="lg"
             disabled={signup.isPending}
-            className="w-full bg-[#FF6B47] hover:bg-[#E5532E]"
+            className="w-full bg-[#1C5EFD] hover:bg-[#316DFD]"
           >
             가입하기
           </Button>
@@ -122,7 +129,7 @@ export default function SignupPage() {
 
         <div className="mt-5 border-t pt-4 text-center text-sm text-muted-foreground">
           이미 회원이신가요?{" "}
-          <Link to="/login" className="font-semibold text-[#FF6B47]">
+          <Link to="/login" className="font-semibold text-[#054EFD]">
             로그인
           </Link>
         </div>

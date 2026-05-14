@@ -27,7 +27,7 @@ export default function EventsAdminPage() {
     <AdminCard
       title="대회 관리"
       action={
-        <Button className="bg-[#FF6B47] hover:bg-[#E5532E]">
+        <Button className="bg-[#054EFD] hover:bg-[#3C76FE]">
           <Plus className="mr-1 h-4 w-4" />
           대회 등록
         </Button>

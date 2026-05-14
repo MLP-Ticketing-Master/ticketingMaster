@@ -19,7 +19,7 @@ const STATUS_LABEL: Record<BookingItem["status"], string> = {
 };
 
 const STATUS_BG: Record<BookingItem["status"], string> = {
-  CONFIRMED: "bg-orange-100 text-[#FF6B47]",
+  CONFIRMED: "bg-blue-100 text-[#054EFD]",
   CANCELED: "bg-red-100 text-red-600",
   PENDING_PAYMENT: "bg-yellow-100 text-yellow-700",
   WATCHED: "bg-gray-100 text-gray-700",
@@ -49,7 +49,7 @@ export function BookingItemCard({ booking, onCancel, onDetail }: Props) {
             <p className="pt-1">좌석: {booking.seatLabels.join(", ")}</p>
           </div>
         </div>
-        <p className="shrink-0 text-xl font-bold text-[#FF6B47]">
+        <p className="shrink-0 text-xl font-bold text-[#1C5EFD]">
           {formatPrice(booking.amount)}
         </p>
       </div>
@@ -68,7 +68,7 @@ export function BookingItemCard({ booking, onCancel, onDetail }: Props) {
             variant="outline"
             size="lg"
             onClick={() => onCancel?.(booking.id)}
-            className="flex-1 border-[#FF6B47] text-[#FF6B47] hover:bg-orange-50"
+            className="flex-1 border-[#1C5EFD] text-[#1C5EFD] hover:bg-blue-50"
           >
             예매취소
           </Button>

@@ -82,7 +82,7 @@ export function SeatSidebar({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <span className="font-semibold">총 결제금액</span>
-          <span className="text-xl font-bold text-[#FF6B47]">
+          <span className="text-xl font-bold text-[#054EFD]">
             {formatPrice(total)}
           </span>
         </div>
@@ -90,7 +90,7 @@ export function SeatSidebar({
           size="lg"
           disabled={!canSubmit}
           onClick={onSubmit}
-          className="w-full bg-[#FF6B47] hover:bg-[#E5532E] disabled:bg-gray-200 disabled:text-gray-400"
+          className="w-full bg-[#054EFD] hover:bg-[#3C76FE] disabled:bg-gray-200 disabled:text-gray-400"
         >
           선택 완료
         </Button>

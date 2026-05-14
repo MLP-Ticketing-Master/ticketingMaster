@@ -142,14 +142,10 @@ export const MOCK_EVENT_DETAIL: EventDetail = {
 };
 
 export const MOCK_SECTIONS: Section[] = [
-  { id: 1, name: "좌측 구역", description: "메인 스크린 좌측 영역", sortOrder: 1 },
-  {
-    id: 2,
-    name: "중앙 구역",
-    description: "메인 스크린 중앙 영역 (최고 시야)",
-    sortOrder: 2,
-  },
-  { id: 3, name: "우측 구역", description: "메인 스크린 우측 영역", sortOrder: 3 },
+  { id: 1, name: "A", description: "메인 스크린 좌측 영역", sortOrder: 1 },
+  { id: 2, name: "B", description: "메인 스크린 중앙 영역 (최고 시야)", sortOrder: 2},
+  { id: 3, name: "C", description: "메인 스크린 중앙 영역 (최고 시야)", sortOrder: 3},
+  { id: 4, name: "D", description: "메인 스크린 우측 영역", sortOrder: 4 },
 ];
 
 export const MOCK_SEAT_GRADES: SeatGrade[] = [
@@ -203,17 +199,19 @@ const buildRow = (
   }));
 
 export const MOCK_SEAT_LAYOUT = {
-  rows: ["A", "B", "C", "D", "E", "F", "G", "H"],
-  cols: 11,
+  rows: ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
+  cols: 10,
   seats: [
-    ...buildRow("A", 11, "VIP", 100),
-    ...buildRow("B", 11, "VIP", 200),
-    ...buildRow("C", 11, "R", 300),
-    ...buildRow("D", 11, "R", 400),
-    ...buildRow("E", 11, "S", 500),
-    ...buildRow("F", 11, "S", 600),
-    ...buildRow("G", 11, "A", 700),
-    ...buildRow("H", 11, "A", 800),
+    ...buildRow("A", 10, "VIP", 100),
+    ...buildRow("B", 10, "VIP", 200),
+    ...buildRow("C", 10, "R", 300),
+    ...buildRow("D", 10, "R", 400),
+    ...buildRow("E", 10, "S", 500),
+    ...buildRow("F", 10, "S", 600),
+    ...buildRow("G", 10, "A", 700),
+    ...buildRow("H", 10, "A", 800),
+    ...buildRow("I", 10, "A", 900),
+    ...buildRow("J", 10, "A", 1000),
   ],
 };
 
