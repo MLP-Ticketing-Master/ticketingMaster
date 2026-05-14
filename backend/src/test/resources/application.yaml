@@ -65,3 +65,14 @@ jwt:
   secret: test-jwt-secret-key-for-testing-only-must-be-long-enough-for-hs256-algorithm
   access-expiration: 1800000
   refresh-expiration: 1209600000
+
+# 좌석 점유 정책 (main 의 application.yaml 과 동일하게 유지)
+seat:
+  reservation-ttl-seconds: 420
+  expiry-scan-interval-ms: 30000
+
+queue:
+  token-ttl-seconds: 1800        # WAITING 토큰 TTL (30분)
+  admission-batch-size: 200      # 한 번에 처리하는 입장 인원
+  admission-interval-seconds: 30 # 입장 승격 스케줄러 주기
+  session-seconds: 600           # ALLOWED 토큰 만료 (10분)

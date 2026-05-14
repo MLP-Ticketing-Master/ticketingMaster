@@ -95,6 +95,6 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
            SELECT s FROM Seat s
            WHERE s.status = 'RESERVED'
            AND s.reservedUntil < :now
-            """)
+           """)
     List<Seat> findExpiredReservedSeats(@Param("now") LocalDateTime now);
 }
