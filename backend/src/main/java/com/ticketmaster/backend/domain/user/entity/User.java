@@ -52,7 +52,7 @@ public class User extends BaseEntity {
     }
 
     public void withdraw() {
-        super.softDelete();
+        softDelete();
     }
 
     /** 프로필 수정 - null이 아닌 값만 변경 */
