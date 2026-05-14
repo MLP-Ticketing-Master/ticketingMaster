@@ -10,10 +10,15 @@ interface Props {
 export function ZoneSelector({ sections, onSelect }: Props) {
   const ordered = [...sections].sort((a, b) => a.sortOrder - b.sortOrder);
  
-  // 3개 구역으로 분할
-  const [homeSection, stageSection, awaySection] = ordered.length >= 3 
-    ? [ordered[0], ordered[1], ordered[2]]
-    : [ordered[0], undefined, ordered[1]];
+  // 4개 구역으로 분할
+  const [homeSection, stageSection, stageSection2,awaySection] = ordered.length >= 4
+    ? [ordered[0], ordered[2], ordered[1], ordered[3]]
+    :  [
+          ordered.at(0) ?? null,      // 첫 번째 또는 null
+          undefined,                  // 없음
+          ordered.at(1) ?? ordered.at(0) ?? null,  // 두 번째 또는 첫 번째
+          ordered.at(2) ?? ordered.at(0) ?? null,  // 세 번째 또는 첫 번째
+        ];
  
   return (
     <div className="flex flex-col items-center gap-6 py-10 px-6">
@@ -75,9 +80,9 @@ export function ZoneSelector({ sections, onSelect }: Props) {
             </Button>
           )}
           {/* 중앙 구역 (스테이지) */}
-          {stageSection && (
+          {stageSection2 && (
             <Button
-              onClick={() => onSelect(stageSection.id)}
+              onClick={() => onSelect(stageSection2.id)}
               className=" absolute
               left-[170px]
               top-[87%]
@@ -93,7 +98,7 @@ export function ZoneSelector({ sections, onSelect }: Props) {
               transition-all duration-300"
             >
               <span className="text-sm font-semibold text-white/90">STAGE</span>
-              <span className="text-2xl font-bold">{sectionLabel(stageSection.name)}</span>
+              <span className="text-2xl font-bold">{sectionLabel(stageSection2.name)}</span>
             </Button>
           )}
  
@@ -125,28 +130,28 @@ export function ZoneSelector({ sections, onSelect }: Props) {
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-blue-500 shadow-md"></div>
           <div>
-            <div className="text-sm font-bold text-gray-900">BLUE AWAY</div>
+            <div className="text-sm font-bold text-gray-900">A</div>
             <div className="text-xs text-gray-600">좌측</div>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-purple-600 shadow-md"></div>
           <div>
-            <div className="text-sm font-bold text-gray-900">STAGE</div>
+            <div className="text-sm font-bold text-gray-900">B</div>
             <div className="text-xs text-gray-600">중앙</div>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-purple-600 shadow-md"></div>
           <div>
-            <div className="text-sm font-bold text-gray-900">STAGE</div>
+            <div className="text-sm font-bold text-gray-900">C</div>
             <div className="text-xs text-gray-600">중앙</div>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-red-500 shadow-md"></div>
           <div>
-            <div className="text-sm font-bold text-gray-900">RED AWAY</div>
+            <div className="text-sm font-bold text-gray-900">D</div>
             <div className="text-xs text-gray-600">우측</div>
           </div>
         </div>
