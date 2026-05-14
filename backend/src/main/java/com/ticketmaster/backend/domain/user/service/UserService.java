@@ -26,7 +26,7 @@ public class UserService {
 			.orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
 		if (user.getDeletedAt() != null) {
-			throw new BusinessException(ErrorCode.UNAUTHORIZED);
+			throw new BusinessException(ErrorCode.DELETED_USER);
 		}
 
 		return UserResponse.from(user);
@@ -64,7 +64,7 @@ public class UserService {
 
 		// 2. 이미 탈퇴한 사용자인지 체크
 		if (user.getDeletedAt() != null) {
-			throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+			throw new BusinessException(ErrorCode.DELETED_USER);
 		}
 
 		// 3. 소프트 삭제 수행

@@ -32,9 +32,6 @@ public class User extends BaseEntity {
     @Column(length = 20)
     private String phone;
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
     @Enumerated(EnumType.STRING) // DB에 enum 값을 문자열로 저장하겠다는 뜻
     @Column(nullable = false, length = 20)
     private Role role;
@@ -54,12 +51,8 @@ public class User extends BaseEntity {
         return user;
     }
 
-    public void delete() {
-        this.deletedAt = LocalDateTime.now();
-    }
-
     public void withdraw() {
-        this.deletedAt = java.time.LocalDateTime.now();
+        super.softDelete();
     }
 
     /** 프로필 수정 - null이 아닌 값만 변경 */

@@ -28,7 +28,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
 		// 2. 소프트 삭제 여부 확인 (deletedAt이 null이 아니면 탈퇴한 유저)
 		if (user.getDeletedAt() != null) {
-			throw new BusinessException(ErrorCode.UNAUTHORIZED);
+			throw new BusinessException(ErrorCode.DELETED_USER);
 		}
 
 		// 3. UserDetails 객체로 변환 (권한에 ROLE_ 접두사 추가)
