@@ -47,15 +47,13 @@ public class AdminEventServiceTest {
     @Test
     @DisplayName("이벤트 등록 성공")
     void 이벤트_등록_정상() {
-        // Given: DTO 준비
+        // given
         AdminEventCreateRequest request = AdminEventCreateRequest.builder()
                 .title("2026 LCK 스프링 결승")
                 .sportType(SportType.LOL)
                 .place("LoL Park")
                 .startDate(LocalDate.of(2026, 4, 24))
                 .endDate(LocalDate.of(2026, 4, 26))
-                .bookingOpenAt(LocalDateTime.of(2026, 4, 20, 20, 0))
-                .bookingCloseAt(LocalDateTime.of(2026, 4, 26, 22, 0))
                 .maxTicketsPerUser(2)
                 .cancelFee(1000)
                 .build();
@@ -92,15 +90,13 @@ public class AdminEventServiceTest {
     @Test
     @DisplayName("이벤트 등록 실패 - 이벤트 타이틀 중복")
     void 이벤트_등록_타이틀중복() {
-        // Given: DTO 준비
+        // given
         AdminEventCreateRequest request = AdminEventCreateRequest.builder()
                 .title("2026 LCK 스프링 결승") // 중복될 타이틀
                 .sportType(SportType.LOL)
                 .place("LoL Park")
                 .startDate(LocalDate.of(2026, 4, 24))
                 .endDate(LocalDate.of(2026, 4, 26))
-                .bookingOpenAt(LocalDateTime.of(2026, 4, 20, 20, 0))
-                .bookingCloseAt(LocalDateTime.of(2026, 4, 26, 22, 0))
                 .maxTicketsPerUser(2)
                 .cancelFee(1000)
                 .build();
@@ -122,44 +118,18 @@ public class AdminEventServiceTest {
     @Test
     @DisplayName("이벤트 등록 실패 - 이벤트 진행 날짜 오류")
     void 이벤트_등록_진행일오류() {
-        // Given: DTO 준비
+        // given
         AdminEventCreateRequest request = AdminEventCreateRequest.builder()
                 .title("2026 LCK 스프링 결승")
                 .sportType(SportType.LOL)
                 .place("LoL Park")
                 .startDate(LocalDate.of(2026, 4, 24))
                 .endDate(LocalDate.of(2026, 3, 26)) // 끝나는 날짜가 시작하는 날짜보다 앞섬
-                .bookingOpenAt(LocalDateTime.of(2026, 4, 20, 20, 0))
-                .bookingCloseAt(LocalDateTime.of(2026, 4, 26, 22, 0))
                 .maxTicketsPerUser(2)
                 .cancelFee(1000)
                 .build();
 
-        // When & Then: 서비스를 실행했을 때, 우리가 설정한 BusinessException이 터져야 정상!
-        BusinessException exception = assertThrows(BusinessException.class, () -> {
-            adminEventService.createEvent(request);
-        });
-
-        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_DATE_RANGE);
-    }
-
-    @Test
-    @DisplayName("이벤트 등록 실패 - 이벤트 예매일 오류")
-    void 이벤트_등록_예매일오류() {
-        // Given: DTO 준비
-        AdminEventCreateRequest request = AdminEventCreateRequest.builder()
-                .title("2026 LCK 스프링 결승")
-                .sportType(SportType.LOL)
-                .place("LoL Park")
-                .startDate(LocalDate.of(2026, 4, 24))
-                .endDate(LocalDate.of(2026, 4, 26))
-                .bookingOpenAt(LocalDateTime.of(2026, 4, 25, 20, 0)) // 예매 시작일이 이벤트 시작일보다 늦음
-                .bookingCloseAt(LocalDateTime.of(2026, 4, 26, 22, 0))
-                .maxTicketsPerUser(2)
-                .cancelFee(1000)
-                .build();
-
-        // When & Then
+        // when & then
         BusinessException exception = assertThrows(BusinessException.class, () -> {
             adminEventService.createEvent(request);
         });
@@ -313,11 +283,8 @@ public class AdminEventServiceTest {
                 .endDate(LocalDate.of(2026, 4, 26))
                 .matchDurationText("약 5시간")
                 .ageRating("12세 이상")
-                .bookingOpenAt(LocalDateTime.of(2026, 4, 20, 20, 0))
-                .bookingCloseAt(LocalDateTime.of(2026, 4, 26, 22, 0))
                 .bookingNotice("취소 수수료가 변경되었습니다.")
                 .maxTicketsPerUser(1) // 2장에서 1장으로 변경
-                .cancelAvailableUntil(LocalDateTime.of(2026, 4, 25, 23, 59))
                 .cancelFee(2000) // 0원에서 2000원으로 변경
                 .status(EventStatus.OPEN) // UPCOMING에서 OPEN으로 변경
                 .build();
@@ -364,8 +331,6 @@ public class AdminEventServiceTest {
                 .status(EventStatus.UPCOMING)
                 .startDate(LocalDate.of(2026, 4, 24))
                 .endDate(LocalDate.of(2026, 4, 26))
-                .bookingOpenAt(LocalDateTime.of(2026, 4, 20, 20, 0))
-                .bookingCloseAt(LocalDateTime.of(2026, 4, 23, 23, 59))
                 .build();
 
         // 2. 타이틀과 장소 딱 2개만 바꾸는 부분 수정 요청 DTO
@@ -464,57 +429,27 @@ public class AdminEventServiceTest {
     @Test
     @DisplayName("이벤트 수정 요청 실패 - 날짜 검증")
     void 서비스_이벤트_수정_날짜검증() {
-        // Given: 공통으로 사용할 타겟 ID와 정상적인 원본 엔티티
+        // given - 공통으로 사용할 타겟 ID와 정상적인 원본 엔티티
         Long targetEventId = 1L;
         Event existingEvent = Event.builder()
                 .id(targetEventId)
                 .title("정상 대회")
                 .startDate(LocalDate.of(2026, 4, 24))
                 .endDate(LocalDate.of(2026, 4, 26))
-                .bookingOpenAt(LocalDateTime.of(2026, 4, 20, 20, 0))
-                .bookingCloseAt(LocalDateTime.of(2026, 4, 23, 23, 59))
                 .build();
 
         given(eventRepository.findById(targetEventId)).willReturn(Optional.of(existingEvent));
 
-        // ---------------------------------------------------------
-        // 1. 이벤트 시작일과 종료일 검증 (종료일이 시작일보다 앞설 때)
-        // ---------------------------------------------------------
-        AdminEventUpdateRequest badDateRequest1 = AdminEventUpdateRequest.builder()
+        // when & then - 종료일이 시작일보다 앞설 때
+        AdminEventUpdateRequest badDateRequest = AdminEventUpdateRequest.builder()
                 .startDate(LocalDate.of(2026, 4, 24))
                 .endDate(LocalDate.of(2026, 4, 20)) // ❌ 에러: 끝나는 날짜가 4일 더 빠름
                 .build();
 
-        BusinessException ex1 = assertThrows(BusinessException.class, () -> {
-            adminEventService.updateEvent(targetEventId, badDateRequest1);
+        BusinessException ex = assertThrows(BusinessException.class, () -> {
+            adminEventService.updateEvent(targetEventId, badDateRequest);
         });
-        assertThat(ex1.getErrorCode()).isEqualTo(ErrorCode.INVALID_DATE_RANGE);
-
-        // ---------------------------------------------------------
-        // 2. 이벤트 예매 시작 시간과 종료 시간 검증 (종료가 오픈보다 앞설 때)
-        // ---------------------------------------------------------
-        AdminEventUpdateRequest badDateRequest2 = AdminEventUpdateRequest.builder()
-                .bookingOpenAt(LocalDateTime.of(2026, 4, 20, 20, 0))
-                .bookingCloseAt(LocalDateTime.of(2026, 4, 19, 20, 0)) // ❌ 에러: 예매 종료가 먼저 됨
-                .build();
-
-        BusinessException ex2 = assertThrows(BusinessException.class, () -> {
-            adminEventService.updateEvent(targetEventId, badDateRequest2);
-        });
-        assertThat(ex2.getErrorCode()).isEqualTo(ErrorCode.INVALID_DATE_RANGE);
-
-        // ---------------------------------------------------------
-        // 3. 이벤트 시작일과 예매 시작 시간 검증 (예매 오픈일이 대회 시작일보다 늦을 때)
-        // ---------------------------------------------------------
-        AdminEventUpdateRequest badDateRequest3 = AdminEventUpdateRequest.builder()
-                .startDate(LocalDate.of(2026, 4, 24))
-                .bookingOpenAt(LocalDateTime.of(2026, 4, 25, 20, 0)) // ❌ 에러: 대회 시작 후 예매 오픈
-                .build();
-
-        BusinessException ex3 = assertThrows(BusinessException.class, () -> {
-            adminEventService.updateEvent(targetEventId, badDateRequest3);
-        });
-        assertThat(ex3.getErrorCode()).isEqualTo(ErrorCode.INVALID_DATE_RANGE);
+        assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_DATE_RANGE);
     }
 
     // 이벤트 수정 요청 - 종료된 이벤트 상태 변경 금지 #TC-08

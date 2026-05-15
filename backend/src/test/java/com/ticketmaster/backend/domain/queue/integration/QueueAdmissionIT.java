@@ -204,15 +204,12 @@ public class QueueAdmissionIT {
     // ─── 시드 빌더 ─────────────────────────────────────
 
     private Event buildEvent() {
-        LocalDateTime now = LocalDateTime.now();
         return Event.builder()
                 .title("승격 통합 " + System.nanoTime())
                 .sportType(SportType.LOL)
                 .place("테스트 경기장")
                 .startDate(LocalDate.now())
                 .endDate(LocalDate.now().plusDays(7))
-                .bookingOpenAt(now.minusDays(1))   // 이미 오픈됨
-                .bookingCloseAt(now.plusDays(7))
                 .maxTicketsPerUser(2)
                 .cancelFee(0)
                 .status(EventStatus.OPEN)
@@ -220,11 +217,14 @@ public class QueueAdmissionIT {
     }
 
     private Match buildMatch(Event event) {
+        LocalDateTime now = LocalDateTime.now();
         return Match.builder()
                 .event(event)
                 .roundLabel("1R")
                 .matchDate(LocalDate.now().plusDays(1))
-                .startAt(LocalDateTime.now().plusDays(1))
+                .startAt(now.plusDays(1))
+                .bookingOpenAt(now.minusDays(1))   // 이미 오픈됨
+                .bookingCloseAt(now.plusDays(7))
                 .status(MatchStatus.SCHEDULED)
                 .build();
     }

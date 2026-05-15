@@ -20,5 +20,8 @@ public class AdminMatchUpdateRequest {
     private LocalDate matchDate;
     private LocalDateTime startAt;
     private LocalDateTime endAt;
+    private LocalDateTime bookingOpenAt;
+    private LocalDateTime bookingCloseAt;
+    private LocalDateTime cancelAvailableUntil;
     private MatchStatus status;
 }

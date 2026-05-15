@@ -39,12 +39,6 @@ public class AdminEventService {
         if (request.getEndDate().isBefore(request.getStartDate())) { // 이벤트 끝나는 날짜가 시작하는 날짜보다 앞서는 경우
             throw new BusinessException(ErrorCode.INVALID_DATE_RANGE);
         }
-        if (request.getBookingCloseAt().isBefore(request.getBookingOpenAt())) { // 예매 오픈/종료일 비교 로직도 여기에 추가
-            throw new BusinessException(ErrorCode.INVALID_DATE_RANGE);
-        }
-        if (request.getStartDate().isBefore(request.getBookingOpenAt().toLocalDate())) { // 예매 시작일이 이벤트 시작하는 날짜보다 뒤인 경우
-            throw new BusinessException(ErrorCode.INVALID_DATE_RANGE);
-        }
 
         // 모든 예외 통과시 DB 등록
         Event saved = eventRepo.save(request.toEntity());
@@ -101,12 +95,6 @@ public class AdminEventService {
 
         // 5. 날짜 논리 검증 (request DTO가 아니라 event 엔티티 기준으로 검증!)
         if (event.getEndDate().isBefore(event.getStartDate())) {
-            throw new BusinessException(ErrorCode.INVALID_DATE_RANGE);
-        }
-        if (event.getBookingCloseAt().isBefore(event.getBookingOpenAt())) {
-            throw new BusinessException(ErrorCode.INVALID_DATE_RANGE);
-        }
-        if (event.getStartDate().isBefore(event.getBookingOpenAt().toLocalDate())) {
             throw new BusinessException(ErrorCode.INVALID_DATE_RANGE);
         }
 

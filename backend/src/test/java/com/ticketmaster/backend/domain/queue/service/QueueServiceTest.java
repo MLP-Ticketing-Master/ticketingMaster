@@ -1,7 +1,6 @@
 package com.ticketmaster.backend.domain.queue.service;
 
 
-import com.ticketmaster.backend.domain.event.entity.Event;
 import com.ticketmaster.backend.domain.match.entity.Match;
 import com.ticketmaster.backend.domain.match.repository.MatchRepository;
 import com.ticketmaster.backend.domain.queue.dto.response.QueueEnterResponse;
@@ -72,10 +71,8 @@ class QueueServiceTest {
     @DisplayName("TC-01: 정상 진입 → 토큰 + 순번 1 + DB 이력 저장 호출")
     void 정상_진입() {
         // given
-        Event event = mock(Event.class);
-        given(event.isBookableAt(any(LocalDateTime.class))).willReturn(true);
         Match match = mock(Match.class);
-        given(match.getEvent()).willReturn(event);
+        given(match.isBookableAt(any(LocalDateTime.class))).willReturn(true);
         given(matchRepository.findById(1L)).willReturn(Optional.of(match));
         User user = mock(User.class);
         given(userRepository.findById(1000L)).willReturn(Optional.of(user));
@@ -102,10 +99,8 @@ class QueueServiceTest {
     @DisplayName("TC-02: 이미 대기 중인 사용자가 재진입 → QUEUE_ALREADY_ENTERED")
     void 중복_진입() {
         // given - Redis 에서 중복 진입 예외 던지도록 설정
-        Event event = mock(Event.class);
-        given(event.isBookableAt(any(LocalDateTime.class))).willReturn(true);
         Match match = mock(Match.class);
-        given(match.getEvent()).willReturn(event);
+        given(match.isBookableAt(any(LocalDateTime.class))).willReturn(true);
         given(matchRepository.findById(1L)).willReturn(Optional.of(match));
         User user = mock(User.class);
         given(userRepository.findById(1000L)).willReturn(Optional.of(user));
@@ -137,11 +132,9 @@ class QueueServiceTest {
     @Test
     @DisplayName("TC-04: 예매 오픈 시간 이전 진입 → BOOKING_NOT_OPEN")
     void 예매_오픈_전_진입() {
-        // given — isBookableAt 이 false 반환 (아직 오픈 안 됨 / 마감 / 상태 OPEN 아님)
-        Event event = mock(Event.class);
-        given(event.isBookableAt(any(LocalDateTime.class))).willReturn(false);
+        // given — isBookableAt 이 false 반환 (아직 오픈 안 됨 / 마감 / event/match 상태 부적합)
         Match match = mock(Match.class);
-        given(match.getEvent()).willReturn(event);
+        given(match.isBookableAt(any(LocalDateTime.class))).willReturn(false);
         given(matchRepository.findById(1L)).willReturn(Optional.of(match));
 
         // when & then

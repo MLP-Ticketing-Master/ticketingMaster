@@ -374,15 +374,12 @@ class SeatReservationConcurrencyIT {
 
     /** 예매 가능한 상태의 Event 생성. title 은 nanoTime 으로 충돌 방지 */
     private Event buildEvent() {
-        LocalDateTime now = LocalDateTime.now();
         return Event.builder()
                 .title("동시성 테스트 이벤트 " + System.nanoTime())
                 .sportType(SportType.LOL)
                 .place("테스트 경기장")
                 .startDate(LocalDate.now())
                 .endDate(LocalDate.now().plusDays(7))
-                .bookingOpenAt(now.minusDays(1))
-                .bookingCloseAt(now.plusDays(7))
                 .maxTicketsPerUser(MAX_TICKETS_PER_USER)
                 .cancelFee(0)
                 .status(EventStatus.OPEN)
@@ -391,11 +388,14 @@ class SeatReservationConcurrencyIT {
 
     /** 시작 시각이 미래인 Match (status 미지정 시 SCHEDULED) */
     private Match buildMatch(Event event) {
+        LocalDateTime now = LocalDateTime.now();
         return Match.builder()
                 .event(event)
                 .roundLabel("1R")
                 .matchDate(LocalDate.now().plusDays(1))
-                .startAt(LocalDateTime.now().plusDays(1))
+                .startAt(now.plusDays(1))
+                .bookingOpenAt(now.minusDays(1))
+                .bookingCloseAt(now.plusDays(7))
                 .build();
     }
 }

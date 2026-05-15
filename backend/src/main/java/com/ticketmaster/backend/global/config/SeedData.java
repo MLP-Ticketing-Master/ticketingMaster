@@ -106,11 +106,8 @@ public class SeedData implements CommandLineRunner {
                 .endDate(LocalDate.of(2026, 4, 25))
                 .matchDurationText("약 240분")
                 .ageRating("12세 이용가")
-                .bookingOpenAt(LocalDateTime.of(2026, 4, 10, 18, 0))
-                .bookingCloseAt(LocalDateTime.of(2026, 4, 24, 23, 59))
                 .bookingNotice("1인당 최대 2매 예매 가능합니다.")
                 .maxTicketsPerUser(2)
-                .cancelAvailableUntil(LocalDateTime.of(2026, 4, 24, 17, 0))
                 .cancelFee(1000)
                 .status(EventStatus.OPEN)
                 .build();
@@ -143,6 +140,9 @@ public class SeedData implements CommandLineRunner {
                 .matchDate(LocalDate.of(2026, 4, 25))
                 .startAt(LocalDateTime.of(2026, 4, 25, 17, 0))
                 .endAt(LocalDateTime.of(2026, 4, 25, 21, 0))
+                .bookingOpenAt(LocalDateTime.of(2026, 4, 10, 18, 0))
+                .bookingCloseAt(LocalDateTime.of(2026, 4, 24, 23, 59))
+                .cancelAvailableUntil(LocalDateTime.of(2026, 4, 24, 17, 0))
                 .status(MatchStatus.SCHEDULED)
                 .build();
 

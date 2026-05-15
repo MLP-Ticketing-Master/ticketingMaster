@@ -16,11 +16,11 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
 
     /**
      * 대기열 승격 스케줄러용 — 현재 시각 기준 예매 가능 상태인 매치 조회
-     * (Event.bookingOpenAt ≤ now ≤ Event.bookingCloseAt)
+     * (bookingOpenAt ≤ now ≤ bookingCloseAt)
      */
     @Query("""
-           SELECT m FROM Match m JOIN m.event e
-           WHERE e.bookingOpenAt <= :now AND e.bookingCloseAt >= :now
+           SELECT m FROM Match m
+           WHERE m.bookingOpenAt <= :now AND m.bookingCloseAt >= :now
            """)
     List<Match> findActiveMatchesForQueueAdmission(@Param("now") LocalDateTime now);
 

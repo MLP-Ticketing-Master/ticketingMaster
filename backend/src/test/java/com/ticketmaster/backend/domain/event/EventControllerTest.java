@@ -10,6 +10,7 @@ import com.ticketmaster.backend.domain.event.service.EventService;
 import com.ticketmaster.backend.domain.match.dto.MatchResponse;
 import com.ticketmaster.backend.domain.match.entity.MatchStatus;
 import com.ticketmaster.backend.domain.seat.dto.response.SeatGradeResponse;
+import com.ticketmaster.backend.domain.team.dto.TeamResponse;
 import com.ticketmaster.backend.domain.team.entity.Team;
 import com.ticketmaster.backend.global.config.SecurityConfig;
 import com.ticketmaster.backend.global.exception.BusinessException;
@@ -166,20 +167,22 @@ public class EventControllerTest {
 
         Team fakeHome = Team.builder().name("T1").logoImageUrl("www.").sportType(SportType.LOL).build();
         Team fakeAway = Team.builder().name("Gen.G").logoImageUrl("www.").sportType(SportType.LOL).build();
+        TeamResponse fakeHomeRes = TeamResponse.from(fakeHome);
+        TeamResponse fakeAwayRes = TeamResponse.from(fakeAway);
 
         List<MatchResponse> fakeMatches = List.of(
                 MatchResponse.builder().matchId(1L).roundLabel("플레이오프 제 1 경기")
                         .matchDate(LocalDate.of(2026, 4, 1))
                         .startAt(LocalDateTime.of(2026, 4, 1, 17, 0))
-                        .homeTeam(fakeHome).awayTeam(fakeAway).status(MatchStatus.SCHEDULED).build(),
+                        .homeTeam(fakeHomeRes).awayTeam(fakeAwayRes).status(MatchStatus.SCHEDULED).build(),
                 MatchResponse.builder().matchId(2L).roundLabel("플레이오프 제 2 경기")
                         .matchDate(LocalDate.of(2026, 4, 2))
                         .startAt(LocalDateTime.of(2026, 4, 2, 17, 0))
-                        .homeTeam(fakeHome).awayTeam(fakeAway).status(MatchStatus.SCHEDULED).build(),
+                        .homeTeam(fakeHomeRes).awayTeam(fakeAwayRes).status(MatchStatus.SCHEDULED).build(),
                 MatchResponse.builder().matchId(3L).roundLabel("플레이오프 제 3 경기")
                         .matchDate(LocalDate.of(2026, 4, 3))
                         .startAt(LocalDateTime.of(2026, 4, 3, 17, 0))
-                        .homeTeam(fakeHome).awayTeam(fakeAway).status(MatchStatus.SCHEDULED).build()
+                        .homeTeam(fakeHomeRes).awayTeam(fakeAwayRes).status(MatchStatus.SCHEDULED).build()
         );
 
         EventDetailResponse fakeResponse = EventDetailResponse.builder()
@@ -194,7 +197,6 @@ public class EventControllerTest {
                 .ageRating("전체관람가")
                 .bookingNotice("예매는 1인당 최대 2매까지 가능하며, 취소 기한을 꼭 확인해주세요.")
                 .maxTicketsPerUser(2)
-                .cancelAvailableUntil(LocalDateTime.of(2026, 3, 23, 23, 59))
                 .cancelFee(1000)
                 .status(EventStatus.OPEN)
                 .seatGrades(fakeSeatGrades)

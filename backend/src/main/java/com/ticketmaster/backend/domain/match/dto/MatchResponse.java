@@ -19,11 +19,12 @@ public class MatchResponse {
     private String roundLabel;
     private LocalDate matchDate;
     private LocalDateTime startAt;
+    private LocalDateTime bookingOpenAt;
+    private LocalDateTime bookingCloseAt;
     private TeamResponse homeTeam;
     private TeamResponse awayTeam;
     private MatchStatus status;
-
-    // TODO: isBookable 필드 생성
+    private boolean isBookable;
 
     // Entity -> DTO
     public static MatchResponse from(Match match) {
@@ -32,10 +33,12 @@ public class MatchResponse {
                 .roundLabel(match.getRoundLabel())
                 .matchDate(match.getMatchDate())
                 .startAt(match.getStartAt())
+                .bookingOpenAt(match.getBookingOpenAt())
+                .bookingCloseAt(match.getBookingCloseAt())
                 .homeTeam(TeamResponse.from(match.getHomeTeam()))
                 .awayTeam(TeamResponse.from(match.getAwayTeam()))
                 .status(match.getStatus())
-                // .isBookable(match.isBookable(LocalDateTime.now())) // TODO
+                .isBookable(match.isBookableAt(LocalDateTime.now()))
                 .build();
     }
 }
