@@ -33,6 +33,7 @@ public enum ErrorCode {
     TEAM_IN_USE(HttpStatus.CONFLICT, "TEAM_IN_USE", "진행 중인 회차에 배정된 팀은 삭제할 수 없습니다."),
     DUPLICATE_EVENT_TITLE(HttpStatus.CONFLICT, "DUPLICATE_EVENT_TITLE", "이미 존재하는 이벤트 타이틀입니다."),
     DUPLICATE_TEAM_NAME(HttpStatus.CONFLICT, "DUPLICATE_TEAM_NAME", "이미 존재하는 팀명입니다."),
+    INVALID_SORT_VALUE(HttpStatus.BAD_REQUEST, "INVALID_SORT_VALUE", "잘못된 정렬 조건입니다."),
     INVALID_DATE_RANGE(HttpStatus.BAD_REQUEST, "INVALID_DATE_RANGE", "종료일은 시작일보다 앞설 수 없습니다."),
     INVALID_TIME_RANGE(HttpStatus.BAD_REQUEST, "INVALID_TIME_RANGE", "종료 시간은 시작 시간보다 앞설 수 없습니다."),
     INVALID_MATCH_DATE(HttpStatus.BAD_REQUEST, "INVALID_MATCH_DATE", "대회 기간을 벗어난 회차입니다"),

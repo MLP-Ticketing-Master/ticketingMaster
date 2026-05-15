@@ -60,6 +60,19 @@ public class Match extends BaseEntity {
     @Column(length = 20, nullable = false)
     private MatchStatus status;
 
+    // TODO: 예매 오픈/종료/취소 관련 필드 가져오기
+//    @Column(name = "booking_open_at", nullable = false)
+//    private LocalDateTime bookingOpenAt;
+//
+//    @Column(name = "booking_close_at", nullable = false)
+//    private LocalDateTime bookingCloseAt;
+//
+//    @Column(name = "cancel_available_until")
+//    private LocalDateTime cancelAvailableUntil;
+
+    // TODO: isBookable 관련
+
+
     /**
      * 생성자 (빌더)
      */
