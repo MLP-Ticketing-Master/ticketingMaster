@@ -8,6 +8,8 @@ import com.ticketmaster.backend.admin.match.dto.response.AdminMatchResponse;
 import com.ticketmaster.backend.admin.match.service.AdminMatchService;
 import com.ticketmaster.backend.domain.match.entity.MatchStatus;
 import com.ticketmaster.backend.global.config.SecurityConfig;
+import com.ticketmaster.backend.global.security.auth.CustomUserDetailsService;
+import com.ticketmaster.backend.global.security.jwt.JwtTokenProvider;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +47,14 @@ public class AdminMatchControllerTest {
 
     @MockitoBean
     private AdminMatchService adminMatchService;
+
+    // JWT 머지 후 JwtAuthenticationFilter(@Component)가 슬라이스 테스트에 자동 스캔됨
+    // → 그 안의 JwtTokenProvider/CustomUserDetailsService를 mock으로 채워야 컨텍스트 로드 성공
+    @MockitoBean
+    private JwtTokenProvider jwtTokenProvider;
+
+    @MockitoBean
+    private CustomUserDetailsService customUserDetailsService;
 
     // 전체 매치 목록 조회 - 정상
     @Test
