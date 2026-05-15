@@ -1,6 +1,8 @@
 package com.ticketmaster.backend.domain.event.entity;
 
 import com.ticketmaster.backend.admin.event.dto.request.AdminEventUpdateRequest;
+import com.ticketmaster.backend.domain.match.entity.Match;
+import com.ticketmaster.backend.domain.seat.entity.SeatGrade;
 import com.ticketmaster.backend.global.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -11,6 +13,7 @@ import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Entity
@@ -76,6 +79,12 @@ public class Event extends BaseEntity {
     @Column(nullable = false, length = 20)
     private EventStatus status;
 
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "event")
+    private List<SeatGrade> seatGrades;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "event")
+    private List<Match> matches;
+
     /**
      * 생성자 (빌더)
      */
@@ -105,9 +114,6 @@ public class Event extends BaseEntity {
         this.cancelFee = cancelFee;
         this.status = status;
     }
-
-    // TODO: SeatGrade, Section, Match 와의 양방향 컬렉션이 필요하면
-    //       @OneToMany(mappedBy = "event") 로 추가
 
     // 이벤트 상태 변경 (UPCOMING → OPEN → CLOSED → FINISHED)
     public void changeStatus(EventStatus newStatus) {
