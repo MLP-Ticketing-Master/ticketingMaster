@@ -2,6 +2,7 @@ package com.ticketmaster.backend.domain.match.dto;
 
 import com.ticketmaster.backend.domain.match.entity.Match;
 import com.ticketmaster.backend.domain.match.entity.MatchStatus;
+import com.ticketmaster.backend.domain.team.dto.TeamResponse;
 import com.ticketmaster.backend.domain.team.entity.Team;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,8 +19,8 @@ public class MatchResponse {
     private String roundLabel;
     private LocalDate matchDate;
     private LocalDateTime startAt;
-    private Team homeTeam;
-    private Team awayTeam;
+    private TeamResponse homeTeam;
+    private TeamResponse awayTeam;
     private MatchStatus status;
 
     // TODO: isBookable 필드 생성
@@ -31,8 +32,8 @@ public class MatchResponse {
                 .roundLabel(match.getRoundLabel())
                 .matchDate(match.getMatchDate())
                 .startAt(match.getStartAt())
-                .homeTeam(match.getHomeTeam())
-                .awayTeam(match.getAwayTeam())
+                .homeTeam(TeamResponse.from(match.getHomeTeam()))
+                .awayTeam(TeamResponse.from(match.getAwayTeam()))
                 .status(match.getStatus())
                 // .isBookable(match.isBookable(LocalDateTime.now())) // TODO
                 .build();

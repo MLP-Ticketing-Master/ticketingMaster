@@ -9,10 +9,12 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -79,11 +81,12 @@ public class Event extends BaseEntity {
     @Column(nullable = false, length = 20)
     private EventStatus status;
 
+    @BatchSize(size = 100)
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "event")
-    private List<SeatGrade> seatGrades;
+    private List<SeatGrade> seatGrades = new ArrayList<>();
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "event")
-    private List<Match> matches;
+    private List<Match> matches = new ArrayList<>();
 
     /**
      * 생성자 (빌더)

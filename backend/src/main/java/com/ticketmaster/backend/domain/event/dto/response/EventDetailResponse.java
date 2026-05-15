@@ -19,7 +19,6 @@ import java.util.List;
 @Builder
 @Getter
 @AllArgsConstructor
-@Transactional(readOnly = true)
 public class EventDetailResponse {
     // 이벤트 기본 정보
     private String title;

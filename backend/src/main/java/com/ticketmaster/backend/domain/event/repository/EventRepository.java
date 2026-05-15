@@ -14,14 +14,11 @@ import java.util.Optional;
 public interface EventRepository extends JpaRepository<Event, Long> {
     boolean existsByTitle(String s);
 
-    @Query(
-        countQuery = """
-            SELECT count(e)
-            FROM Event e
-            WHERE e.deletedAt IS NULL
-                AND (:sportType IS NULL OR e.sportType = :sportType) 
-                AND (:status IS NULL OR e.status = :status)
-        """)
+    @Query("""
+      SELECT e FROM Event e
+      WHERE (:sportType IS NULL OR e.sportType = :sportType)
+        AND (:status IS NULL OR e.status = :status)
+    """)
     Page<Event> findAllBySportTypeAndStatusExceptDeleted(@Param("sportType") SportType sportType,
                                             @Param("status") EventStatus status,
                                             Pageable pageable);
