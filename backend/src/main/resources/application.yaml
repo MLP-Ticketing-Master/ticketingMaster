@@ -71,9 +71,13 @@ seat:
   expiry-scan-interval-ms: 30000
 
 queue:
-  # 대기열 토큰 만료(초) — 좌석 진입까지 충분한 시간 + 비정상 종료 시 자동 청소
+  # WAITING 상태 토큰 TTL
+  # 대기열 이탈/비정상 종료 사용자를 자동 정리하기 위한 시간
   token-ttl-seconds: 1800       # 30분
   # 한 번에 처리하는 입장 인원
   admission-batch-size: 200
-  # 입장 승격 스케줄러 주기(초)
+  # 입장 승격 스케줄러 주기(초) WAITING → ALLOWED
   admission-interval-seconds: 30
+  # ALLOWED 토큰 만료(초) — 좌석 페이지 진입 후 좌석 점유까지의 데드라인
+  # (좌석 점유 성공 시 권한이 좌석 TTL 7분으로 인계되어 결제까지 보호)
+  session-seconds: 600          # 10분

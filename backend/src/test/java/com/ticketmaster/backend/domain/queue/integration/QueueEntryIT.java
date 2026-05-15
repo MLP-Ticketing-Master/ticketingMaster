@@ -58,7 +58,8 @@ import static org.assertj.core.api.Assertions.assertThat;
         "seat.expiry-scan-interval-ms=30000",
         "queue.token-ttl-seconds=1800",
         "queue.admission-batch-size=200",
-        "queue.admission-interval-seconds=30"
+        "queue.admission-interval-seconds=30",
+        "queue.session-seconds=600"
 })
 @DisplayName("대기열 진입 통합 테스트")
 class QueueEntryIT {

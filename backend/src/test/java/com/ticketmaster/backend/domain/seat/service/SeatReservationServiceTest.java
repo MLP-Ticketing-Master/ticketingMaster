@@ -64,6 +64,10 @@ class SeatReservationServiceTest {
         // self 필드는 @InjectMocks 가 못 채움 — 자기 자신으로 직접 주입
         // 재시도 시나리오를 다루는 nested 클래스에선 spy 로 재설정
         ReflectionTestUtils.setField(seatReservationService, "self", seatReservationService);
+
+        // @Value 필드도 단위 테스트에선 주입되지 않으므로 직접 세팅
+        // (application.yaml 의 seat.reservation-ttl-seconds 와 동일한 값)
+        ReflectionTestUtils.setField(seatReservationService, "reservationTtlSeconds", 420);
     }
 
     // ----- 점유 (reserve) ------------------------------------

@@ -1,5 +1,6 @@
 package com.ticketmaster.backend.domain.seat.controller;
 
+import com.ticketmaster.backend.domain.queue.util.QueueTokenValidator;
 import com.ticketmaster.backend.domain.seat.dto.request.SeatReleaseRequest;
 import com.ticketmaster.backend.domain.seat.dto.request.SeatReserveRequest;
 import com.ticketmaster.backend.domain.seat.dto.response.SeatReleaseResponse;
@@ -17,10 +18,10 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * 좌석 조회
- *
+ * <p>
  * GET /matches/{matchId}/sections                    — 1단계: 구역 목록 + 등급별 잔여
  * GET /matches/{matchId}/sections/{sectionId}/seats  — 2단계: 구역 내 좌석
- *
+ * <p>
  * 점유 / 해제
  * POST   /matches/{matchId}/seats/reserve
  * DELETE /matches/{matchId}/seats/reserve
@@ -32,16 +33,21 @@ public class SeatController {
 
     private final SeatService seatService;
     private final SeatReservationService seatReservationService;
+    private final QueueTokenValidator queueTokenValidator;
 
     // ─── 조회 ────────────────────────────────────────
 
-    /** 좌석 선택 1단계 — 구역 목록 + 등급별 잔여 */
+    /**
+     * 좌석 선택 1단계 — 구역 목록 + 등급별 잔여
+     */
     @GetMapping("/sections")
     public SeatSectionListResponse findSections(@PathVariable Long matchId) {
         return seatService.findSectionsByMatch(matchId);
     }
 
-    /** 좌석 선택 2단계 — 구역 내 좌석 */
+    /**
+     * 좌석 선택 2단계 — 구역 내 좌석
+     */
     @GetMapping("/sections/{sectionId}/seats")
     public SectionSeatListResponse findSeats(@PathVariable Long matchId,
                                              @PathVariable Long sectionId) {
@@ -50,17 +56,27 @@ public class SeatController {
 
     // ─── 점유 / 해제 ────────────────────────────────────────
 
-    /** 좌석 일괄 점유 */
+    /**
+     * 좌석 일괄 점유
+     */
     @PostMapping("/seats/reserve")
     @PreAuthorize("hasRole('USER')")
-    public SeatReserveResponse reserve(@PathVariable Long matchId,
-                                       @AuthenticationPrincipal CustomUserDetails principal,
-                                       @Valid @RequestBody SeatReserveRequest request) {
+    public SeatReserveResponse reserve(
+            @PathVariable Long matchId,
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @RequestHeader(value = "Queue-Token", required = false) String queueToken,
+            @Valid @RequestBody SeatReserveRequest request) {
+
+        // 큐 통과 검증 — ALLOWED 상태 토큰만 좌석 점유 가능
+        queueTokenValidator.validateAllowed(matchId, queueToken);
+
         Long userId = principal.getUser().getId();
         return seatReservationService.reserve(matchId, userId, request.getSeatIds());
     }
 
-    /** 본인 점유 좌석 해제 */
+    /**
+     * 본인 점유 좌석 해제
+     */
     @DeleteMapping("/seats/reserve")
     @PreAuthorize("hasRole('USER')")
     public SeatReleaseResponse release(@PathVariable Long matchId,

@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 public class QueueEnterResponse {
 
     private final String queueToken;            // 대기열 토큰
-    private final String status;                // 현재 상태 (WAITING / ENTERED / EXPIRED 등)
+    private final String status;                // 현재 상태 (WAITING / ALLOWED / EXPIRED)
     private final long queueNumber;             // 내 순번 (1-based, ZRANK + 1)
     private final long remainingAhead;          // 내 앞에 남은 인원 수
     private final long estimatedWaitSeconds;    // 예상 대기 시간 (초)

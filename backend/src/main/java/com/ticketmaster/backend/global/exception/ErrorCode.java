@@ -63,6 +63,8 @@ public enum ErrorCode {
     QUEUE_ALREADY_ENTERED(HttpStatus.CONFLICT, "QUEUE_ALREADY_ENTERED", "이미 대기열에 진입한 사용자입니다."),
     QUEUE_ACCESS_DENIED(HttpStatus.FORBIDDEN, "QUEUE_ACCESS_DENIED", "대기열 접근이 거부되었습니다."),
     QUEUE_NOT_PASSED(HttpStatus.FORBIDDEN, "QUEUE_NOT_PASSED", "아직 대기열을 통과하지 못했습니다."),
+    QUEUE_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "QUEUE_TOKEN_EXPIRED", "대기열 토큰이 만료되었습니다."),
+    QUEUE_TOKEN_MATCH_MISMATCH(HttpStatus.FORBIDDEN, "QUEUE_TOKEN_MATCH_MISMATCH", "토큰의 회차와 요청 회차가 일치하지 않습니다."),
 
     // ====== BOOKING ======
     BOOKING_NOT_FOUND(HttpStatus.NOT_FOUND, "BOOKING_NOT_FOUND", "존재하지 않는 예매입니다."),

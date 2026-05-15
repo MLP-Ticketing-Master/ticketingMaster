@@ -3,6 +3,7 @@ package com.ticketmaster.backend.domain.queue.service;
 import com.ticketmaster.backend.domain.match.entity.Match;
 import com.ticketmaster.backend.domain.match.repository.MatchRepository;
 import com.ticketmaster.backend.domain.queue.dto.response.QueueEnterResponse;
+import com.ticketmaster.backend.domain.queue.dto.response.QueueStatusResponse;
 import com.ticketmaster.backend.domain.queue.entity.Queue;
 import com.ticketmaster.backend.domain.queue.repository.QueueRedisRepository;
 import com.ticketmaster.backend.domain.queue.repository.QueueRepository;
@@ -16,16 +17,19 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Map;
 import java.util.UUID;
 
 /**
  * 대기열 진입 서비스
- *
+ * <p>
  * 역할 분담
- *   - Redis 동작 : QueueRedisRepository 에 위임
- *   - DB  동작 : QueueRepository 에 위임
- *   - 이 서비스 : 흐름 (검증 → 토큰 발급 → Redis 등록 → DB 이력 저장)
+ * - Redis 동작 : QueueRedisRepository 에 위임
+ * - DB  동작 : QueueRepository 에 위임
+ * - 이 서비스 : 흐름 (검증 → 토큰 발급 → Redis 등록 → DB 이력 저장)
  */
 @Slf4j
 @Service
@@ -44,9 +48,17 @@ public class QueueService {
     @Value("${queue.admission-interval-seconds}")
     private int admissionIntervalSeconds;
 
-    /** 대기열 토큰 TTL(초) — application.yaml 의 queue.token-ttl-seconds */
+    /**
+     * 대기열 토큰 TTL(초) — application.yaml 의 queue.token-ttl-seconds
+     */
     @Value("${queue.token-ttl-seconds}")
     private int tokenTtlSeconds;
+
+    /**
+     * ALLOWED 토큰 TTL(초) — application.yaml 의 queue.session-seconds
+     */
+    @Value("${queue.session-seconds}")
+    private int sessionSeconds;
 
     private final MatchRepository matchRepository;
     private final UserRepository userRepository;
@@ -72,10 +84,9 @@ public class QueueService {
         Match match = matchRepository.findById(matchId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MATCH_NOT_FOUND));
 
-        // 2) 예매 가능 시간 검증 — 현재 시각이 bookingOpenAt 이전이면 거절
+        // 2) 예매 가능 시간 검증 — status OPEN + bookingOpenAt ≤ now ≤ bookingCloseAt
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime bookingOpenAt = match.getEvent().getBookingOpenAt();
-        if (now.isBefore(bookingOpenAt)) {
+        if (!match.getEvent().isBookableAt(now)) {
             throw new BusinessException(ErrorCode.BOOKING_NOT_OPEN);
         }
 
@@ -106,5 +117,74 @@ public class QueueService {
                 matchId, userId, token, queueNumber);
 
         return QueueEnterResponse.of(token, queueNumber, remainingAhead, estimatedWaitSeconds, now);
+    }
+
+    /**
+     * 대기열 상태 조회 (폴링용 — 프론트가 3초 단위로 호출)
+     * <p>
+     * 흐름
+     * 1) 회차 존재 검증 — 없으면 MATCH_NOT_FOUND
+     * 2) 토큰 형식 검증 (null/빈 문자열이면 QUEUE_TOKEN_NOT_FOUND)
+     * 3) Redis Hash 에서 토큰 메타 조회 — 없으면 TTL 만료로 간주 (QUEUE_TOKEN_EXPIRED)
+     * 4) 토큰의 matchId 와 요청 matchId 일치 확인 — 불일치 시 QUEUE_TOKEN_MATCH_MISMATCH
+     * 5) 상태 판정: ALLOWED → WAITING → EXPIRED 순서로 확인
+     * 6) 상태별 응답 조립
+     */
+    @Transactional(readOnly = true)
+    public QueueStatusResponse getStatus(Long matchId, String token) {
+
+        // 1) 회차 존재 검증 — 잘못된 matchId 면 404
+        if (!matchRepository.existsById(matchId)) {
+            throw new BusinessException(ErrorCode.MATCH_NOT_FOUND);
+        }
+
+        // 2) 토큰 형식 검증 — 헤더 누락 / 빈 문자열
+        if (token == null || token.isBlank()) {
+            throw new BusinessException(ErrorCode.QUEUE_TOKEN_NOT_FOUND);
+        }
+
+        // 3) 토큰 메타 조회 — Redis 키 자체가 없으면 TTL 만료
+        Map<String, String> meta = queueRedis.getTokenMeta(token);
+        if (meta.isEmpty()) {
+            throw new BusinessException(ErrorCode.QUEUE_TOKEN_EXPIRED);
+        }
+
+        // 4) 토큰의 matchId 와 요청 matchId 일치 확인
+        long tokenMatchId = Long.parseLong(meta.get("matchId"));
+        if (tokenMatchId != matchId) {
+            throw new BusinessException(ErrorCode.QUEUE_TOKEN_MATCH_MISMATCH);
+        }
+
+        // 진입 시각 디코딩 — Hash 에는 시각이 long(밀리초) 문자열로 저장돼있어서
+        // LocalDateTime 으로 변환. 아래 모든 분기에서 쓰이므로 한 번만 처리
+        long enteredAtMs = Long.parseLong(meta.get("enteredAt"));
+        LocalDateTime enteredAt = LocalDateTime.ofInstant(
+                Instant.ofEpochMilli(enteredAtMs), ZoneId.systemDefault());
+
+        // 5-1) ALLOWED 인지 먼저 확인
+        if (queueRedis.isAllowed(matchId, token)) {
+            // Hash 의 allowedAt 사용 — 스케줄러가 승격 시 채워둠
+            String allowedAtStr = meta.get("allowedAt");
+            long allowedAtMs = allowedAtStr != null
+                    ? Long.parseLong(allowedAtStr)
+                    : System.currentTimeMillis();
+            LocalDateTime allowedAt = LocalDateTime.ofInstant(
+                    Instant.ofEpochMilli(allowedAtMs), ZoneId.systemDefault());
+            LocalDateTime entryDeadline = allowedAt.plusSeconds(sessionSeconds);
+            return QueueStatusResponse.allowed(enteredAt, allowedAt, entryDeadline);
+        }
+
+        // 5-2) WAITING 인지 확인
+        if (queueRedis.isWaiting(matchId, token)) {
+            long queueNumber = queueRedis.getRank(matchId, token);
+            long remainingAhead = Math.max(0L, queueNumber - 1L);
+            long estimatedWaitSeconds =
+                    (remainingAhead / admissionBatchSize) * admissionIntervalSeconds;
+            return QueueStatusResponse.waiting(queueNumber, remainingAhead, estimatedWaitSeconds, enteredAt);
+        }
+
+        // 5-3) Sorted Set 에서 빠졌고 allowed 키도 만료 → 권한 만료
+        //      (Hash 는 30분 TTL 이라 아직 살아있어서 여기까지 도달)
+        return QueueStatusResponse.expired(enteredAt);
     }
 }

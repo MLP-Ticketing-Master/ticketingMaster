@@ -1,9 +1,13 @@
 package com.ticketmaster.backend.domain.queue.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ticketmaster.backend.domain.queue.dto.response.QueueEnterResponse;
+import com.ticketmaster.backend.domain.queue.dto.response.QueueStatusResponse;
 import com.ticketmaster.backend.domain.queue.service.QueueService;
 import com.ticketmaster.backend.domain.user.entity.User;
 import com.ticketmaster.backend.global.config.SecurityConfig;
+import com.ticketmaster.backend.global.exception.BusinessException;
+import com.ticketmaster.backend.global.exception.ErrorCode;
 import com.ticketmaster.backend.global.security.auth.CustomUserDetails;
 import com.ticketmaster.backend.global.security.auth.CustomUserDetailsService;
 import com.ticketmaster.backend.global.security.jwt.JwtTokenProvider;
@@ -12,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
@@ -19,22 +24,28 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDateTime;
 
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * TK-82 대기열 진입 컨트롤러 슬라이스 테스트
+ * TK-82, TK-88 대기열 컨트롤러 슬라이스 테스트
  */
 @WebMvcTest(QueueController.class)
 @Import(SecurityConfig.class)
-@DisplayName("대기열 진입 컨트롤러 슬라이스 테스트")
+@DisplayName("대기열 컨트롤러 슬라이스 테스트")
 class QueueControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper om;
 
     @MockitoBean
     private QueueService queueService;
@@ -44,6 +55,8 @@ class QueueControllerTest {
 
     @MockitoBean
     private CustomUserDetailsService customUserDetailsService;
+
+    // ---------- POST /queue/{matchId}/enter ---------------
 
     @Test
     @DisplayName("TC-05: 정상 응답 → 200 + queueToken 포함")
@@ -89,6 +102,47 @@ class QueueControllerTest {
                 .andExpect(jsonPath("$.remainingAhead").value(49))
                 .andExpect(jsonPath("$.estimatedWaitSeconds").value(7))
                 .andExpect(jsonPath("$.enteredAt").exists());
+    }
+
+    // --------- GET /queue/{matchId}/status ----------------
+
+    @Test
+    @WithMockUser(roles = "USER")
+    @DisplayName("TC-14: 정상 응답 200")
+    void 상태_정상_응답() throws Exception {
+        // given — service 가 ALLOWED 응답 반환하도록 stub
+        QueueStatusResponse response = QueueStatusResponse.allowed(
+                LocalDateTime.of(2026, 5, 14, 18, 0),    // enteredAt
+                LocalDateTime.of(2026, 5, 14, 18, 5),    // allowedAt
+                LocalDateTime.of(2026, 5, 14, 18, 15)    // entryDeadline (allowedAt + 10분)
+        );
+        given(queueService.getStatus(eq(10L), eq("test-token"))).willReturn(response);
+
+        // when & then — Queue-Token 헤더 포함해서 호출
+        mockMvc.perform(get("/queue/{matchId}/status", 10L)
+                        .with(csrf())
+                        .header("Queue-Token", "test-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ALLOWED"))
+                .andExpect(jsonPath("$.allowedAt").exists())
+                .andExpect(jsonPath("$.entryDeadline").exists())
+                // ALLOWED 응답엔 순번 관련 필드는 null
+                .andExpect(jsonPath("$.queueNumber").doesNotExist());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    @DisplayName("TC-15: Queue-Token 헤더 없이 호출 → 401 QUEUE_TOKEN_NOT_FOUND")
+    void 헤더_누락() throws Exception {
+        // given — 컨트롤러가 token=null 로 service 호출 → service 가 예외 던짐
+        given(queueService.getStatus(eq(10L), isNull()))
+                .willThrow(new BusinessException(ErrorCode.QUEUE_TOKEN_NOT_FOUND));
+
+        // when & then — 헤더 없이 호출
+        mockMvc.perform(get("/queue/{matchId}/status", 10L)
+                        .with(csrf()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("QUEUE_TOKEN_NOT_FOUND"));
     }
 
     // ──────── 헬퍼 ────────────────────────────────────────

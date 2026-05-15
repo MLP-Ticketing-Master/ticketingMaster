@@ -79,4 +79,13 @@ public class Queue extends BaseEntity {
         q.expiresAt = expiresAt;
         return q;
     }
+
+    /**
+     * 대기열 상태를 ALLOWED 로 전환
+     * 스케줄러가 200명 단위로 승격할 때 호출
+     */
+    public void markAllowed(LocalDateTime allowedAt) {
+        this.status = QueueStatus.ALLOWED;
+        this.allowedAt = allowedAt;
+    }
 }
