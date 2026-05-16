@@ -66,7 +66,11 @@ public class AdminMatchService {
             throw new BusinessException(ErrorCode.INVALID_TIME_RANGE);
         }
 
-        // 예외-4) 존재하지 않는 팀인 경우
+        // 예외-4) 예매 시간 검증
+        validateBookingTimes(request.getBookingOpenAt(), request.getBookingCloseAt(),
+                request.getCancelAvailableUntil(), request.getStartAt());
+
+        // 예외-5) 존재하지 않는 팀인 경우
         Team homeTeam = null;
         if (request.getHomeTeamId() != null) {
             homeTeam = teamRepo.findById(request.getHomeTeamId())
@@ -133,6 +137,15 @@ public class AdminMatchService {
             throw new BusinessException(ErrorCode.INVALID_TIME_RANGE);
         }
 
+        // 예외-4) 예매 시간 검증 (request 값이 있으면 그 값, 없으면 기존 값으로 비교)
+        LocalDateTime newBookingOpen = request.getBookingOpenAt() != null
+                ? request.getBookingOpenAt() : match.getBookingOpenAt();
+        LocalDateTime newBookingClose = request.getBookingCloseAt() != null
+                ? request.getBookingCloseAt() : match.getBookingCloseAt();
+        LocalDateTime newCancelUntil = request.getCancelAvailableUntil() != null
+                ? request.getCancelAvailableUntil() : match.getCancelAvailableUntil();
+        validateBookingTimes(newBookingOpen, newBookingClose, newCancelUntil, newStart);
+
         match.update(request, homeTeam, awayTeam); // 엔티티 상태 변경
 
         // JPA 더티 체킹에 의해 트랜잭션 종료 시 자동 UPDATE 쿼리가 날아갑니다. (save 호출 불필요)
@@ -165,9 +178,40 @@ public class AdminMatchService {
                 .matchDate(req.getMatchDate())
                 .startAt(req.getStartAt())
                 .endAt(req.getEndAt())
+                .bookingOpenAt(req.getBookingOpenAt())
+                .bookingCloseAt(req.getBookingCloseAt())
+                .cancelAvailableUntil(req.getCancelAvailableUntil())
                 .homeTeam(home)
                 .awayTeam(away)
                 .status(MatchStatus.SCHEDULED)
                 .build();
+    }
+
+    /**
+     * 예매 시간 공통 검증
+     * - bookingOpenAt < bookingCloseAt
+     * - bookingCloseAt <= matchStart (경기 시작 전에 예매 마감)
+     * - cancelAvailableUntil(있다면) 은 예매 윈도우 안: bookingOpenAt <= cancel <= bookingCloseAt
+     */
+    private void validateBookingTimes(LocalDateTime bookingOpenAt,
+                                      LocalDateTime bookingCloseAt,
+                                      LocalDateTime cancelAvailableUntil,
+                                      LocalDateTime matchStart) {
+        if (bookingOpenAt != null && bookingCloseAt != null
+                && !bookingCloseAt.isAfter(bookingOpenAt)) {
+            throw new BusinessException(ErrorCode.INVALID_DATE_RANGE);
+        }
+        if (bookingCloseAt != null && matchStart != null
+                && bookingCloseAt.isAfter(matchStart)) {
+            throw new BusinessException(ErrorCode.INVALID_DATE_RANGE);
+        }
+        if (cancelAvailableUntil != null && bookingOpenAt != null
+                && cancelAvailableUntil.isBefore(bookingOpenAt)) {
+            throw new BusinessException(ErrorCode.INVALID_DATE_RANGE);
+        }
+        if (cancelAvailableUntil != null && bookingCloseAt != null
+                && cancelAvailableUntil.isAfter(bookingCloseAt)) {
+            throw new BusinessException(ErrorCode.INVALID_DATE_RANGE);
+        }
     }
 }

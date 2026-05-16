@@ -129,6 +129,8 @@ public class AdminMatchControllerTest {
                 .matchDate(LocalDate.of(2026, 4, 26))
                 .startAt(LocalDateTime.of(2026, 4, 26, 17, 0))
                 .endAt(LocalDateTime.of(2026, 4, 26, 19, 0))
+                .bookingOpenAt(LocalDateTime.of(2026, 4, 20, 18, 0))
+                .bookingCloseAt(LocalDateTime.of(2026, 4, 26, 16, 0))
                 .homeTeamId(10L)
                 .awayTeamId(20L)
                 .build();
@@ -143,6 +145,8 @@ public class AdminMatchControllerTest {
                 .matchDate(LocalDate.of(2026, 4, 26))
                 .startAt(LocalDateTime.of(2026, 4, 26, 17, 0))
                 .endAt(LocalDateTime.of(2026, 4, 26, 19, 0))
+                .bookingOpenAt(LocalDateTime.of(2026, 4, 20, 18, 0))
+                .bookingCloseAt(LocalDateTime.of(2026, 4, 26, 16, 0))
                 .status(MatchStatus.SCHEDULED) // 엔티티 Builder에 정의된 기본값(SCHEDULED) 반영
                 .deletedAt(null)
                 .build();

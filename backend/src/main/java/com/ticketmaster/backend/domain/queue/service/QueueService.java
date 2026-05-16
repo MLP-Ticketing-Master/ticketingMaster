@@ -84,9 +84,9 @@ public class QueueService {
         Match match = matchRepository.findById(matchId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MATCH_NOT_FOUND));
 
-        // 2) 예매 가능 시간 검증 — status OPEN + bookingOpenAt ≤ now ≤ bookingCloseAt
+        // 2) 예매 가능 시간 검증 — event.status OPEN + match.status SCHEDULED + bookingOpenAt ≤ now ≤ bookingCloseAt
         LocalDateTime now = LocalDateTime.now();
-        if (!match.getEvent().isBookableAt(now)) {
+        if (!match.isBookableAt(now)) {
             throw new BusinessException(ErrorCode.BOOKING_NOT_OPEN);
         }
 

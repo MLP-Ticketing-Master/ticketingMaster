@@ -13,7 +13,6 @@ import lombok.Getter;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Builder
@@ -32,7 +31,6 @@ public class EventDetailResponse {
     private String ageRating;
     private String bookingNotice;
     private int maxTicketsPerUser;
-    private LocalDateTime cancelAvailableUntil;
     private int cancelFee;
     private EventStatus status;
 
@@ -56,7 +54,6 @@ public class EventDetailResponse {
                 .ageRating(event.getAgeRating())
                 .bookingNotice(event.getBookingNotice())
                 .maxTicketsPerUser(event.getMaxTicketsPerUser())
-                .cancelAvailableUntil(event.getCancelAvailableUntil())
                 .cancelFee(event.getCancelFee())
                 .status(event.getStatus())
                 .seatGrades(
