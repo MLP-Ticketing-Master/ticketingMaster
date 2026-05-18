@@ -43,10 +43,11 @@ export const useSignupMutation = () => {
   return useMutation({
     mutationFn: useMock
       ? async (body: SignupRequest) => ({
+        
           accessToken: "mock-token",
           user: {
             ...MOCK_USER,
-            name: body.name,
+            nickname: body.nickname,
             email: body.email,
             phone: body.phone,
           },

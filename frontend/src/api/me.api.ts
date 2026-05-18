@@ -8,7 +8,7 @@ export interface UserStats {
 }
 
 export interface UpdateProfileRequest {
-  name: string;
+  nickname: string;
   email: string;
   phone: string;
 }

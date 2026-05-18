@@ -16,10 +16,10 @@ export default function ProfilePage() {
 
       <div className="flex items-center gap-5">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 text-2xl font-bold text-[#3C76FE]">
-          {profile.name.charAt(0)}
+          {profile.nickname.charAt(0)}
         </div>
         <div>
-          <p className="text-lg font-bold">{profile.name}</p>
+          <p className="text-lg font-bold">{profile.nickname}</p>
           <p className="text-sm text-muted-foreground">
             가입일: {formatDate(profile.joinedAt)}
           </p>

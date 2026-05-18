@@ -65,7 +65,7 @@ export function Header() {
             </button>
           )}
           {isAuth ? (
-            <span className="text-sm font-medium">{user?.name}님</span>
+            <span className="text-sm font-medium">{user?.nickname}님</span>
           ) : (
             <Button
               size="sm"

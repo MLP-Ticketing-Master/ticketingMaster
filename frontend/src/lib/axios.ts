@@ -57,7 +57,7 @@ http.interceptors.response.use(
       isRefreshing = true;
  
       try {
-        // 🔄 토큰 갱신 API 호출
+        // 토큰 갱신 API 호출
         const response = await axios.post<{
           accessToken: string;
           user: any;
