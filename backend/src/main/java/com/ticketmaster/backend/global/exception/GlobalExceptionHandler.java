@@ -1,6 +1,7 @@
 package com.ticketmaster.backend.global.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
@@ -83,7 +84,19 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.of(ErrorCode.FORBIDDEN));
     }
 
-    /** 6) 예상하지 못한 서버 예외 */
+    /**
+     * 6) DB UNIQUE 위반 — BookingSeat (match_id, seat_id) 중복 예매 차단
+     * BookingService 에서 BookingSeat 저장 시 발생 → SEAT_ALREADY_RESERVED (409)
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException e) {
+        log.warn("[DataIntegrityViolationException] {}", e.getMessage());
+        return ResponseEntity
+                .status(ErrorCode.SEAT_ALREADY_RESERVED.getHttpStatus())
+                .body(ErrorResponse.of(ErrorCode.SEAT_ALREADY_RESERVED));
+    }
+
+    /** 7) 예상하지 못한 서버 예외 */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnknown(Exception e) {
         log.error("[UnhandledException] ", e);

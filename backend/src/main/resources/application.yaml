@@ -33,6 +33,8 @@ spring:
           batch_versioned_data: true
         order_inserts: true            # INSERT 문 정렬 (배치 효율 ↑)
         order_updates: true
+    flyway:
+      enabled: true
 
   mail:
     host: smtp.gmail.com

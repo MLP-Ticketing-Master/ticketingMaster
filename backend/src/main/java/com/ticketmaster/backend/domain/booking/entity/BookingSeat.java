@@ -7,9 +7,23 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * 예매–좌석 N:M 매핑 + 가격 스냅샷
+ *
+ * (match_id, seat_id) UNIQUE 제약으로 동일 좌석의 이중 예매를 DB 레벨에서 차단
+ * → DataIntegrityViolationException → GlobalExceptionHandler → SEAT_ALREADY_RESERVED (409)
+ */
 @Getter
 @Entity
-@Table(name = "booking_seats")
+@Table(
+        name = "booking_seats",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_booking_seat_match_seat",
+                        columnNames = {"match_id", "seat_id"}
+                )
+        }
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class BookingSeat extends BaseEntity {
 
@@ -28,6 +42,13 @@ public class BookingSeat extends BaseEntity {
     @JoinColumn(name = "seat_id", nullable = false)
     private Seat seat;
 
+    /**
+     * UNIQUE 제약의 match_id 컬럼 — Seat.match.id 를 비정규화해서 저장
+     * Seat → Match FK 를 타지 않고도 DB가 유니크 검사 가능
+     */
+    @Column(name = "match_id", nullable = false)
+    private Long matchId;
+
     /** 예매 시점 가격 스냅샷 (등급 가격 변동에도 유지) */
     @Column(name = "seat_price", nullable = false)
     private int seatPrice;
@@ -35,6 +56,7 @@ public class BookingSeat extends BaseEntity {
     public static BookingSeat of(Seat seat, int seatPrice) {
         BookingSeat bs = new BookingSeat();
         bs.seat = seat;
+        bs.matchId = seat.getMatch().getId();
         bs.seatPrice = seatPrice;
         return bs;
     }
