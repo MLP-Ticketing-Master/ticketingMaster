@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { Seat } from "@/types";
 
-export type BookingStep = "ZONE" | "SEAT";
+export type BookingStep = "ZONE" | "SEAT" | "QUEUE" | "PAYMENT";
 
 interface BookingFlowState {
   open: boolean;
@@ -40,6 +40,8 @@ export const useBookingFlowStore = create<BookingFlowState>((set, get) => ({
   closeFlow: () => set({ ...initial }),
   goToSeat: (sectionId) => set({ step: "SEAT", sectionId }),
   goBackToZone: () => set({ step: "ZONE", sectionId: null }),
+  goToQueue: () => set({ step: "QUEUE" }),
+  goToPayment: () => set({ step: "PAYMENT" }),
   toggleSeat: (seat) => {
     const exists = get().selectedSeats.find((s) => s.id === seat.id);
     set({

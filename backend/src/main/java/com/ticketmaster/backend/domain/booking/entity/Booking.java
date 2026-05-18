@@ -66,7 +66,23 @@ public class Booking extends BaseEntity {
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BookingSeat> bookingSeats = new ArrayList<>();
 
-    // 상태 변경 메서드
+    // ===== 생성 =====
+
+    /**
+     * 예매 생성 팩토리 메서드
+     * BookingService.createBooking() 에서 호출
+     */
+    public static Booking create(User user, Match match, String bookingNumber, int totalPrice) {
+        Booking b = new Booking();
+        b.user = user;
+        b.match = match;
+        b.bookingNumber = bookingNumber;
+        b.totalPrice = totalPrice;
+        b.status = BookingStatus.PENDING;
+        return b;
+    }
+
+    // ===== 상태 변경 =====
 
     /** 예매 확정 (결제 성공 시 호출) - PENDING → CONFIRMED */
     public void confirm() {
