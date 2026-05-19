@@ -1,6 +1,5 @@
 package com.ticketmaster.backend.domain.seat.controller;
 
-import com.ticketmaster.backend.domain.queue.util.QueueTokenValidator;
 import com.ticketmaster.backend.domain.seat.dto.request.SeatReleaseRequest;
 import com.ticketmaster.backend.domain.seat.dto.request.SeatReserveRequest;
 import com.ticketmaster.backend.domain.seat.dto.response.SeatReleaseResponse;
@@ -33,7 +32,6 @@ public class SeatController {
 
     private final SeatService seatService;
     private final SeatReservationService seatReservationService;
-    private final QueueTokenValidator queueTokenValidator;
 
     // ─── 조회 ────────────────────────────────────────
 
@@ -64,12 +62,7 @@ public class SeatController {
     public SeatReserveResponse reserve(
             @PathVariable Long matchId,
             @AuthenticationPrincipal CustomUserDetails principal,
-            @RequestHeader(value = "Queue-Token", required = false) String queueToken,
             @Valid @RequestBody SeatReserveRequest request) {
-
-        // 큐 통과 검증 — ALLOWED 상태 토큰만 좌석 점유 가능
-        queueTokenValidator.validateAllowed(matchId, queueToken);
-
         Long userId = principal.getUser().getId();
         return seatReservationService.reserve(matchId, userId, request.getSeatIds());
     }
