@@ -21,7 +21,9 @@ import java.util.List;
  * - Match : Booking = 1:N (한 회차에 여러 예매 발생)
  * - Booking : BookingSeat = 1:N (한 예매에 여러 좌석 포함 가능)
  *
- * 상태 흐름: PENDING → CONFIRMED (또는 CANCELED)
+ * 상태 흐름:
+ * PENDING → CONFIRMED / CANCELED / EXPIRED
+ * CONFIRMED → CANCELED
  *
  * ※ Booking은 "좌석에 대한 권리", Payment는 "돈 거래" — 별개 도메인
  */
@@ -62,6 +64,10 @@ public class Booking extends BaseEntity {
     @Column(name = "canceled_at")
     private LocalDateTime canceledAt;
 
+    /** 낙관적 락 — 자동 만료 스케줄러와 사용자 결제 confirm 동시 발생 시 lost update 방지 */
+    @Version
+    private Long version;
+
     /** 한 예매에 여러 좌석 (1:N, 양방향) */
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BookingSeat> bookingSeats = new ArrayList<>();
@@ -92,12 +98,21 @@ public class Booking extends BaseEntity {
         this.status = BookingStatus.CONFIRMED;
     }
 
-    /** 예매 취소 (사용자 취소 / 결제 실패 / 타임아웃) */
+    /** 예매 취소 (사용자 / 관리자 취소 공용) */
     public void cancel() {
-        if (this.status == BookingStatus.CANCELED) {
-            throw new BusinessException(ErrorCode.BOOKING_ALREADY_CANCELED);
+        if (this.status != BookingStatus.PENDING && this.status != BookingStatus.CONFIRMED) {
+            throw new BusinessException(ErrorCode.BOOKING_CANNOT_CANCEL);
         }
         this.status = BookingStatus.CANCELED;
+        this.canceledAt = LocalDateTime.now();
+    }
+
+    /** 결제 시간 초과 자동 만료 — PENDING → EXPIRED */
+    public void expire() {
+        if (this.status != BookingStatus.PENDING) {
+            throw new BusinessException(ErrorCode.BOOKING_NOT_PENDING);
+        }
+        this.status = BookingStatus.EXPIRED;
         this.canceledAt = LocalDateTime.now();
     }
 

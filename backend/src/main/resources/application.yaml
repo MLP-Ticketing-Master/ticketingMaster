@@ -83,3 +83,10 @@ queue:
   # ALLOWED 토큰 만료(초) — 좌석 페이지 진입 후 좌석 점유까지의 데드라인
   # (좌석 점유 성공 시 권한이 좌석 TTL 7분으로 인계되어 결제까지 보호)
   session-seconds: 600          # 10분
+
+booking:
+  expiry-scan-interval-ms: 60000   # 1분 주기
+
+toss:
+  secret-key: ${TOSS_SECRET_KEY}
+  api-base-url: https://api.tosspayments.com/v1
