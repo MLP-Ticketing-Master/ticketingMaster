@@ -39,10 +39,8 @@ public class SeedData implements CommandLineRunner {
     private final SectionRepository sectionRepository;
     private final SeatRepository seatRepository;
 
-    private Match match;
-    private SeatGrade VIPGrade;
-    private SeatGrade RGrade;
-    private SeatGrade SGrade;
+    private Match match1, match2, match3, match4;
+    private SeatGrade VIPGrade, RGrade, SGrade;
 
     @Transactional
     @Override
@@ -50,43 +48,86 @@ public class SeedData implements CommandLineRunner {
         // 실행전 테이블 초기화 코드
         resetData();
 
-        // 1. Event 생성
-        Event event = createEvent();
+        // 날짜 기준점
+        LocalDate today = LocalDate.now();
+        LocalDateTime now = LocalDateTime.now();
+
+        // 1. Event 생성 (오늘 포함, 넉넉하게 -30일 ~ +60일)
+        Event event = createEvent(today.minusDays(30), today.plusDays(60));
         eventRepository.save(event);
 
-        // Team 생성
+        // 2. Team 생성
         Team homeTeam = createTeam("T1");
         Team awayTeam = createTeam("Gen.G");
         teamRepository.save(homeTeam);
         teamRepository.save(awayTeam);
 
-        // Match 생성
-        match = createMatch(event, homeTeam, awayTeam);
-        matchRepository.save(match);
+        // 3. Match 4개 생성
+        // Case 1: 예매 시작 전 (예매 오픈: +7일, 경기: +21일)
+        match1 = createMatch(event, homeTeam, awayTeam,
+                "1경기 - 예매 대기",
+                today.plusDays(21),
+                now.plusDays(21).withHour(17).withMinute(0),
+                now.plusDays(21).withHour(21).withMinute(0),
+                now.plusDays(7),                      // 예매 시작: +7일
+                now.plusDays(20).withHour(23).withMinute(59), // 예매 종료: 경기 전날
+                now.plusDays(20).withHour(17).withMinute(0)   // 취소 가능: 경기 전날 17시
+        );
 
-        // SeatGrade 생성
+        // Case 2: 예매 진행 중 (예매 오픈: -1일, 경기: +7일)
+        match2 = createMatch(event, homeTeam, awayTeam,
+                "2경기 - 예매 진행 중",
+                today.plusDays(7),
+                now.plusDays(7).withHour(17).withMinute(0),
+                now.plusDays(7).withHour(21).withMinute(0),
+                now.minusDays(1),                     // 예매 시작: 어제
+                now.plusDays(6).withHour(23).withMinute(59),  // 예매 종료: 경기 전날
+                now.plusDays(6).withHour(17).withMinute(0)    // 취소 가능: 경기 전날 17시
+        );
+
+        // Case 3: 예매 마감, 경기 전 (예매 오픈: -14일, 예매 종료: -1일, 경기: +1일)
+        match3 = createMatch(event, homeTeam, awayTeam,
+                "3경기 - 예매 마감",
+                today.plusDays(1),
+                now.plusDays(1).withHour(17).withMinute(0),
+                now.plusDays(1).withHour(21).withMinute(0),
+                now.minusDays(14),                    // 예매 시작: -14일
+                now.minusDays(1).withHour(23).withMinute(59), // 예매 종료: 어제
+                now.minusDays(1).withHour(17).withMinute(0)   // 취소 가능: 어제 17시
+        );
+
+        // Case 4: 예매 마감, 경기 종료 (예매 오픈: -21일, 경기: -7일)
+        match4 = createMatch(event, homeTeam, awayTeam,
+                "4경기 - 경기 종료",
+                today.minusDays(7),
+                now.minusDays(7).withHour(17).withMinute(0),
+                now.minusDays(7).withHour(21).withMinute(0),
+                now.minusDays(21),                    // 예매 시작: -21일
+                now.minusDays(8).withHour(23).withMinute(59), // 예매 종료: 경기 전날
+                now.minusDays(8).withHour(17).withMinute(0)   // 취소 가능: 경기 전날 17시
+        );
+
+        matchRepository.saveAll(List.of(match1, match2, match3, match4));
+
+        // 4. SeatGrade 생성
         VIPGrade = createSeatGrade(event, "VIP", 100000, "FF0000");
         RGrade = createSeatGrade(event, "R", 70000, "00FF00");
         SGrade = createSeatGrade(event, "S", 50000, "0000FF");
-        seatGradeRepository.save(VIPGrade);
-        seatGradeRepository.save(RGrade);
-        seatGradeRepository.save(SGrade);
+        seatGradeRepository.saveAll(List.of(VIPGrade, RGrade, SGrade));
 
-        // Section 생성
+        // 5. Section 생성 (Event 단위 — 매치 공유)
         Section sectionA = createSection(event, "A구역", 1, null);
         Section sectionB = createSection(event, "B구역", 2, null);
         Section sectionC = createSection(event, "C구역", 3, null);
         Section sectionD = createSection(event, "D구역", 4, null);
-        sectionRepository.save(sectionA);
-        sectionRepository.save(sectionB);
-        sectionRepository.save(sectionC);
-        sectionRepository.save(sectionD);
+        sectionRepository.saveAll(List.of(sectionA, sectionB, sectionC, sectionD));
 
-        // Seat 생성
-        createSeat(sectionA);
-        createSeat(sectionB);
-        createSeat(sectionC);
-        createSeat(sectionD);
+        // 6. Seat 생성 (Match 단위 — 매치마다 독립적인 좌석)
+        for (Match match : List.of(match1, match2, match3, match4)) {
+            for (Section section : List.of(sectionA, sectionB, sectionC, sectionD)) {
+                createSeat(match, section);
+            }
+        }
 
         log.info("[SeedData] ✅ 시드 데이터 삽입 완료!");
     }
@@ -94,16 +135,16 @@ public class SeedData implements CommandLineRunner {
     /**
      * Event 엔티티 생성 및 반환 메소드
      */
-    private Event createEvent() {
-        Event event = Event.builder()
+    private Event createEvent(LocalDate startDate, LocalDate endDate) {
+        return Event.builder()
                 .title("2026 LCK Spring 결승전")
                 .sportType(SportType.LOL)
                 .place("LOL Park")
                 .thumbnailUrl("lck_thumb.png")
                 .detailImageUrl("lck_detail.png")
                 .description("2026 LoL 챔피언스 코리아 스프링 시즌의 대미를 장식할 결승전!")
-                .startDate(LocalDate.of(2026, 4, 25))
-                .endDate(LocalDate.of(2026, 4, 25))
+                .startDate(startDate)
+                .endDate(endDate)
                 .matchDurationText("약 240분")
                 .ageRating("12세 이용가")
                 .bookingNotice("1인당 최대 2매 예매 가능합니다.")
@@ -111,113 +152,90 @@ public class SeedData implements CommandLineRunner {
                 .cancelFee(1000)
                 .status(EventStatus.OPEN)
                 .build();
-
-        return event;
     }
 
     /**
      * Team 엔티티 생성 및 반환 메소드
      */
     private Team createTeam(String name) {
-        Team team = Team.builder()
+        return Team.builder()
                 .name(name)
                 .logoImageUrl(name.toLowerCase().replace('.', ' ').strip() + "_logo.png")
                 .sportType(SportType.LOL)
                 .build();
-
-        return team;
     }
 
     /**
      * Match 엔티티 생성 및 반환 메소드
      */
-    private Match createMatch(Event event, Team homeTeam, Team awayTeam) {
-        Match match = Match.builder()
+    private Match createMatch(
+            Event event, Team homeTeam, Team awayTeam,
+            String roundLabel,
+            LocalDate matchDate,
+            LocalDateTime startAt,
+            LocalDateTime endAt,
+            LocalDateTime bookingOpenAt,
+            LocalDateTime bookingCloseAt,
+            LocalDateTime cancelAvailableUntil
+    ) {
+        return Match.builder()
                 .event(event)
-                .roundLabel("플레이오프 제 3 경기")
+                .roundLabel(roundLabel)
                 .homeTeam(homeTeam)
                 .awayTeam(awayTeam)
-                .matchDate(LocalDate.of(2026, 4, 25))
-                .startAt(LocalDateTime.of(2026, 4, 25, 17, 0))
-                .endAt(LocalDateTime.of(2026, 4, 25, 21, 0))
-                .bookingOpenAt(LocalDateTime.of(2026, 4, 10, 18, 0))
-                .bookingCloseAt(LocalDateTime.of(2026, 4, 24, 23, 59))
-                .cancelAvailableUntil(LocalDateTime.of(2026, 4, 24, 17, 0))
-                .status(MatchStatus.SCHEDULED)
+                .matchDate(matchDate)
+                .startAt(startAt)
+                .endAt(endAt)
+                .bookingOpenAt(bookingOpenAt)
+                .bookingCloseAt(bookingCloseAt)
+                .cancelAvailableUntil(cancelAvailableUntil)
+                .status(resolveMatchStatus(startAt, endAt)) // 자동 결정
                 .build();
-
-        return match;
     }
 
     /**
      * SeatGrade 엔티티 생성 및 반환 메소드
      */
     private SeatGrade createSeatGrade(Event event, String gradeCode, int price, String colorHex) {
-        SeatGrade seatGrade = SeatGrade.create(
-                event,
-                gradeCode,
-                price,
-                colorHex
-        );
-
-        return seatGrade;
+        return SeatGrade.create(event, gradeCode, price, colorHex);
     }
 
     /**
      * Section 엔티티 생성 및 반환 메소드
      */
     private Section createSection(Event event, String name, int displayOrder, String description) {
-        Section section = Section.create(
-                event,
-                name,
-                displayOrder,
-                description
-        );
-
-        return section;
+        return Section.create(event, name, displayOrder, description);
     }
 
     /**
      * 구역별 좌석 생성 메소드 (100석 씩)
      */
-    public void createSeat(Section section) {
+    public void createSeat(Match match, Section section) {
         List<Seat> seatList = new ArrayList<>();
 
         for (int r = 1; r <= 10; r++) {
             for (int c = 1; c <= 10; c++) {
-                SeatGrade seatGrade;
-
-                switch (r) {
-                    // 앞열 2줄은 VIP 등급
-                    case 1, 2:
-                        seatGrade = VIPGrade;
-                        break;
-                    // 다음 3줄은 R 등급
-                    case 3, 4, 5:
-                        seatGrade = RGrade;
-                        break;
-                    // 나머지는 S 등급
-                    default:
-                        seatGrade = SGrade;
-                        break;
-                }
+                SeatGrade seatGrade = switch (r) {
+                    case 1, 2    -> VIPGrade;
+                    case 3, 4, 5 -> RGrade;
+                    default      -> SGrade;
+                };
 
                 Seat seat = Seat.create(
                         match,
                         section,
-                        seatGrade, // 위에서 지정한 좌석 등급
-                        Character.toString((char)('A' + (r-1))), // 행: A, B, C..
-                        c,  // 열: 1, 2, 3...
-                        createSeatCode(seatGrade.getGradeCode(), section.getName(), Character.toString((char)('A' + (r-1))), c)
+                        seatGrade,
+                        Character.toString((char) ('A' + (r - 1))),
+                        c,
+                        createSeatCode(seatGrade.getGradeCode(), section.getName(),
+                                Character.toString((char) ('A' + (r - 1))), c)
                 );
-
                 seatList.add(seat);
-
-                log.info(seat.getSeatCode() + " 좌석 생성 완료!");
             }
         }
 
         seatRepository.saveAll(seatList);
+        log.info("[SeedData] {} - {} 좌석 {}개 생성 완료", match.getRoundLabel(), section.getName(), seatList.size());
     }
 
     /**
@@ -230,7 +248,7 @@ public class SeedData implements CommandLineRunner {
     /**
      * 전체 테이블 데이터 초기화 메소드
      */
-    public void resetData() {
+    private void resetData() {
         /**
          * 삭제 순서 seat -> section & seatgrade -> match -> team & event
          */
@@ -240,5 +258,23 @@ public class SeedData implements CommandLineRunner {
         matchRepository.deleteAllInBatch();
         teamRepository.deleteAllInBatch();
         eventRepository.deleteAllInBatch();
+    }
+
+    /**
+     * 현재 시각 기준으로 MatchStatus 자동 결정
+     * - now < startAt         → SCHEDULED (경기 예정)
+     * - startAt <= now < endAt → LIVE     (경기 진행 중)
+     * - endAt <= now           → FINISHED (경기 종료)
+     */
+    private MatchStatus resolveMatchStatus(LocalDateTime startAt, LocalDateTime endAt) {
+        LocalDateTime now = LocalDateTime.now();
+
+        if (now.isBefore(startAt)) {
+            return MatchStatus.SCHEDULED;
+        } else if (now.isBefore(endAt)) {
+            return MatchStatus.LIVE;
+        } else {
+            return MatchStatus.FINISHED;
+        }
     }
 }
