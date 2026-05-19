@@ -92,7 +92,7 @@ export function SeatSidebar({
           onClick={onSubmit}
           className="w-full bg-[#054EFD] hover:bg-[#3C76FE] disabled:bg-gray-200 disabled:text-gray-400"
         >
-          선택 완료
+          다음 단계 (결제)
         </Button>
       </div>
     </aside>

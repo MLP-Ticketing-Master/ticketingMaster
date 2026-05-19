@@ -6,7 +6,7 @@ import {
   MyPageLayout,
   PublicLayout,
 } from "@/components/layout";
-import { SeatSelectionDialog } from "@/components/main/seat/SeatSelectionDialog";
+import { BookingDialog } from "@/components/main/seat/BookingDialog";
 import HomePage from "@/pages/HomePage";
 import EventDetailPage from "@/pages/EventDetailPage";
 import QueuePage from "@/pages/QueuePage";
@@ -60,7 +60,7 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
-      <SeatSelectionDialog />
+      <BookingDialog />
       <Toaster richColors position="top-center" />
     </>
   );
