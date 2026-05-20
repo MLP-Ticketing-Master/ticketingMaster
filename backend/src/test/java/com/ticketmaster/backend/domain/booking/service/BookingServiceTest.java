@@ -1,6 +1,8 @@
 package com.ticketmaster.backend.domain.booking.service;
 
+import com.ticketmaster.backend.domain.booking.dto.request.BookingCancelRequest;
 import com.ticketmaster.backend.domain.booking.dto.request.BookingCreateRequest;
+import com.ticketmaster.backend.domain.booking.dto.response.BookingCancelResponse;
 import com.ticketmaster.backend.domain.booking.dto.response.BookingResponse;
 import com.ticketmaster.backend.domain.booking.dto.response.BookingSummaryResponse;
 import com.ticketmaster.backend.domain.booking.entity.Booking;
@@ -9,6 +11,11 @@ import com.ticketmaster.backend.domain.booking.repository.BookingRepository;
 import com.ticketmaster.backend.domain.event.entity.Event;
 import com.ticketmaster.backend.domain.match.entity.Match;
 import com.ticketmaster.backend.domain.match.repository.MatchRepository;
+import com.ticketmaster.backend.domain.payment.entity.Payment;
+import com.ticketmaster.backend.domain.payment.entity.PaymentMethod;
+import com.ticketmaster.backend.domain.payment.entity.PaymentStatus;
+import com.ticketmaster.backend.domain.payment.repository.PaymentRepository;
+import com.ticketmaster.backend.domain.payment.service.PaymentService;
 import com.ticketmaster.backend.domain.seat.entity.Seat;
 import com.ticketmaster.backend.domain.seat.entity.SeatGrade;
 import com.ticketmaster.backend.domain.seat.entity.SeatStatus;
@@ -55,6 +62,8 @@ class BookingServiceTest {
     @Mock SeatRepository seatRepository;
     @Mock BookingRepository bookingRepository;
     @Mock UserRepository userRepository;
+    @Mock PaymentRepository paymentRepository;
+    @Mock PaymentService paymentService;
 
     @InjectMocks BookingService bookingService;
 
@@ -329,6 +338,155 @@ class BookingServiceTest {
     }
 
     // -------------------------------------------------------
+    // 예매 취소 — cancelBooking
+    // -------------------------------------------------------
+
+    @Nested
+    @DisplayName("예매 취소 — cancelBooking")
+    class CancelBooking {
+
+        private Booking confirmedBooking;
+        private Seat soldSeat;
+        private Payment successPayment;
+
+        @BeforeEach
+        void setUpCancel() {
+            soldSeat = soldSeat(1L, 100_000);
+            confirmedBooking = confirmedBookingWithSeat(10L, user, match, soldSeat, 100_000);
+            successPayment = successPayment(10L, confirmedBooking, 100_000);
+        }
+
+        @Test
+        @DisplayName("TC-01: 3일 이상 남은 공연 취소 → 수수료 0%, 전액 환불, Booking CANCELED, Seat AVAILABLE")
+        void 전액_환불() {
+            // 공연 4일 후
+            Match farMatch = matchWithStartAt(MATCH_ID, event, LocalDateTime.now().plusDays(4));
+            Booking booking = confirmedBookingWithSeat(10L, user, farMatch, soldSeat(1L, 100_000), 100_000);
+            given(bookingRepository.findForCancel(10L)).willReturn(Optional.of(booking));
+            given(paymentRepository.findByBookingId(10L)).willReturn(Optional.of(successPayment(10L, booking, 100_000)));
+
+            BookingCancelResponse resp = bookingService.cancelBooking(USER_ID, 10L, cancelRequest("단순변심"));
+
+            assertThat(resp.getOriginalAmount()).isEqualTo(100_000);
+            assertThat(resp.getCancelFee()).isEqualTo(0);
+            assertThat(resp.getRefundAmount()).isEqualTo(100_000);
+            assertThat(resp.getBookingStatus()).isEqualTo(BookingStatus.CANCELED);
+        }
+
+        @Test
+        @DisplayName("TC-02: 24시간~3일 사이 취소 → 수수료 10%, refundAmount = totalPrice * 0.9")
+        void 수수료_10퍼센트() {
+            // 공연 2일 후
+            Match nearMatch = matchWithStartAt(MATCH_ID, event, LocalDateTime.now().plusDays(2));
+            Booking booking = confirmedBookingWithSeat(10L, user, nearMatch, soldSeat(1L, 100_000), 100_000);
+            given(bookingRepository.findForCancel(10L)).willReturn(Optional.of(booking));
+            given(paymentRepository.findByBookingId(10L)).willReturn(Optional.of(successPayment(10L, booking, 100_000)));
+
+            BookingCancelResponse resp = bookingService.cancelBooking(USER_ID, 10L, cancelRequest("일정변경"));
+
+            assertThat(resp.getCancelFee()).isEqualTo(10_000);
+            assertThat(resp.getRefundAmount()).isEqualTo(90_000);
+        }
+
+        @Test
+        @DisplayName("TC-04: 24시간 이내 취소 요청 → 400 CANCEL_DEADLINE_PASSED")
+        void 마감시간_초과() {
+            Match closeMatch = matchWithStartAt(MATCH_ID, event, LocalDateTime.now().plusHours(12));
+            Booking booking = confirmedBookingWithSeat(10L, user, closeMatch, soldSeat(1L, 100_000), 100_000);
+            given(bookingRepository.findForCancel(10L)).willReturn(Optional.of(booking));
+
+            assertThatThrownBy(() -> bookingService.cancelBooking(USER_ID, 10L, cancelRequest("급취소")))
+                    .isInstanceOf(BusinessException.class)
+                    .satisfies(ex -> assertThat(((BusinessException) ex).getErrorCode())
+                            .isEqualTo(ErrorCode.CANCEL_DEADLINE_PASSED));
+        }
+
+        @Test
+        @DisplayName("TC-05: 타인 예매 취소 시도 → 403 FORBIDDEN")
+        void 타인_예매_취소() {
+            User other = createUser(OTHER_ID);
+            Booking otherBooking = confirmedBookingWithSeat(10L, other, match, soldSeat(1L, 100_000), 100_000);
+            given(bookingRepository.findForCancel(10L)).willReturn(Optional.of(otherBooking));
+
+            assertThatThrownBy(() -> bookingService.cancelBooking(USER_ID, 10L, cancelRequest("취소")))
+                    .isInstanceOf(BusinessException.class)
+                    .satisfies(ex -> assertThat(((BusinessException) ex).getErrorCode())
+                            .isEqualTo(ErrorCode.FORBIDDEN));
+        }
+
+        @Test
+        @DisplayName("TC-06: PENDING 상태 취소 시도 → 400 BOOKING_CANNOT_CANCEL")
+        void PENDING_취소_불가() {
+            Booking pending = pendingBookingWithSeat(10L, user, match, soldSeat(1L, 100_000), 100_000);
+            given(bookingRepository.findForCancel(10L)).willReturn(Optional.of(pending));
+
+            assertThatThrownBy(() -> bookingService.cancelBooking(USER_ID, 10L, cancelRequest("취소")))
+                    .isInstanceOf(BusinessException.class)
+                    .satisfies(ex -> assertThat(((BusinessException) ex).getErrorCode())
+                            .isEqualTo(ErrorCode.BOOKING_CANNOT_CANCEL));
+        }
+
+        @Test
+        @DisplayName("TC-07: 이미 CANCELED 된 예매 재취소 → 409 BOOKING_ALREADY_CANCELED")
+        void 이미_취소된_예매() {
+            Booking canceled = confirmedBookingWithSeat(10L, user, match, soldSeat(1L, 100_000), 100_000);
+            ReflectionTestUtils.setField(canceled, "status", BookingStatus.CANCELED);
+            given(bookingRepository.findForCancel(10L)).willReturn(Optional.of(canceled));
+
+            assertThatThrownBy(() -> bookingService.cancelBooking(USER_ID, 10L, cancelRequest("재취소")))
+                    .isInstanceOf(BusinessException.class)
+                    .satisfies(ex -> assertThat(((BusinessException) ex).getErrorCode())
+                            .isEqualTo(ErrorCode.BOOKING_ALREADY_CANCELED));
+        }
+
+        @Test
+        @DisplayName("TC-08: 존재하지 않는 bookingId → 404 BOOKING_NOT_FOUND")
+        void 없는_예매() {
+            given(bookingRepository.findForCancel(999L)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> bookingService.cancelBooking(USER_ID, 999L, cancelRequest("취소")))
+                    .isInstanceOf(BusinessException.class)
+                    .satisfies(ex -> assertThat(((BusinessException) ex).getErrorCode())
+                            .isEqualTo(ErrorCode.BOOKING_NOT_FOUND));
+        }
+
+        @Test
+        @DisplayName("TC-09: paymentService.refund() TOSS_API_ERROR throw → 502 + 상태 변경 없음")
+        void 환불_실패_롤백() {
+            Match farMatch = matchWithStartAt(MATCH_ID, event, LocalDateTime.now().plusDays(4));
+            Booking booking = confirmedBookingWithSeat(10L, user, farMatch, soldSeat(1L, 100_000), 100_000);
+            given(bookingRepository.findForCancel(10L)).willReturn(Optional.of(booking));
+            given(paymentRepository.findByBookingId(10L)).willReturn(Optional.of(successPayment(10L, booking, 100_000)));
+            org.mockito.Mockito.doThrow(new BusinessException(ErrorCode.TOSS_API_ERROR))
+                    .when(paymentService).refund(any(), any(), anyInt());
+
+            assertThatThrownBy(() -> bookingService.cancelBooking(USER_ID, 10L, cancelRequest("취소")))
+                    .isInstanceOf(BusinessException.class)
+                    .satisfies(ex -> assertThat(((BusinessException) ex).getErrorCode())
+                            .isEqualTo(ErrorCode.TOSS_API_ERROR));
+
+            // 상태 변경 없음 검증
+            assertThat(booking.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
+        }
+
+        @Test
+        @DisplayName("TC-10: 환불 성공 → Booking CANCELED, Seat AVAILABLE, canceledAt 기록")
+        void 취소_성공_상태_전환() {
+            Match farMatch = matchWithStartAt(MATCH_ID, event, LocalDateTime.now().plusDays(4));
+            Seat seat = soldSeat(1L, 100_000);
+            Booking booking = confirmedBookingWithSeat(10L, user, farMatch, seat, 100_000);
+            given(bookingRepository.findForCancel(10L)).willReturn(Optional.of(booking));
+            given(paymentRepository.findByBookingId(10L)).willReturn(Optional.of(successPayment(10L, booking, 100_000)));
+
+            BookingCancelResponse resp = bookingService.cancelBooking(USER_ID, 10L, cancelRequest("단순변심"));
+
+            assertThat(resp.getBookingStatus()).isEqualTo(BookingStatus.CANCELED);
+            assertThat(resp.getCanceledAt()).isNotNull();
+            assertThat(seat.getStatus()).isEqualTo(SeatStatus.AVAILABLE);
+        }
+    }
+
+    // -------------------------------------------------------
     // 헬퍼
     // -------------------------------------------------------
 
@@ -410,5 +568,64 @@ class BookingServiceTest {
         ReflectionTestUtils.setField(req, "matchId", matchId);
         ReflectionTestUtils.setField(req, "seatIds", seatIds);
         return req;
+    }
+
+    private BookingCancelRequest cancelRequest(String reason) {
+        BookingCancelRequest req = BeanUtils.instantiateClass(BookingCancelRequest.class);
+        ReflectionTestUtils.setField(req, "cancelReason", reason);
+        return req;
+    }
+
+    /** SOLD 상태 좌석 생성 */
+    private Seat soldSeat(Long id, int price) {
+        SeatGrade grade = createSeatGrade(400L + id, event, "VIP", price, "#FFD700");
+        Seat s = Seat.create(match, section, grade, "A", id.intValue(), "VIP-A-" + id);
+        ReflectionTestUtils.setField(s, "id", id);
+        ReflectionTestUtils.setField(s, "status", SeatStatus.SOLD);
+        return s;
+    }
+
+    /** CONFIRMED 상태 Booking + BookingSeat(sold seat) 생성 */
+    private Booking confirmedBookingWithSeat(Long id, User user, Match match, Seat seat, int totalPrice) {
+        Booking b = Booking.create(user, match, "BK-CANCEL-TEST", totalPrice);
+        ReflectionTestUtils.setField(b, "id", id);
+        ReflectionTestUtils.setField(b, "status", BookingStatus.CONFIRMED);
+        com.ticketmaster.backend.domain.booking.entity.BookingSeat bs =
+                com.ticketmaster.backend.domain.booking.entity.BookingSeat.of(seat, seat.getSeatGrade().getPrice());
+        b.addBookingSeat(bs);
+        return b;
+    }
+
+    /** PENDING 상태 Booking */
+    private Booking pendingBookingWithSeat(Long id, User user, Match match, Seat seat, int totalPrice) {
+        Booking b = Booking.create(user, match, "BK-PENDING-TEST", totalPrice);
+        ReflectionTestUtils.setField(b, "id", id);
+        com.ticketmaster.backend.domain.booking.entity.BookingSeat bs =
+                com.ticketmaster.backend.domain.booking.entity.BookingSeat.of(seat, seat.getSeatGrade().getPrice());
+        b.addBookingSeat(bs);
+        return b;
+    }
+
+    /** SUCCESS 상태 Payment 생성 */
+    private Payment successPayment(Long id, Booking booking, int amount) {
+        Payment p = Payment.success(booking, "toss-key-" + id, "order-" + id, amount,
+                PaymentMethod.CARD, LocalDateTime.now().minusHours(1));
+        ReflectionTestUtils.setField(p, "id", id);
+        return p;
+    }
+
+    /** startAt이 지정된 Match 생성 */
+    private Match matchWithStartAt(Long id, Event event, LocalDateTime startAt) {
+        Match m = Match.builder()
+                .event(event)
+                .roundLabel("1R")
+                .matchDate(startAt.toLocalDate())
+                .startAt(startAt)
+                .endAt(startAt.plusHours(2))
+                .bookingOpenAt(LocalDateTime.now().minusHours(1))
+                .bookingCloseAt(LocalDateTime.now().plusHours(1))
+                .build();
+        ReflectionTestUtils.setField(m, "id", id);
+        return m;
     }
 }

@@ -1,6 +1,8 @@
 package com.ticketmaster.backend.domain.booking.service;
 
+import com.ticketmaster.backend.domain.booking.dto.request.BookingCancelRequest;
 import com.ticketmaster.backend.domain.booking.dto.request.BookingCreateRequest;
+import com.ticketmaster.backend.domain.booking.dto.response.BookingCancelResponse;
 import com.ticketmaster.backend.domain.booking.dto.response.BookingResponse;
 import com.ticketmaster.backend.domain.booking.dto.response.BookingSummaryResponse;
 import com.ticketmaster.backend.domain.booking.entity.Booking;
@@ -9,6 +11,9 @@ import com.ticketmaster.backend.domain.booking.entity.BookingStatus;
 import com.ticketmaster.backend.domain.booking.repository.BookingRepository;
 import com.ticketmaster.backend.domain.match.entity.Match;
 import com.ticketmaster.backend.domain.match.repository.MatchRepository;
+import com.ticketmaster.backend.domain.payment.entity.Payment;
+import com.ticketmaster.backend.domain.payment.repository.PaymentRepository;
+import com.ticketmaster.backend.domain.payment.service.PaymentService;
 import com.ticketmaster.backend.domain.seat.entity.Seat;
 import com.ticketmaster.backend.domain.seat.entity.SeatStatus;
 import com.ticketmaster.backend.domain.seat.repository.SeatRepository;
@@ -31,11 +36,14 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class BookingService {
+    private static final String DEFAULT_CANCEL_REASON = "사용자 취소";
 
     private final BookingRepository bookingRepository;
     private final MatchRepository matchRepository;
     private final SeatRepository seatRepository;
     private final UserRepository userRepository;
+    private final PaymentRepository paymentRepository;
+    private final PaymentService paymentService;
 
     // -------------------------------------------------------
     // 예매 생성
@@ -117,6 +125,77 @@ public class BookingService {
     public Page<BookingSummaryResponse> getMyBookings(Long userId, BookingStatus status, Pageable pageable) {
         return bookingRepository.findMyBookings(userId, status, pageable)
                 .map(BookingSummaryResponse::from);
+    }
+
+    // -------------------------------------------------------
+    // 예매 취소
+    // -------------------------------------------------------
+
+    @Transactional
+    public BookingCancelResponse cancelBooking(Long userId, Long bookingId, BookingCancelRequest request) {
+        // 취소 사유 결정
+        String cancelReason = request != null ? request.getCancelReason() : DEFAULT_CANCEL_REASON;
+
+        // 1. Booking 존재 검증
+        Booking booking = bookingRepository.findForCancel(bookingId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.BOOKING_NOT_FOUND));
+
+        // 본인 소유 검증
+        if (!booking.getUser().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
+        // 2. 상태 검증
+        if (booking.getStatus() == BookingStatus.CANCELED) {
+            throw new BusinessException(ErrorCode.BOOKING_ALREADY_CANCELED);
+        }
+        if (booking.getStatus() != BookingStatus.CONFIRMED) {
+            throw new BusinessException(ErrorCode.BOOKING_CANNOT_CANCEL);
+        }
+
+        // 3. 취소 가능 시점 검증 (공연 24시간 이내 → 불가)
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startAt = booking.getMatch().getStartAt();
+        long hoursUntilStart = java.time.Duration.between(now, startAt).toHours();
+
+        if (hoursUntilStart < 24) {
+            throw new BusinessException(ErrorCode.CANCEL_DEADLINE_PASSED);
+        }
+
+        // 4. 수수료 계산
+        // - 3일(72h) 이상: 0% 수수료 → 전액 환불
+        // - 24h 이상 ~ 3일 미만: 10% 수수료
+        int originalAmount = booking.getTotalPrice();
+        int cancelFee;
+        if (hoursUntilStart >= 72) {
+            cancelFee = 0;
+        } else {
+            cancelFee = (int) (originalAmount * 0.1);
+        }
+        int refundAmount = originalAmount - cancelFee;
+
+        // 5. 환불 위임 — PaymentService.refund() 호출 (실패 시 예외 throw → 롤백)
+        Payment payment = paymentRepository.findByBookingId(bookingId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PAYMENT_NOT_FOUND));
+        paymentService.refund(payment, cancelReason, refundAmount);
+
+        // 6. Booking 상태 갱신
+        booking.cancel(cancelReason);
+
+        // Seat 상태 복원 (SOLD → AVAILABLE)
+        for (BookingSeat bookingSeat : booking.getBookingSeats()) {
+            bookingSeat.getSeat().restoreFromSold();
+        }
+
+        // 7. 응답 반환
+        return BookingCancelResponse.of(
+                bookingId,
+                originalAmount,
+                cancelFee,
+                refundAmount,
+                booking.getCanceledAt(),
+                payment.getRefundedAt()
+        );
     }
 
     // -------------------------------------------------------

@@ -1,6 +1,8 @@
 package com.ticketmaster.backend.domain.booking.controller;
 
+import com.ticketmaster.backend.domain.booking.dto.request.BookingCancelRequest;
 import com.ticketmaster.backend.domain.booking.dto.request.BookingCreateRequest;
+import com.ticketmaster.backend.domain.booking.dto.response.BookingCancelResponse;
 import com.ticketmaster.backend.domain.booking.dto.response.BookingResponse;
 import com.ticketmaster.backend.domain.booking.dto.response.BookingSummaryResponse;
 import com.ticketmaster.backend.domain.booking.entity.BookingStatus;
@@ -72,6 +74,22 @@ public class BookingController {
     ) {
         Long userId = userDetails.getUser().getId();
         Page<BookingSummaryResponse> response = bookingService.getMyBookings(userId, status, pageable);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 예매 취소 (POST /bookings/{bookingId}/cancel)
+     * JWT 인증 필수 (ROLE_USER)
+     */
+    @PostMapping("/{bookingId}/cancel")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<BookingCancelResponse> cancelBooking(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long bookingId,
+            @RequestBody @Valid BookingCancelRequest request
+    ) {
+        Long userId = userDetails.getUser().getId();
+        BookingCancelResponse response = bookingService.cancelBooking(userId, bookingId, request);
         return ResponseEntity.ok(response);
     }
 }

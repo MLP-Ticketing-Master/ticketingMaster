@@ -64,6 +64,10 @@ public class Booking extends BaseEntity {
     @Column(name = "canceled_at")
     private LocalDateTime canceledAt;
 
+    /** 취소 사유 (TK-21 Phase 0 마이그레이션에서 추가) */
+    @Column(name = "cancel_reason", length = 200)
+    private String cancelReason;
+
     /** 낙관적 락 — 자동 만료 스케줄러와 사용자 결제 confirm 동시 발생 시 lost update 방지 */
     @Version
     private Long version;
@@ -98,7 +102,20 @@ public class Booking extends BaseEntity {
         this.status = BookingStatus.CONFIRMED;
     }
 
-    /** 예매 취소 (사용자 / 관리자 취소 공용) */
+    /** 예매 취소 (사용자 / 관리자 취소 공용 — 취소 사유 포함) */
+    public void cancel(String reason) {
+        if (this.status == BookingStatus.CANCELED) {
+            throw new BusinessException(ErrorCode.BOOKING_ALREADY_CANCELED);
+        }
+        if (this.status != BookingStatus.CONFIRMED) {
+            throw new BusinessException(ErrorCode.BOOKING_CANNOT_CANCEL);
+        }
+        this.status = BookingStatus.CANCELED;
+        this.canceledAt = LocalDateTime.now();
+        this.cancelReason = reason;
+    }
+
+    /** 예매 취소 (하위 호환 — 관리자/스케줄러용) */
     public void cancel() {
         if (this.status != BookingStatus.PENDING && this.status != BookingStatus.CONFIRMED) {
             throw new BusinessException(ErrorCode.BOOKING_CANNOT_CANCEL);

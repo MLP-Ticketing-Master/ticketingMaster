@@ -1,6 +1,8 @@
 package com.ticketmaster.backend.domain.booking.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ticketmaster.backend.domain.booking.dto.request.BookingCancelRequest;
+import com.ticketmaster.backend.domain.booking.dto.response.BookingCancelResponse;
 import com.ticketmaster.backend.domain.booking.dto.response.BookingResponse;
 import com.ticketmaster.backend.domain.booking.dto.response.BookingSummaryResponse;
 import com.ticketmaster.backend.domain.booking.entity.BookingStatus;
@@ -170,6 +172,129 @@ class BookingControllerTest {
     }
 
     // -------------------------------------------------------
+    // 예매 취소
+    // -------------------------------------------------------
+
+    @Test
+    @DisplayName("TC-C01: 취소 성공 → 200 + BookingCancelResponse")
+    void 취소_성공() throws Exception {
+        BookingCancelResponse resp = fakeCancelResponse(10L, 100_000, 0, 100_000);
+        given(bookingService.cancelBooking(eq(USER_ID), eq(10L), any())).willReturn(resp);
+
+        mockMvc.perform(post("/bookings/10/cancel")
+                        .with(authentication(userAuth(USER_ID)))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(Map.of("cancelReason", "단순변심"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.bookingId").value(10L))
+                .andExpect(jsonPath("$.bookingStatus").value("CANCELED"))
+                .andExpect(jsonPath("$.cancelFee").value(0))
+                .andExpect(jsonPath("$.refundAmount").value(100_000));
+    }
+
+    @Test
+    @DisplayName("TC-C02: 24시간 이내 취소 → 410 CANCEL_DEADLINE_PASSED")
+    void 마감_초과() throws Exception {
+        given(bookingService.cancelBooking(eq(USER_ID), eq(10L), any()))
+                .willThrow(new BusinessException(ErrorCode.CANCEL_DEADLINE_PASSED));
+
+        mockMvc.perform(post("/bookings/10/cancel")
+                        .with(authentication(userAuth(USER_ID)))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(Map.of("cancelReason", "급취소"))))
+                .andExpect(status().isGone())
+                .andExpect(jsonPath("$.code").value("CANCEL_DEADLINE_PASSED"));
+    }
+
+    @Test
+    @DisplayName("TC-C03: 타인 예매 취소 → 403 FORBIDDEN")
+    void 타인_예매_취소() throws Exception {
+        given(bookingService.cancelBooking(eq(USER_ID), eq(10L), any()))
+                .willThrow(new BusinessException(ErrorCode.FORBIDDEN));
+
+        mockMvc.perform(post("/bookings/10/cancel")
+                        .with(authentication(userAuth(USER_ID)))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(Map.of("cancelReason", "취소"))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+    }
+
+    @Test
+    @DisplayName("TC-C04: PENDING 취소 → 409 BOOKING_CANNOT_CANCEL")
+    void PENDING_취소_불가() throws Exception {
+        given(bookingService.cancelBooking(eq(USER_ID), eq(10L), any()))
+                .willThrow(new BusinessException(ErrorCode.BOOKING_CANNOT_CANCEL));
+
+        mockMvc.perform(post("/bookings/10/cancel")
+                        .with(authentication(userAuth(USER_ID)))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(Map.of("cancelReason", "취소"))))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("BOOKING_CANNOT_CANCEL"));
+    }
+
+    @Test
+    @DisplayName("TC-C05: 이미 CANCELED 재취소 → 409 BOOKING_ALREADY_CANCELED")
+    void 이미_취소된_예매() throws Exception {
+        given(bookingService.cancelBooking(eq(USER_ID), eq(10L), any()))
+                .willThrow(new BusinessException(ErrorCode.BOOKING_ALREADY_CANCELED));
+
+        mockMvc.perform(post("/bookings/10/cancel")
+                        .with(authentication(userAuth(USER_ID)))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(Map.of("cancelReason", "재취소"))))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("BOOKING_ALREADY_CANCELED"));
+    }
+
+    @Test
+    @DisplayName("TC-C06: 존재하지 않는 bookingId → 404 BOOKING_NOT_FOUND")
+    void 없는_예매_취소() throws Exception {
+        given(bookingService.cancelBooking(eq(USER_ID), eq(999L), any()))
+                .willThrow(new BusinessException(ErrorCode.BOOKING_NOT_FOUND));
+
+        mockMvc.perform(post("/bookings/999/cancel")
+                        .with(authentication(userAuth(USER_ID)))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(Map.of("cancelReason", "취소"))))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("BOOKING_NOT_FOUND"));
+    }
+
+    @Test
+    @DisplayName("TC-C07: 토스 API 실패 → 502 TOSS_API_ERROR")
+    void 토스_실패() throws Exception {
+        given(bookingService.cancelBooking(eq(USER_ID), eq(10L), any()))
+                .willThrow(new BusinessException(ErrorCode.TOSS_API_ERROR));
+
+        mockMvc.perform(post("/bookings/10/cancel")
+                        .with(authentication(userAuth(USER_ID)))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(Map.of("cancelReason", "취소"))))
+                .andExpect(status().isBadGateway())
+                .andExpect(jsonPath("$.code").value("TOSS_API_ERROR"));
+    }
+
+    @Test
+    @DisplayName("TC-C08: cancelReason 없이 요청 → 400 BAD_REQUEST")
+    void 취소사유_없음() throws Exception {
+        mockMvc.perform(post("/bookings/10/cancel")
+                        .with(authentication(userAuth(USER_ID)))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(Map.of())))
+                .andExpect(status().isBadRequest());
+    }
+
+    // -------------------------------------------------------
     // 헬퍼
     // -------------------------------------------------------
 
@@ -180,6 +305,18 @@ class BookingControllerTest {
         ReflectionTestUtils.setField(user, "role", Role.USER);
         CustomUserDetails details = new CustomUserDetails(user);
         return new UsernamePasswordAuthenticationToken(details, null, details.getAuthorities());
+    }
+
+    private BookingCancelResponse fakeCancelResponse(Long id, int original, int fee, int refund) {
+        BookingCancelResponse resp = BeanUtils.instantiateClass(BookingCancelResponse.class);
+        ReflectionTestUtils.setField(resp, "bookingId", id);
+        ReflectionTestUtils.setField(resp, "bookingStatus", BookingStatus.CANCELED);
+        ReflectionTestUtils.setField(resp, "originalAmount", original);
+        ReflectionTestUtils.setField(resp, "cancelFee", fee);
+        ReflectionTestUtils.setField(resp, "refundAmount", refund);
+        ReflectionTestUtils.setField(resp, "canceledAt", LocalDateTime.now());
+        ReflectionTestUtils.setField(resp, "refundedAt", LocalDateTime.now());
+        return resp;
     }
 
     private BookingResponse fakeBookingResponse(Long id, String bookingNumber, BookingStatus status) {
