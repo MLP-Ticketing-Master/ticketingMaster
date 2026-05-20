@@ -1,9 +1,9 @@
 import axios,{ AxiosError } from "axios";
 import { useAuthStore } from "@/store";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080";
 
-export const http = axios.create({
+const api = axios.create({
   baseURL: BASE_URL,
   timeout: 10_000,
   withCredentials: true,
@@ -11,11 +11,12 @@ export const http = axios.create({
 
 // ====== Request Interceptor ======
 // 모든 요청에 Authorization 헤더 추가
-http.interceptors.request.use((config) => {
+api.interceptors.request.use((config) => {
   const token = localStorage.getItem("accessToken");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
   return config;
 });
 
@@ -39,7 +40,7 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
-http.interceptors.response.use(
+api.interceptors.response.use(
   (res) => res,
   async (error: AxiosError) => {
     const originalRequest = error.config as any;
@@ -50,7 +51,7 @@ http.interceptors.response.use(
         // 이미 갱신 중이면 완료될 때까지 대기
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
-        }).then(() => http(originalRequest));
+        }).then(() => api(originalRequest));
       }
  
       originalRequest._retry = true;
@@ -75,7 +76,7 @@ http.interceptors.response.use(
         processQueue(null, accessToken);
  
         // 원본 요청 재시도
-        return http(originalRequest);
+        return api(originalRequest);
       } catch (refreshError) {
         // 갱신 실패 시 로그아웃
         useAuthStore.getState().clear();
@@ -93,3 +94,5 @@ http.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+export default api;

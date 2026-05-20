@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useSignupMutation } from "@/hooks";
+import { useSignupMutation } from "@/hooks/mutations/auth/useSignupMutation";
 import { useAuthStore } from "@/store";
 import { toast } from "sonner";
 import logo from "@/image/logoNuki.png";

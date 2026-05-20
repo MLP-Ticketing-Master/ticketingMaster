@@ -18,6 +18,7 @@ const NAV = [
 
 export function Header() {
   const user = useAuthStore((s) => s.user);
+  console.log("HEADER USER:", user);
   const isAuth = useAuthStore((s) => s.isAuthenticated)();
   const navigate = useNavigate();
   const [isHovering, setIsHovering] = useState(false);
@@ -66,6 +67,7 @@ export function Header() {
           )}
           {isAuth ? (
             <span className="text-sm font-medium">{user?.nickname}님</span>
+            
           ) : (
             <Button
               size="sm"

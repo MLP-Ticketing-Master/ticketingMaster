@@ -38,7 +38,7 @@ export default function EditProfilePage() {
       <h2 className="text-2xl font-bold">회원정보 수정</h2>
       <form className="space-y-5" onSubmit={onSubmit}>
         <Field
-          id="name"
+          id="nickname"
           label="이름"
           icon={User}
           value={form.nickname}

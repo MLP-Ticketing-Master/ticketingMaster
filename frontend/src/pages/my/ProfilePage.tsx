@@ -1,12 +1,10 @@
 import { Card } from "@/components/ui/card";
-import { StatCard } from "@/components/my/StatCard";
 import { Separator } from "@/components/ui/separator";
-import { useMyProfile, useMyStats } from "@/hooks";
+import { useMyProfile } from "@/hooks";
 import { formatDate } from "@/lib/format";
 
 export default function ProfilePage() {
   const { data: profile } = useMyProfile();
-  const { data: stats } = useMyStats();
 
   if (!profile) return null;
 
@@ -35,14 +33,6 @@ export default function ProfilePage() {
 
       <Separator />
 
-      <div>
-        <h3 className="font-bold">이용 통계</h3>
-        <div className="mt-4 grid gap-4 md:grid-cols-3">
-          <StatCard value={stats?.totalBookings ?? 0} label="총 예매 횟수" />
-          <StatCard value={stats?.upcomingMatches ?? 0} label="예정된 경기" />
-          <StatCard value={stats?.watchedMatches ?? 0} label="관람 완료" />
-        </div>
-      </div>
     </Card>
   );
 }
