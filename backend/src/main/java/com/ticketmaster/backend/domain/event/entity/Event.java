@@ -1,16 +1,20 @@
 package com.ticketmaster.backend.domain.event.entity;
 
 import com.ticketmaster.backend.admin.event.dto.request.AdminEventUpdateRequest;
+import com.ticketmaster.backend.domain.match.entity.Match;
+import com.ticketmaster.backend.domain.seat.entity.SeatGrade;
 import com.ticketmaster.backend.global.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Entity
@@ -54,20 +58,11 @@ public class Event extends BaseEntity {
     @Column(name = "age_rating", length = 30)
     private String ageRating;
 
-    @Column(name = "booking_open_at", nullable = false)
-    private LocalDateTime bookingOpenAt;
-
-    @Column(name = "booking_close_at", nullable = false)
-    private LocalDateTime bookingCloseAt;
-
     @Column(name = "booking_notice", length = 300)
     private String bookingNotice;
 
     @Column(name = "max_tickets_per_user", nullable = false)
     private int maxTicketsPerUser;
-
-    @Column(name = "cancel_available_until")
-    private LocalDateTime cancelAvailableUntil;
 
     @Column(name = "cancel_fee", nullable = false)
     private int cancelFee;
@@ -76,6 +71,13 @@ public class Event extends BaseEntity {
     @Column(nullable = false, length = 20)
     private EventStatus status;
 
+    @BatchSize(size = 100)
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "event")
+    private List<SeatGrade> seatGrades = new ArrayList<>();
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "event")
+    private List<Match> matches = new ArrayList<>();
+
     /**
      * 생성자 (빌더)
      */
@@ -83,9 +85,8 @@ public class Event extends BaseEntity {
     public Event(Long id, String title, SportType sportType, String place, String thumbnailUrl,
                  String detailImageUrl, String description, LocalDate startDate,
                  LocalDate endDate, String matchDurationText, String ageRating,
-                 LocalDateTime bookingOpenAt, LocalDateTime bookingCloseAt,
                  String bookingNotice, int maxTicketsPerUser,
-                 LocalDateTime cancelAvailableUntil, int cancelFee, EventStatus status) {
+                 int cancelFee, EventStatus status) {
         this.id = id;
         this.title = title;
         this.sportType = sportType;
@@ -97,34 +98,15 @@ public class Event extends BaseEntity {
         this.endDate = endDate;
         this.matchDurationText = matchDurationText;
         this.ageRating = ageRating;
-        this.bookingOpenAt = bookingOpenAt;
-        this.bookingCloseAt = bookingCloseAt;
         this.bookingNotice = bookingNotice;
         this.maxTicketsPerUser = maxTicketsPerUser;
-        this.cancelAvailableUntil = cancelAvailableUntil;
         this.cancelFee = cancelFee;
         this.status = status;
     }
 
-    // TODO: SeatGrade, Section, Match 와의 양방향 컬렉션이 필요하면
-    //       @OneToMany(mappedBy = "event") 로 추가
-
     // 이벤트 상태 변경 (UPCOMING → OPEN → CLOSED → FINISHED)
     public void changeStatus(EventStatus newStatus) {
         this.status = newStatus;
-    }
-
-    /**
-     * 현재 시각이 예매 가능한 시간인지 체크
-     * - status == OPEN
-     * - bookingOpenAt <= now <= bookingCloseAt
-     *
-     * Service에서 false일 때 BusinessException 던지는 용도
-     */
-    public boolean isBookableAt(LocalDateTime now) {
-        return status == EventStatus.OPEN
-                && !now.isBefore(bookingOpenAt)
-                && !now.isAfter(bookingCloseAt);
     }
 
     /**
@@ -141,15 +123,12 @@ public class Event extends BaseEntity {
         if (request.getEndDate() != null) this.endDate = request.getEndDate();
         if (request.getMatchDurationText() != null) this.matchDurationText = request.getMatchDurationText();
         if (request.getAgeRating() != null) this.ageRating = request.getAgeRating();
-        if (request.getBookingOpenAt() != null) this.bookingOpenAt = request.getBookingOpenAt();
-        if (request.getBookingCloseAt() != null) this.bookingCloseAt = request.getBookingCloseAt();
         if (request.getBookingNotice() != null) this.bookingNotice = request.getBookingNotice();
         if (request.getStatus() != null) this.status = request.getStatus();
 
         // 주의: DTO에서 숫자형 데이터는 반드시
         // int가 아닌 Integer(래퍼 클래스)로 선언되어 있어야 아래처럼 null 체크가 가능
         if (request.getMaxTicketsPerUser() != null) this.maxTicketsPerUser = request.getMaxTicketsPerUser();
-        if (request.getCancelAvailableUntil() != null) this.cancelAvailableUntil = request.getCancelAvailableUntil();
         if (request.getCancelFee() != null) this.cancelFee = request.getCancelFee();
     }
 }

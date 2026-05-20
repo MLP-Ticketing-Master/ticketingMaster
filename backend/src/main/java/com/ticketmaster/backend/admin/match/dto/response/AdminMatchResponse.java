@@ -4,6 +4,7 @@ import com.ticketmaster.backend.domain.match.entity.Match;
 import com.ticketmaster.backend.domain.match.entity.MatchStatus;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDate;
@@ -13,6 +14,7 @@ import java.time.LocalDateTime;
  * 응답 DTO
  */
 @Getter
+@Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class AdminMatchResponse {
     private Long id;
@@ -23,6 +25,9 @@ public class AdminMatchResponse {
     private LocalDate matchDate;
     private LocalDateTime startAt;
     private LocalDateTime endAt;
+    private LocalDateTime bookingOpenAt;
+    private LocalDateTime bookingCloseAt;
+    private LocalDateTime cancelAvailableUntil;
     private MatchStatus status;
 
     private LocalDateTime deletedAt; // 삭제된 매치인지 확인용 (관리자는 다 보이게끔)
@@ -38,6 +43,9 @@ public class AdminMatchResponse {
                 m.getMatchDate(),
                 m.getStartAt(),
                 m.getEndAt(),
+                m.getBookingOpenAt(),
+                m.getBookingCloseAt(),
+                m.getCancelAvailableUntil(),
                 m.getStatus(),
                 m.getDeletedAt()
         );

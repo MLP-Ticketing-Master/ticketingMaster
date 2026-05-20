@@ -1,14 +1,19 @@
 package com.ticketmaster.backend.domain.seat.repository;
 
 import com.ticketmaster.backend.domain.seat.entity.Seat;
-import io.lettuce.core.dynamic.annotation.Param;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
 public interface SeatRepository extends JpaRepository<Seat, Long> {
+
+    // -------------------------------------------------------
+    // 관리자 기능
+    // -------------------------------------------------------
 
     /** 회차 내 좌석 코드 중복 체크 — 단건 등록 시 */
     boolean existsByMatchIdAndSeatCode(Long matchId, String seatCode);
@@ -36,4 +41,60 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
     /** SEAT_GRADE_IN_USE / SECTION_IN_USE 검증용 */
     boolean existsBySeatGradeId(Long seatGradeId);
     boolean existsBySectionId(Long sectionId);
+
+    // -------------------------------------------------------
+    // 좌석 조회 (사용자 기능)
+    // -------------------------------------------------------
+
+    /**
+     * 1단계 잔여 카운트용 — 매치 좌석의 ID/구역ID/등급ID/상태만 조회
+     * Entity 전체 로딩 대신 필요 컬럼만 가져와 메모리 집계 (N+1 방지)
+     * <p>
+     * 반환: Object[]{seatId, sectionId, gradeId, status}
+     */
+    @Query("""
+           SELECT s.id, s.section.id, s.seatGrade.id, s.status
+           FROM Seat s
+           WHERE s.match.id = :matchId
+           """)
+    List<Object[]> findIdAndGroupingByMatchId(@Param("matchId") Long matchId);
+
+    /**
+     * 2단계 구역 내 좌석 조회 — SeatGrade fetch join 으로 등급 정보 함께 로딩
+     */
+    @Query("""
+           SELECT s FROM Seat s
+           JOIN FETCH s.seatGrade
+           WHERE s.match.id = :matchId AND s.section.id = :sectionId
+           ORDER BY s.rowLabel ASC, s.seatNo ASC
+           """)
+    List<Seat> findBySectionAndMatch(@Param("matchId") Long matchId,
+                                     @Param("sectionId") Long sectionId);
+
+    /**
+     * 특정 경기의 좌석들을 ID로 일괄 조회 (좌석 점유/해제 처리 시 사용)
+     * SeatGrade를 fetch join하여 totalPrice 계산 시 N+1 방지
+     */
+    @Query("""
+       SELECT s FROM Seat s
+       JOIN FETCH s.seatGrade
+       WHERE s.match.id = :matchId AND s.id IN :seatIds
+       """)
+    List<Seat> findByMatchAndIdIn(@Param("matchId") Long matchId,
+                                  @Param("seatIds") Collection<Long> seatIds);
+
+
+    /**
+     * 만료 시간이 지난 점유 좌석을 찾아 반환
+     *
+     * - 조건: 현재 RESERVED 상태이면서, 점유 만료 시각이 지금보다 과거인 좌석
+     * - SOLD(판매 완료) 좌석은 조건에 안 걸려서 자동 제외
+     * - 사용자가 본인 해제한 좌석도 이미 AVAILABLE 이라 제외
+     */
+    @Query("""
+           SELECT s FROM Seat s
+           WHERE s.status = 'RESERVED'
+           AND s.reservedUntil < :now
+           """)
+    List<Seat> findExpiredReservedSeats(@Param("now") LocalDateTime now);
 }

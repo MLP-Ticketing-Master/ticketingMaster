@@ -13,7 +13,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 // ==========================================
 // 대회 등록 (POST /admin/events)
@@ -45,20 +44,12 @@ public class AdminEventCreateRequest {
     private String matchDurationText;
     private String ageRating;
 
-    @NotNull(message = "예매 시작 시간은 필수입니다.")
-    private LocalDateTime bookingOpenAt;
-
-    @NotNull(message = "예매 종료 시간은 필수입니다.")
-    private LocalDateTime bookingCloseAt;
-
     private String bookingNotice;
 
     @NotNull(message = "1인당 최대 예매 수량은 필수입니다.")
     @Min(value = 1, message = "최소 1장 이상이어야 합니다.")
-    @Max(value = 4, message = "최대 4장까지 가능합니다.")
+    @Max(value = 2, message = "최대 2장까지 가능합니다.")
     private int maxTicketsPerUser; // 등록 시에는 필수 입력이므로 기본형 int 사용 가능
-
-    private LocalDateTime cancelAvailableUntil;
 
     @NotNull(message = "취소 수수료는 필수입니다.")
     private int cancelFee;
@@ -76,11 +67,8 @@ public class AdminEventCreateRequest {
                 .endDate(this.endDate)
                 .matchDurationText(this.matchDurationText)
                 .ageRating(this.ageRating)
-                .bookingOpenAt(this.bookingOpenAt)
-                .bookingCloseAt(this.bookingCloseAt)
                 .bookingNotice(this.bookingNotice)
                 .maxTicketsPerUser(this.maxTicketsPerUser)
-                .cancelAvailableUntil(this.cancelAvailableUntil)
                 .cancelFee(this.cancelFee)
                 .status(EventStatus.UPCOMING) // 디폴트 status 설정
                 .build();

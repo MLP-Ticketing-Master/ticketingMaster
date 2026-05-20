@@ -6,6 +6,9 @@
 .DS_Store
 Thumbs.db
 
+# IntelliJ IDEA
+.idea
+
 # Claude
 .claude/
 CLAUDE.md

@@ -8,12 +8,16 @@ import com.ticketmaster.backend.domain.seat.entity.Seat;
 import com.ticketmaster.backend.domain.seat.entity.SeatGrade;
 import com.ticketmaster.backend.domain.seat.entity.SeatStatus;
 import com.ticketmaster.backend.domain.seat.entity.Section;
+import com.ticketmaster.backend.global.config.SecurityConfig;
 import com.ticketmaster.backend.global.exception.BusinessException;
 import com.ticketmaster.backend.global.exception.ErrorCode;
+import com.ticketmaster.backend.global.security.auth.CustomUserDetailsService;
+import com.ticketmaster.backend.global.security.jwt.JwtTokenProvider;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -36,6 +40,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AdminSeatController.class)
+@Import(SecurityConfig.class)
 @WithMockUser(roles = "ADMIN")
 class AdminSeatControllerTest {
 
@@ -47,6 +52,14 @@ class AdminSeatControllerTest {
 
     @MockitoBean
     private AdminSeatService service;
+
+    // JWT 머지 후 JwtAuthenticationFilter(@Component)가 슬라이스 테스트에 자동 스캔됨
+    // → 그 안의 JwtTokenProvider/CustomUserDetailsService를 mock으로 채워야 컨텍스트 로드 성공
+    @MockitoBean
+    private JwtTokenProvider jwtTokenProvider;
+
+    @MockitoBean
+    private CustomUserDetailsService customUserDetailsService;
 
     private static final Long MATCH_ID = 1L;
     private static final Long SEAT_ID = 500L;

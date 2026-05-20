@@ -3,6 +3,8 @@ spring:
     import: optional:file:../.env[.properties]
   application:
     name: backend
+  profiles:
+    active: dev
 
   datasource:
     # 호스트 포트는 docker-compose에 고정(1522)
@@ -31,6 +33,8 @@ spring:
           batch_versioned_data: true
         order_inserts: true            # INSERT 문 정렬 (배치 효율 ↑)
         order_updates: true
+    flyway:
+      enabled: true
 
   mail:
     host: smtp.gmail.com
@@ -60,3 +64,29 @@ jwt:
   secret: ${JWT_SECRET}
   access-expiration: 1800000
   refresh-expiration: 1209600000
+
+# 좌석 점유 정책
+seat:
+  # 점유 TTL — 결제 안 하면 이 시간 뒤 자동 해제 (7분)
+  reservation-ttl-seconds: 420
+  # 만료 좌석 스캐너 실행 간격 (30초)
+  expiry-scan-interval-ms: 30000
+
+queue:
+  # WAITING 상태 토큰 TTL
+  # 대기열 이탈/비정상 종료 사용자를 자동 정리하기 위한 시간
+  token-ttl-seconds: 1800       # 30분
+  # 한 번에 처리하는 입장 인원
+  admission-batch-size: 200
+  # 입장 승격 스케줄러 주기(초) WAITING → ALLOWED
+  admission-interval-seconds: 30
+  # ALLOWED 토큰 만료(초) — 좌석 페이지 진입 후 좌석 점유까지의 데드라인
+  # (좌석 점유 성공 시 권한이 좌석 TTL 7분으로 인계되어 결제까지 보호)
+  session-seconds: 600          # 10분
+
+booking:
+  expiry-scan-interval-ms: 60000   # 1분 주기
+
+toss:
+  secret-key: ${TOSS_SECRET_KEY}
+  api-base-url: https://api.tosspayments.com/v1

@@ -2,6 +2,7 @@ package com.ticketmaster.backend.domain.match.entity;
 
 import com.ticketmaster.backend.admin.match.dto.request.AdminMatchUpdateRequest;
 import com.ticketmaster.backend.domain.event.entity.Event;
+import com.ticketmaster.backend.domain.event.entity.EventStatus;
 import com.ticketmaster.backend.domain.team.entity.Team;
 import com.ticketmaster.backend.global.common.BaseEntity;
 import com.ticketmaster.backend.global.exception.BusinessException;
@@ -11,6 +12,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -23,6 +25,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "matches")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@SQLRestriction("deleted_at IS NULL")
 public class Match extends BaseEntity {
 
     @Id
@@ -54,9 +57,19 @@ public class Match extends BaseEntity {
     @Column(name = "end_at", nullable = false)
     private LocalDateTime endAt;
 
+    @Column(name = "booking_open_at", nullable = false)
+    private LocalDateTime bookingOpenAt;
+
+    @Column(name = "booking_close_at", nullable = false)
+    private LocalDateTime bookingCloseAt;
+
+    @Column(name = "cancel_available_until")
+    private LocalDateTime cancelAvailableUntil;
+
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
     private MatchStatus status;
+
 
     /**
      * 생성자 (빌더)
@@ -64,6 +77,8 @@ public class Match extends BaseEntity {
     @Builder
     public Match(Event event, String roundLabel, Team homeTeam, Team awayTeam,
                  LocalDate matchDate, LocalDateTime startAt, LocalDateTime endAt,
+                 LocalDateTime bookingOpenAt, LocalDateTime bookingCloseAt,
+                 LocalDateTime cancelAvailableUntil,
                  MatchStatus status) {
         this.event = event;
         this.roundLabel = roundLabel;
@@ -72,6 +87,9 @@ public class Match extends BaseEntity {
         this.matchDate = matchDate;
         this.startAt = startAt;
         this.endAt = (endAt != null) ? endAt : startAt.plusHours(2);
+        this.bookingOpenAt = bookingOpenAt;
+        this.bookingCloseAt = bookingCloseAt;
+        this.cancelAvailableUntil = cancelAvailableUntil;
         this.status = (status != null) ? status : MatchStatus.SCHEDULED; // Default value logic
     }
 
@@ -80,6 +98,9 @@ public class Match extends BaseEntity {
         if (request.getMatchDate() != null) this.matchDate = request.getMatchDate();
         if (request.getStartAt() != null) this.startAt = request.getStartAt();
         if (request.getEndAt() != null) this.endAt = request.getEndAt();
+        if (request.getBookingOpenAt() != null) this.bookingOpenAt = request.getBookingOpenAt();
+        if (request.getBookingCloseAt() != null) this.bookingCloseAt = request.getBookingCloseAt();
+        if (request.getCancelAvailableUntil() != null) this.cancelAvailableUntil = request.getCancelAvailableUntil();
         if (request.getStatus() != null) changeStatus(request.getStatus());
         if (request.getHomeTeamId() != null) this.homeTeam = homeTeam;
         if (request.getAwayTeamId() != null) this.awayTeam = awayTeam;
@@ -92,5 +113,20 @@ public class Match extends BaseEntity {
             throw new BusinessException(ErrorCode.CANNOT_CHANGE_FINISHED_MATCH);
         }
         this.status = newStatus;
+    }
+
+    /**
+     * 현재 시각에 이 매치가 예매 가능한지 검증
+     * <p>
+     * 3축 게이팅
+     *  - 대회 운영 상태: event.status == OPEN
+     *  - 경기 상태: match.status == SCHEDULED
+     *  - 시간 윈도우: bookingOpenAt ≤ now ≤ bookingCloseAt
+     */
+    public boolean isBookableAt(LocalDateTime now) {
+        return this.event.getStatus() == EventStatus.OPEN
+                && this.status == MatchStatus.SCHEDULED
+                && !now.isBefore(bookingOpenAt)
+                && !now.isAfter(bookingCloseAt);
     }
 }

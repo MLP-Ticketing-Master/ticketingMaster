@@ -11,6 +11,8 @@ import com.ticketmaster.backend.admin.event.service.AdminEventService;
 import com.ticketmaster.backend.domain.event.entity.EventStatus;
 import com.ticketmaster.backend.domain.event.entity.SportType;
 import com.ticketmaster.backend.global.config.SecurityConfig;
+import com.ticketmaster.backend.global.security.auth.CustomUserDetailsService;
+import com.ticketmaster.backend.global.security.jwt.JwtTokenProvider;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +27,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -52,20 +53,26 @@ public class AdminEventControllerTest {
     @MockitoBean // 스프링 컨테이너에 가짜(Mock) 서비스를 띄워줍니다.
     private AdminEventService adminEventService;
 
+    // JWT 머지 후 JwtAuthenticationFilter(@Component)가 슬라이스 테스트에 자동 스캔됨
+    // → 그 안의 JwtTokenProvider/CustomUserDetailsService를 mock으로 채워야 컨텍스트 로드 성공
+    @MockitoBean
+    private JwtTokenProvider jwtTokenProvider;
+
+    @MockitoBean
+    private CustomUserDetailsService customUserDetailsService;
+
     @Test
     @WithMockUser(roles = "ADMIN") // ADMIN 권한의 가짜 유저로 로그인한 상태를 가정
     @DisplayName("TC-01: ADMIN이 정상적인 데이터를 보내면 대회 생성이 성공하고 201 응답을 반환한다.")
     void 이벤트_등록_201() throws Exception {
-        // Given: DTO의 필수(@NotNull, @NotBlank) 필드를 모두 채워줍니다.
+        // given - DTO의 필수(@NotNull, @NotBlank) 필드를 모두 채워줍니다.
         AdminEventCreateRequest request = AdminEventCreateRequest.builder()
                 .title("2026 LCK 스프링 결승")
                 .sportType(SportType.LOL)
                 .place("LoL Park")
                 .startDate(LocalDate.of(2026, 4, 24))
                 .endDate(LocalDate.of(2026, 4, 26))
-                .bookingOpenAt(LocalDateTime.of(2026, 4, 20, 20, 0))
-                .bookingCloseAt(LocalDateTime.of(2026, 4, 26, 22, 0))
-                .maxTicketsPerUser(4)
+                .maxTicketsPerUser(2)
                 .cancelFee(1000)
                 .build();
 
@@ -82,16 +89,14 @@ public class AdminEventControllerTest {
     @WithMockUser(roles = "USER") // 일반 유저 권한 가정
     @DisplayName("TC-02: USER 권한 접근 → 403 FORBIDDEN")
     void 이벤트_등록_접근권한_403() throws Exception {
-        // Given
+        // given
         AdminEventCreateRequest request = AdminEventCreateRequest.builder()
                 .title("2026 LCK 스프링 결승")
                 .sportType(SportType.LOL)
                 .place("LoL Park")
                 .startDate(LocalDate.of(2026, 4, 24))
                 .endDate(LocalDate.of(2026, 4, 26))
-                .bookingOpenAt(LocalDateTime.of(2026, 4, 20, 20, 0))
-                .bookingCloseAt(LocalDateTime.of(2026, 4, 26, 22, 0))
-                .maxTicketsPerUser(4)
+                .maxTicketsPerUser(2)
                 .cancelFee(1000)
                 .build();
 
@@ -107,16 +112,14 @@ public class AdminEventControllerTest {
     @WithMockUser(roles = "ADMIN")
     @DisplayName("TC-09: 필수 필드 누락 생성 -> 400 Bad Request 응답")
     void 이벤트_등록_필수필드누락_400() throws Exception {
-        // Given (타이틀이 누락된 비정상적인 요청 생성)
+        // given - 타이틀이 누락된 비정상적인 요청 생성
         AdminEventCreateRequest request = AdminEventCreateRequest.builder()
                 .title(null) // @NotBlank 위반!
                 .sportType(SportType.LOL)
                 .place("LoL Park")
                 .startDate(LocalDate.of(2026, 4, 24))
                 .endDate(LocalDate.of(2026, 4, 26))
-                .bookingOpenAt(LocalDateTime.of(2026, 4, 20, 20, 0))
-                .bookingCloseAt(LocalDateTime.of(2026, 4, 26, 22, 0))
-                .maxTicketsPerUser(4)
+                .maxTicketsPerUser(2)
                 .cancelFee(1000)
                 .build();
 
@@ -182,19 +185,16 @@ public class AdminEventControllerTest {
                 .title("2026 LCK 스프링 결승")
                 .sportType(SportType.LOL)
                 .place("LOL Park")
-                .thumbnailUrl("https://image.ticketmaster.com/lck-2026-thumb.jpg") // 추가
-                .detailImageUrl("https://image.ticketmaster.com/lck-2026-detail.jpg") // 추가
-                .description("2026 LCK 스프링 결승전 티켓팅입니다. 많은 관심 부탁드립니다.") // 추가
+                .thumbnailUrl("https://image.ticketmaster.com/lck-2026-thumb.jpg")
+                .detailImageUrl("https://image.ticketmaster.com/lck-2026-detail.jpg")
+                .description("2026 LCK 스프링 결승전 티켓팅입니다. 많은 관심 부탁드립니다.")
                 .startDate(LocalDate.of(2026, 3, 24))
                 .endDate(LocalDate.of(2026, 5, 11))
                 .matchDurationText("4시간")
                 .ageRating("전체관람가")
-                .bookingOpenAt(LocalDateTime.of(2026, 3, 10, 20, 0)) // 추가
-                .bookingCloseAt(LocalDateTime.of(2026, 3, 23, 23, 59)) // 추가
-                .bookingNotice("예매는 1인당 최대 4매까지 가능하며, 취소 기한을 꼭 확인해주세요.") // 추가
-                .maxTicketsPerUser(4)
-                .cancelAvailableUntil(LocalDateTime.of(2026, 3, 23, 23, 59)) // 추가
-                .cancelFee(1000) // 추가
+                .bookingNotice("예매는 1인당 최대 2매까지 가능하며, 취소 기한을 꼭 확인해주세요.")
+                .maxTicketsPerUser(2)
+                .cancelFee(1000)
                 .status(EventStatus.OPEN)
                 .build();
 

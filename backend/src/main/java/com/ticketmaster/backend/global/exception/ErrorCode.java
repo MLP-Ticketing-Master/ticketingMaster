@@ -20,6 +20,7 @@ public enum ErrorCode {
     INVALID_RESET_TOKEN(HttpStatus.BAD_REQUEST, "INVALID_RESET_TOKEN", "유효하지 않은 재설정 토큰입니다."),
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "INVALID_PASSWORD", "현재 비밀번호가 일치하지 않습니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", "존재하지 않는 사용자입니다."),
+    DELETED_USER(HttpStatus.FORBIDDEN, "DELETED_USER", "탈퇴 처리된 회원입니다."),
 
     // ====== EVENT / MATCH / TEAM ======
     EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "EVENT_NOT_FOUND", "존재하지 않는 대회입니다."),
@@ -32,6 +33,7 @@ public enum ErrorCode {
     TEAM_IN_USE(HttpStatus.CONFLICT, "TEAM_IN_USE", "진행 중인 회차에 배정된 팀은 삭제할 수 없습니다."),
     DUPLICATE_EVENT_TITLE(HttpStatus.CONFLICT, "DUPLICATE_EVENT_TITLE", "이미 존재하는 이벤트 타이틀입니다."),
     DUPLICATE_TEAM_NAME(HttpStatus.CONFLICT, "DUPLICATE_TEAM_NAME", "이미 존재하는 팀명입니다."),
+    INVALID_SORT_VALUE(HttpStatus.BAD_REQUEST, "INVALID_SORT_VALUE", "잘못된 정렬 조건입니다."),
     INVALID_DATE_RANGE(HttpStatus.BAD_REQUEST, "INVALID_DATE_RANGE", "종료일은 시작일보다 앞설 수 없습니다."),
     INVALID_TIME_RANGE(HttpStatus.BAD_REQUEST, "INVALID_TIME_RANGE", "종료 시간은 시작 시간보다 앞설 수 없습니다."),
     INVALID_MATCH_DATE(HttpStatus.BAD_REQUEST, "INVALID_MATCH_DATE", "대회 기간을 벗어난 회차입니다"),
@@ -62,6 +64,8 @@ public enum ErrorCode {
     QUEUE_ALREADY_ENTERED(HttpStatus.CONFLICT, "QUEUE_ALREADY_ENTERED", "이미 대기열에 진입한 사용자입니다."),
     QUEUE_ACCESS_DENIED(HttpStatus.FORBIDDEN, "QUEUE_ACCESS_DENIED", "대기열 접근이 거부되었습니다."),
     QUEUE_NOT_PASSED(HttpStatus.FORBIDDEN, "QUEUE_NOT_PASSED", "아직 대기열을 통과하지 못했습니다."),
+    QUEUE_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "QUEUE_TOKEN_EXPIRED", "대기열 토큰이 만료되었습니다."),
+    QUEUE_TOKEN_MATCH_MISMATCH(HttpStatus.FORBIDDEN, "QUEUE_TOKEN_MATCH_MISMATCH", "토큰의 회차와 요청 회차가 일치하지 않습니다."),
 
     // ====== BOOKING ======
     BOOKING_NOT_FOUND(HttpStatus.NOT_FOUND, "BOOKING_NOT_FOUND", "존재하지 않는 예매입니다."),
@@ -69,9 +73,9 @@ public enum ErrorCode {
     BOOKING_NOT_PENDING(HttpStatus.BAD_REQUEST, "BOOKING_NOT_PENDING", "결제 가능한 예매 상태가 아닙니다."),
     BOOKING_ALREADY_CANCELED(HttpStatus.CONFLICT, "BOOKING_ALREADY_CANCELED", "이미 취소된 예매입니다."),
     BOOKING_TIME_EXPIRED(HttpStatus.GONE, "BOOKING_TIME_EXPIRED", "예매 가능 시간이 만료되었습니다."),
-    BOOKING_CANNOT_CANCEL(HttpStatus.BAD_REQUEST, "BOOKING_CANNOT_CANCEL", "취소할 수 없는 예매입니다."),
+    BOOKING_CANNOT_CANCEL(HttpStatus.CONFLICT, "BOOKING_CANNOT_CANCEL", "취소할 수 없는 예매입니다."),
     BOOKING_ACCESS_DENIED(HttpStatus.FORBIDDEN, "BOOKING_ACCESS_DENIED", "본인의 예매만 조회/처리할 수 있습니다."),
-    CANCEL_DEADLINE_PASSED(HttpStatus.BAD_REQUEST, "CANCEL_DEADLINE_PASSED", "취소 가능 기한이 지났습니다."),
+    CANCEL_DEADLINE_PASSED(HttpStatus.GONE, "CANCEL_DEADLINE_PASSED", "취소 가능 기한이 지났습니다."),
     MAX_TICKETS_EXCEEDED(HttpStatus.BAD_REQUEST, "MAX_TICKETS_EXCEEDED", "1인당 예매 가능 매수를 초과했습니다."),
 
     // ====== PAYMENT ======
@@ -79,7 +83,8 @@ public enum ErrorCode {
     PAYMENT_FAILED(HttpStatus.BAD_REQUEST, "PAYMENT_FAILED", "결제에 실패했습니다."),
     PAYMENT_TIME_EXPIRED(HttpStatus.GONE, "PAYMENT_TIME_EXPIRED", "결제 가능 시간이 만료되었습니다."),
     PAYMENT_ALREADY_COMPLETED(HttpStatus.CONFLICT, "PAYMENT_ALREADY_COMPLETED", "이미 처리된 결제입니다."),
-    INVALID_PAYMENT_AMOUNT(HttpStatus.BAD_REQUEST, "INVALID_PAYMENT_AMOUNT", "결제 금액이 올바르지 않습니다.");
+    INVALID_PAYMENT_AMOUNT(HttpStatus.BAD_REQUEST, "INVALID_PAYMENT_AMOUNT", "결제 금액이 올바르지 않습니다."),
+    TOSS_API_ERROR(HttpStatus.BAD_GATEWAY, "TOSS_API_ERROR", "결제 처리 중 외부 서비스 오류가 발생했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

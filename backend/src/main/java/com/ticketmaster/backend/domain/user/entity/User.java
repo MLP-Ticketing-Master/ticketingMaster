@@ -6,6 +6,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Entity
 @Table(name = "users")
@@ -47,6 +49,10 @@ public class User extends BaseEntity {
         user.phone = phone;
         user.role = Role.USER;
         return user;
+    }
+
+    public void withdraw() {
+        softDelete();
     }
 
     /** 프로필 수정 - null이 아닌 값만 변경 */

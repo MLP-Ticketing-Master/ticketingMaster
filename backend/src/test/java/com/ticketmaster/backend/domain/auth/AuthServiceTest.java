@@ -4,7 +4,7 @@ import com.ticketmaster.backend.domain.auth.dto.request.AuthSignupRequest;
 import com.ticketmaster.backend.domain.auth.dto.response.AuthSignupResponse;
 import com.ticketmaster.backend.domain.user.entity.User;
 import com.ticketmaster.backend.domain.user.repository.UserRepository;
-import com.ticketmaster.backend.global.exception.DuplicateEmailException;
+import com.ticketmaster.backend.global.exception.BusinessException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,7 +44,7 @@ public class AuthServiceTest {
 		AuthSignupRequest request = new AuthSignupRequest("dup@test.com", "Pw123!", "nick", null);
 		given(userRepository.existsByEmail(anyString())).willReturn(true);
 
-		assertThatThrownBy(() -> authService.signup(request)).isInstanceOf(DuplicateEmailException.class);
+		assertThatThrownBy(() -> authService.signup(request)).isInstanceOf(BusinessException.class);
 	}
 
 	@Test

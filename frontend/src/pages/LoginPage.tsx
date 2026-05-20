@@ -10,7 +10,8 @@ import { useLoginMutation } from "@/hooks/mutations/auth/useLoginMutation";
 import { useAuthStore } from "@/store";
 import { toast } from "sonner";
 import logo from "@/image/logoNuki.png";
- 
+import { ForgotPasswordFlow } from "@/components/main/ForgotPasswordFlow";
+
 export default function LoginPage() {
   const navigate = useNavigate();
   const { error: authError, setError } = useAuthStore();
@@ -27,6 +28,7 @@ export default function LoginPage() {
   });
   
   // 뮤테이션
+  const [showForgot, setShowForgot] = useState(false);
   const login = useLoginMutation();
  
   // ===== 검증 함수 =====
@@ -92,99 +94,71 @@ export default function LoginPage() {
     <div className="w-full max-w-md">
       <div className="text-center">
         <div className="flex justify-center">
-          <img
-            src={logo}
-            alt="티켓팅마스터"
-            className="h-40 w-auto scale-80"
-          />
+          <img src={logo} alt="티켓팅마스터" className="h-40 w-auto scale-80" />
         </div>
         <p className="mt-2 text-sm text-muted-foreground">
           로그인하여 E스포츠 경기 티켓을 예매하세요
         </p>
       </div>
- 
-      <Card className="mt-8 space-y-5 p-8">
-        {/* 에러 메시지 표시 */}
-        {authError && (
-          <div className="flex gap-3 rounded-lg bg-red-50 p-3 text-sm dark:bg-red-900/20">
-            <AlertCircle className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
-            <div>
-              <p className="font-medium text-red-800 dark:text-red-200">
-                로그인 실패
-              </p>
-              <p className="text-red-700 dark:text-red-300">{authError}</p>
+
+      <Card className="mt-8 p-8">
+        {showForgot ? (
+          <ForgotPasswordFlow onBack={() => setShowForgot(false)} />
+        ) : (
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            <FieldWithIcon
+              id="email"
+              label="이메일"
+              icon={Mail}
+              type="email"
+              placeholder="example@email.com"
+              value={email}
+              onChange={setEmail}
+            />
+            <FieldWithIcon
+              id="password"
+              label="비밀번호"
+              icon={Lock}
+              type="password"
+              placeholder="비밀번호를 입력하세요"
+              value={password}
+              onChange={setPassword}
+            />
+
+            <div className="flex items-center justify-between text-sm">
+              <label className="flex items-center gap-2">
+                <Checkbox
+                  checked={keep}
+                  onCheckedChange={(v) => setKeep(!!v)}
+                />
+                로그인 상태 유지
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowForgot(true)}
+                className="font-medium text-[#054EFD] hover:underline"
+              >
+                비밀번호 찾기
+              </button>
             </div>
-          </div>
-        )}
- 
-        <form className="space-y-5" onSubmit={handleSubmit}>
-          {/* 이메일 필드 */}
-          <FieldWithIcon
-            id="email"
-            label="이메일"
-            icon={Mail}
-            type="email"
-            placeholder="example@email.com"
-            value={email}
-            onChange={handleEmailChange}
-            onBlur={() => handleBlur("email")}
-            error={
-              touched.email && email && !isEmailValid(email)
-                ? "유효한 이메일 형식이 아닙니다"
-                : undefined
-            }
-            disabled={login.isPending}
-          />
- 
-          {/* 비밀번호 필드 */}
-          <FieldWithIcon
-            id="password"
-            label="비밀번호"
-            icon={Lock}
-            type="password"
-            placeholder="비밀번호를 입력하세요"
-            value={password}
-            onChange={handlePasswordChange}
-            onBlur={() => handleBlur("password")}
-            disabled={login.isPending}
-          />
- 
-          {/* 로그인 상태 유지 & 비밀번호 찾기 */}
-          <div className="flex items-center justify-between text-sm">
-            <label className="flex items-center gap-2">
-              <Checkbox
-                checked={keep}
-                onCheckedChange={(v) => setKeep(!!v)}
-                disabled={login.isPending}
-              />
-              <span>로그인 상태 유지</span>
-            </label>
-            <Link
-              to="/password-reset"
-              className="font-medium text-[#054EFD] hover:underline"
+
+            <Button
+              type="submit"
+              size="lg"
+              disabled={login.isPending}
+              className="w-full bg-[#1C5EFD] hover:bg-[#316DFD]"
             >
-              비밀번호 찾기
-            </Link>
-          </div>
- 
-          {/* 로그인 버튼 */}
-          <Button
-            type="submit"
-            size="lg"
-            disabled={!isFormValid || login.isPending}
-            className="w-full bg-[#1C5EFD] hover:bg-[#316DFD]"
-          >
-            {login.isPending ? "로그인 중..." : "로그인"}
-          </Button>
-        </form>
- 
-        {/* 회원가입 링크 */}
-        <div className="border-t pt-4 text-center text-sm text-muted-foreground">
-          아직 회원이 아니신가요?{" "}
-          <Link to="/signup" className="font-semibold text-[#054EFD] hover:underline">
-            회원가입
-          </Link>
-        </div>
+              로그인
+            </Button>
+
+            <div className="border-t pt-4 text-center text-sm text-muted-foreground">
+              아직 회원이 아니신가요?{" "}
+              <Link to="/signup" className="font-semibold text-[#054EFD]">
+                회원가입
+              </Link>
+            </div>
+          </form>
+        )}
       </Card>
     </div>
   );

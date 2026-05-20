@@ -4,7 +4,7 @@ import com.ticketmaster.backend.admin.team.dto.request.AdminTeamUpdateRequest;
 import com.ticketmaster.backend.admin.team.dto.response.AdminTeamResponse;
 import com.ticketmaster.backend.domain.event.entity.SportType;
 import com.ticketmaster.backend.domain.team.entity.Team;
-import com.ticketmaster.backend.domain.team.repository.AdminTeamRepository;
+import com.ticketmaster.backend.domain.team.repository.TeamRepository;
 import com.ticketmaster.backend.global.exception.BusinessException;
 import com.ticketmaster.backend.global.exception.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,7 +36,7 @@ class AdminTeamServiceTest {
     private AdminTeamService service;
 
     @Mock
-    private AdminTeamRepository teamRepository;
+    private TeamRepository teamRepository;
 
     private static final Long TEAM_ID = 1L;
 
