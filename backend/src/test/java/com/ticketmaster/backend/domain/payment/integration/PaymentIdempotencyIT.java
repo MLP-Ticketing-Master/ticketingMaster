@@ -207,7 +207,7 @@ public class PaymentIdempotencyIT {
         assertThat(paymentRepository.findByPaymentKey("pk-same")).isPresent();
         assertThat(paymentRepository.count()).isEqualTo(1);
 
-        // Booking CONFIRMED 한 번만
+        // Booking 최종 상태 CONFIRMED
         Booking booking = bookingRepository.findById(bookingId).orElseThrow();
         assertThat(booking.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
     }
