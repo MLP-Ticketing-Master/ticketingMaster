@@ -133,6 +133,9 @@ public class BookingService {
 
     @Transactional
     public BookingCancelResponse cancelBooking(Long userId, Long bookingId, BookingCancelRequest request) {
+        // 취소 사유 결정
+        String cancelReason = request != null ? request.getCancelReason() : DEFAULT_CANCEL_REASON;
+
         // 1. Booking 존재 검증
         Booking booking = bookingRepository.findForCancel(bookingId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BOOKING_NOT_FOUND));
@@ -174,10 +177,10 @@ public class BookingService {
         // 5. 환불 위임 — PaymentService.refund() 호출 (실패 시 예외 throw → 롤백)
         Payment payment = paymentRepository.findByBookingId(bookingId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PAYMENT_NOT_FOUND));
-        paymentService.refund(payment, DEFAULT_CANCEL_REASON, refundAmount);
+        paymentService.refund(payment, cancelReason, refundAmount);
 
         // 6. Booking 상태 갱신
-        booking.cancel(DEFAULT_CANCEL_REASON);
+        booking.cancel(cancelReason);
 
         // Seat 상태 복원 (SOLD → AVAILABLE)
         for (BookingSeat bookingSeat : booking.getBookingSeats()) {
