@@ -103,6 +103,20 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             """)
     Optional<Booking> findForPayment(@Param("id") Long id);
 
+    /**
+     * 예매 취소 시 Booking + BookingSeat + Seat + Match + Payment 일괄 로딩
+     * PaymentService.refund() 호출 전 Payment 필요
+     */
+    @Query("""
+            SELECT DISTINCT b FROM Booking b
+            JOIN FETCH b.user
+            JOIN FETCH b.match m
+            LEFT JOIN FETCH b.bookingSeats bs
+            LEFT JOIN FETCH bs.seat
+            WHERE b.id = :id
+            """)
+    Optional<Booking> findForCancel(@Param("id") Long id);
+
     /** PENDING 상태 + 좌석 TTL 지난 Booking 목록 (자동 만료 스케줄러용) */
     List<Booking> findByStatusAndCreatedAtBefore(BookingStatus status, LocalDateTime threshold);
-}
+}// NOTE: 이 파일은 interface라 직접 추가 불가 — str_replace로 진행

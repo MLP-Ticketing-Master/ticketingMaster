@@ -15,6 +15,15 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     Optional<Payment> findByPaymentKey(String paymentKey);
 
     /**
+     * 예매 취소용 — bookingId로 Payment 조회
+     */
+    @Query("""
+            SELECT p FROM Payment p
+            WHERE p.booking.id = :bookingId AND p.status = 'SUCCESS'
+            """)
+    Optional<Payment> findByBookingId(@Param("bookingId") Long bookingId);
+
+    /**
      * 본인 결제 조회 (결제 상세 조회용)
      */
     @Query("""
