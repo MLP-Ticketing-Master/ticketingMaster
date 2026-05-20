@@ -73,9 +73,9 @@ public enum ErrorCode {
     BOOKING_NOT_PENDING(HttpStatus.BAD_REQUEST, "BOOKING_NOT_PENDING", "결제 가능한 예매 상태가 아닙니다."),
     BOOKING_ALREADY_CANCELED(HttpStatus.CONFLICT, "BOOKING_ALREADY_CANCELED", "이미 취소된 예매입니다."),
     BOOKING_TIME_EXPIRED(HttpStatus.GONE, "BOOKING_TIME_EXPIRED", "예매 가능 시간이 만료되었습니다."),
-    BOOKING_CANNOT_CANCEL(HttpStatus.BAD_REQUEST, "BOOKING_CANNOT_CANCEL", "취소할 수 없는 예매입니다."),
+    BOOKING_CANNOT_CANCEL(HttpStatus.CONFLICT, "BOOKING_CANNOT_CANCEL", "취소할 수 없는 예매입니다."),
     BOOKING_ACCESS_DENIED(HttpStatus.FORBIDDEN, "BOOKING_ACCESS_DENIED", "본인의 예매만 조회/처리할 수 있습니다."),
-    CANCEL_DEADLINE_PASSED(HttpStatus.BAD_REQUEST, "CANCEL_DEADLINE_PASSED", "취소 가능 기한이 지났습니다."),
+    CANCEL_DEADLINE_PASSED(HttpStatus.GONE, "CANCEL_DEADLINE_PASSED", "취소 가능 기한이 지났습니다."),
     MAX_TICKETS_EXCEEDED(HttpStatus.BAD_REQUEST, "MAX_TICKETS_EXCEEDED", "1인당 예매 가능 매수를 초과했습니다."),
 
     // ====== PAYMENT ======
@@ -83,7 +83,8 @@ public enum ErrorCode {
     PAYMENT_FAILED(HttpStatus.BAD_REQUEST, "PAYMENT_FAILED", "결제에 실패했습니다."),
     PAYMENT_TIME_EXPIRED(HttpStatus.GONE, "PAYMENT_TIME_EXPIRED", "결제 가능 시간이 만료되었습니다."),
     PAYMENT_ALREADY_COMPLETED(HttpStatus.CONFLICT, "PAYMENT_ALREADY_COMPLETED", "이미 처리된 결제입니다."),
-    INVALID_PAYMENT_AMOUNT(HttpStatus.BAD_REQUEST, "INVALID_PAYMENT_AMOUNT", "결제 금액이 올바르지 않습니다.");
+    INVALID_PAYMENT_AMOUNT(HttpStatus.BAD_REQUEST, "INVALID_PAYMENT_AMOUNT", "결제 금액이 올바르지 않습니다."),
+    TOSS_API_ERROR(HttpStatus.BAD_GATEWAY, "TOSS_API_ERROR", "결제 처리 중 외부 서비스 오류가 발생했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

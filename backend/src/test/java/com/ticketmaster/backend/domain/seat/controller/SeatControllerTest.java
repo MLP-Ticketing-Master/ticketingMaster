@@ -8,7 +8,6 @@ import com.ticketmaster.backend.domain.seat.dto.response.SectionSeatListResponse
 import com.ticketmaster.backend.domain.seat.entity.Seat;
 import com.ticketmaster.backend.domain.seat.entity.SeatGrade;
 import com.ticketmaster.backend.domain.seat.entity.SeatStatus;
-import com.ticketmaster.backend.domain.queue.util.QueueTokenValidator;
 import com.ticketmaster.backend.domain.seat.service.SeatReservationService;
 import com.ticketmaster.backend.domain.seat.service.SeatService;
 import com.ticketmaster.backend.domain.user.entity.Role;
@@ -68,9 +67,6 @@ class SeatControllerTest {
 
     @MockitoBean
     private CustomUserDetailsService customUserDetailsService;
-
-    @MockitoBean
-    private QueueTokenValidator queueTokenValidator;
 
     private static final Long MATCH_ID = 10L;
     private static final Long USER_ID = 99L;
@@ -189,7 +185,6 @@ class SeatControllerTest {
                 List.of(1L, 2L), LocalDateTime.of(2026, 5, 11, 18, 0), 200_000);
         given(seatReservationService.reserve(eq(MATCH_ID), eq(USER_ID), any()))
                 .willReturn(response);
-        // queueTokenValidator 는 mock — 검증 통과(예외 안 던짐)
 
         // when & then
         mockMvc.perform(post("/matches/{matchId}/seats/reserve", MATCH_ID)
@@ -280,24 +275,6 @@ class SeatControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(om.writeValueAsString(Map.of("seatIds", List.of(1)))))
                 .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    @WithMockUser(roles = "USER")
-    @DisplayName("TC-16: Queue-Token 헤더 없이 좌석 점유 → 401 QUEUE_TOKEN_NOT_FOUND")
-    void TC16_큐토큰_누락() throws Exception {
-        // given — validator 가 QUEUE_TOKEN_NOT_FOUND throw 하도록 stub
-        willThrow(new BusinessException(ErrorCode.QUEUE_TOKEN_NOT_FOUND))
-                .given(queueTokenValidator).validateAllowed(eq(MATCH_ID), isNull());
-
-        // when & then — Queue-Token 헤더 없이 reserve 호출
-        mockMvc.perform(post("/matches/{matchId}/seats/reserve", MATCH_ID)
-                        .with(csrf())
-                        .with(authentication(userAuth(USER_ID)))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(om.writeValueAsString(Map.of("seatIds", List.of(1, 2)))))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.code").value("QUEUE_TOKEN_NOT_FOUND"));
     }
 
     // ----- 헬퍼 --------------------------------------------------------------
