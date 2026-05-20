@@ -76,3 +76,13 @@ queue:
   admission-batch-size: 200      # 한 번에 처리하는 입장 인원
   admission-interval-seconds: 30 # 입장 승격 스케줄러 주기
   session-seconds: 600           # ALLOWED 토큰 만료 (10분)
+
+# PENDING 예매 자동 만료 스케줄러 주기 (운영과 동일)
+booking:
+  expiry-scan-interval-ms: 60000
+
+# 토스페이먼츠 — 통합 테스트에서 TossPaymentsClient 빈 생성 시 placeholder 충족용 더미
+# 실제 호출은 @MockitoBean 으로 대체되므로 운영 키 아님
+toss:
+  api-base-url: https://api.tosspayments.test
+  secret-key: test_dummy_secret_key
