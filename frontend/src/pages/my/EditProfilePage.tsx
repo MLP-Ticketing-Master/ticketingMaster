@@ -10,12 +10,12 @@ import { toast } from "sonner";
 export default function EditProfilePage() {
   const { data: profile } = useMyProfile();
   const update = useUpdateProfileMutation();
-  const [form, setForm] = useState({ name: "", email: "", phone: "" });
+  const [form, setForm] = useState({ nickname: "", email: "", phone: "" });
 
   useEffect(() => {
     if (profile)
       setForm({
-        name: profile.name,
+        nickname: profile.nickname,
         email: profile.email,
         phone: profile.phone,
       });
@@ -38,11 +38,11 @@ export default function EditProfilePage() {
       <h2 className="text-2xl font-bold">회원정보 수정</h2>
       <form className="space-y-5" onSubmit={onSubmit}>
         <Field
-          id="name"
+          id="nickname"
           label="이름"
           icon={User}
-          value={form.name}
-          onChange={(v) => setForm({ ...form, name: v })}
+          value={form.nickname}
+          onChange={(v) => setForm({ ...form, nickname: v })}
         />
         <Field
           id="email"

@@ -13,7 +13,7 @@ import type {
 
 export const MOCK_USER: User = {
   id: 1,
-  name: "홍길동",
+  nickname: "홍길동",
   email: "hong@example.com",
   phone: "010-1234-5678",
   joinedAt: "2026-01-15",

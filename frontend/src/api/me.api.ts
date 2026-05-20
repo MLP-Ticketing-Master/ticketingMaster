@@ -1,14 +1,8 @@
-import { http } from "@/lib/axios";
+import api from "@/lib/axios";
 import type { User } from "@/types";
 
-export interface UserStats {
-  totalBookings: number;
-  upcomingMatches: number;
-  watchedMatches: number;
-}
-
 export interface UpdateProfileRequest {
-  name: string;
+  nickname: string;
   email: string;
   phone: string;
 }
@@ -19,12 +13,29 @@ export interface ChangePasswordRequest {
   newPasswordConfirm: string;
 }
 
+export async function getProfile(): Promise<User> {
+  const res = await api.get<User>("/me");
+  return res.data;
+}
+
+export async function updateProfile(body: UpdateProfileRequest): Promise<User> {
+  const res = await api.put<User>("/me", body);
+  return res.data;
+}
+
+export async function changePassword(body: ChangePasswordRequest): Promise<void> {
+  await api.put("/me/password", body);
+}
+
+export async function withdraw(): Promise<void> {
+  await api.delete("/me");
+}
+
+
+// API 객체로 내보내기
 export const meApi = {
-  profile: () => http.get<User>("/me").then((r) => r.data),
-  stats: () => http.get<UserStats>("/me/stats").then((r) => r.data),
-  updateProfile: (body: UpdateProfileRequest) =>
-    http.put<User>("/me", body).then((r) => r.data),
-  changePassword: (body: ChangePasswordRequest) =>
-    http.put("/me/password", body).then((r) => r.data),
-  withdraw: () => http.delete("/me").then((r) => r.data),
+  profile: getProfile,
+  updateProfile,
+  changePassword,
+  withdraw,
 };

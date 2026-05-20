@@ -1,4 +1,4 @@
-import { http } from "@/lib/axios";
+import api from "@/lib/axios";
 import type {
   AuthResponse,
   LoginRequest,
@@ -6,11 +6,47 @@ import type {
   User,
 } from "@/types";
 
-export const authApi = {
-  login: (body: LoginRequest) =>
-    http.post<AuthResponse>("/auth/login", body).then((r) => r.data),
-  signup: (body: SignupRequest) =>
-    http.post<AuthResponse>("/auth/signup", body).then((r) => r.data),
-  logout: () => http.post("/auth/logout").then((r) => r.data),
-  me: () => http.get<User>("/auth/me").then((r) => r.data),
-};
+/**
+ * 로그인
+ */
+export async function getLogin(body: LoginRequest): Promise<AuthResponse> {
+  const res = await api.post<AuthResponse>("/auth/login", body);
+  return res.data;
+}
+
+// 회원가입 후 자동 로그인
+export async function getSignup(body: SignupRequest): Promise<AuthResponse> {
+  try {
+    await api.post("/auth/signup", body);  // 회원가입
+    
+    const loginRes = await api.post<AuthResponse>("/auth/login", {
+      email: body.email,
+      password: body.password,
+    });  // 자동 로그인
+    
+    return loginRes.data;
+  } catch (error) {
+      console.error("회원가입 또는 로그인 실패:", error);
+      throw error;
+    }
+}
+
+/**
+ * 로그아웃
+ */
+export async function getLogout(): Promise<void> {
+  await api.post("/auth/logout");
+}
+
+/**
+ * 내 정보 조회 (Me)
+ */
+export async function getMe(): Promise<User> {
+  const res = await api.get<User>("/auth/me");
+  return res.data;
+}
+/** refresh */
+export async function getRefresh(): Promise<AuthResponse> {
+  const res = await api.post<AuthResponse>("/auth/refresh");
+  return res.data;
+}

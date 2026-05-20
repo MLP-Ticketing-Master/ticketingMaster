@@ -1,4 +1,4 @@
-import { http } from "@/lib/axios";
+import api from "@/lib/axios";
 import type { EventSummary, Round, SeatGrade, Section } from "@/types";
 
 export interface AdminDashboardStats {
@@ -9,18 +9,18 @@ export interface AdminDashboardStats {
 
 export const adminApi = {
   dashboard: () =>
-    http
+    api
       .get<AdminDashboardStats>("/admin/dashboard")
       .then((r) => r.data),
   events: () =>
-    http.get<EventSummary[]>("/admin/events").then((r) => r.data),
-  rounds: () => http.get<Round[]>("/admin/rounds").then((r) => r.data),
+    api.get<EventSummary[]>("/admin/events").then((r) => r.data),
+  rounds: () => api.get<Round[]>("/admin/rounds").then((r) => r.data),
   seatGrades: (eventId: number) =>
-    http
+    api
       .get<SeatGrade[]>(`/admin/events/${eventId}/seat-grades`)
       .then((r) => r.data),
   sections: (eventId: number) =>
-    http
+    api
       .get<Section[]>(`/admin/events/${eventId}/sections`)
       .then((r) => r.data),
 };

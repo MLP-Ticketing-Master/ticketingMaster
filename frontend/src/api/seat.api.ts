@@ -1,15 +1,15 @@
-import { http } from "@/lib/axios";
+import api from "@/lib/axios";
 import type { SeatGrade, SeatLayout, Section } from "@/types";
 
 export const seatApi = {
   grades: (eventId: number) =>
-    http
+    api
       .get<SeatGrade[]>(`/events/${eventId}/seat-grades`)
       .then((r) => r.data),
   sections: (eventId: number) =>
-    http.get<Section[]>(`/events/${eventId}/sections`).then((r) => r.data),
+    api.get<Section[]>(`/events/${eventId}/sections`).then((r) => r.data),
   layout: (roundId: number, sectionId?: number) =>
-    http
+    api
       .get<SeatLayout>(`/rounds/${roundId}/seats`, {
         params: sectionId ? { sectionId } : {},
       })

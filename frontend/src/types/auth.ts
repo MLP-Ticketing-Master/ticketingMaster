@@ -2,7 +2,7 @@ export type UserRole = "USER" | "ADMIN";
 
 export interface User {
   id: number;
-  name: string;
+  nickname: string;
   email: string;
   phone: string;
   joinedAt: string;
@@ -15,11 +15,10 @@ export interface LoginRequest {
 }
 
 export interface SignupRequest {
-  name: string;
+  nickname: string;
   email: string;
   phone: string;
   password: string;
-  passwordConfirm: string;
 }
 
 export interface AuthResponse {

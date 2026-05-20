@@ -1,38 +1,95 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Lock, Mail } from "lucide-react";
+import { Lock, Mail, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useLoginMutation } from "@/hooks";
+import { useLoginMutation } from "@/hooks/mutations/auth/useLoginMutation";
+import { useAuthStore } from "@/store";
 import { toast } from "sonner";
 import logo from "@/image/logoNuki.png";
 import { ForgotPasswordFlow } from "@/components/main/ForgotPasswordFlow";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { error: authError, setError } = useAuthStore();
+  
+  // 폼 상태
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [keep, setKeep] = useState(false);
+  
+  // 검증 상태
+  const [touched, setTouched] = useState({
+    email: false,
+    password: false,
+  });
+  
+  // 뮤테이션
   const [showForgot, setShowForgot] = useState(false);
   const login = useLoginMutation();
-
+ 
+  // ===== 검증 함수 =====
+  const isEmailValid = (value: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  };
+ 
+  const isFormValid = email.trim() && password.trim() && isEmailValid(email);
+ 
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    // 에러 메시지 자동 초기화
+    if (authError) {
+      setError(null);
+    }
+  };
+ 
+  const handlePasswordChange = (value: string) => {
+    setPassword(value);
+    // 에러 메시지 자동 초기화
+    if (authError) {
+      setError(null);
+    }
+  };
+ 
+  const handleBlur = (field: "email" | "password") => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  };
+ 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+ 
+    // 최종 검증
+    if (!isFormValid) {
+      toast.error("이메일과 비밀번호를 올바르게 입력해주세요");
+      return;
+    }
+ 
+    // 로그인 요청
     login.mutate(
       { email, password },
       {
         onSuccess: () => {
           toast.success("로그인되었습니다.");
+          // 메모리 초기화
+          setEmail("");
+          setPassword("");
+          // keep이 false면 setKeep도 false로 초기화 (localStorage는 이미 관리됨)
           navigate("/");
         },
-        onError: () => toast.error("로그인에 실패했습니다."),
-      },
+        onError: (error: any) => {
+          const errorMsg = error.message || "로그인에 실패했습니다.";
+          toast.error(errorMsg);
+          // 비밀번호 필드 초기화 (보안)
+          setPassword("");
+          setTouched((prev) => ({ ...prev, password: false }));
+        },
+      }
     );
   };
-
+ 
   return (
     <div className="w-full max-w-md">
       <div className="text-center">
@@ -106,7 +163,9 @@ export default function LoginPage() {
     </div>
   );
 }
-
+ 
+//FieldWithIcon 컴포넌트
+ 
 interface FieldProps {
   id: string;
   label: string;
@@ -115,23 +174,49 @@ interface FieldProps {
   placeholder?: string;
   value: string;
   onChange: (value: string) => void;
+  onBlur?: () => void;
+  error?: string;
+  disabled?: boolean;
 }
-
-function FieldWithIcon({ id, label, icon: Icon, type = "text", placeholder, value, onChange }: FieldProps) {
+ 
+function FieldWithIcon({
+  id,
+  label,
+  icon: Icon,
+  type = "text",
+  placeholder,
+  value,
+  onChange,
+  onBlur,
+  error,
+  disabled,
+}: FieldProps) {
   return (
     <div className="space-y-2">
       <Label htmlFor={id}>{label}</Label>
       <div className="relative">
-        <Icon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Icon
+          className={`absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 ${
+            error ? "text-red-500" : "text-muted-foreground"
+          }`}
+        />
         <Input
           id={id}
           type={type}
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="pl-10"
+          onBlur={onBlur}
+          disabled={disabled}
+          className={`pl-10 ${
+            error
+              ? "border-red-500 focus-visible:ring-red-500"
+              : "focus-visible:ring-[#054EFD]"
+          }`}
         />
       </div>
+      {/* 에러 메시지 */}
+      {error && <p className="text-xs font-medium text-red-500">{error}</p>}
     </div>
   );
 }
