@@ -1,8 +1,9 @@
 import { useBookingFlowStore } from "@/store";
-import { useSeatLayout } from "@/hooks";
+import { useSeatGrades, useSeatLayout } from "@/hooks";
 import { SeatGrid } from "../SeatGrid";
 
 export function SeatStep() {
+  const eventId = useBookingFlowStore((s) => s.eventId);
   const matchId = useBookingFlowStore((s) => s.matchId);
   const sectionId = useBookingFlowStore((s) => s.sectionId);
   const selectedSeats = useBookingFlowStore((s) => s.selectedSeats);
@@ -10,6 +11,7 @@ export function SeatStep() {
   const toggleSeat = useBookingFlowStore((s) => s.toggleSeat);
 
   const { data: layout } = useSeatLayout(matchId ?? 0, sectionId ?? undefined);
+  const { data: grades = [] } = useSeatGrades(eventId ?? 0);
 
   if (!layout) {
     return (
@@ -21,6 +23,7 @@ export function SeatStep() {
 
   return (
     <SeatGrid
+      grades={grades}
       layout={layout}
       selectedIds={selectedSeats.map((s) => s.id)}
       onToggle={toggleSeat}

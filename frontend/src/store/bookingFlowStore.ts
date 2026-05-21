@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import type { Seat } from "@/types";
+import { createJSONStorage, persist } from "zustand/middleware";
+import type { QueueEnterResponse, QueueStatusResponse, Seat } from "@/types";
 
 export type BookingStep = "ZONE" | "SEAT" | "QUEUE" | "PAYMENT";
 
@@ -10,8 +11,15 @@ interface BookingFlowState {
   matchId: number | null;
   sectionId: number | null;
   selectedSeats: Seat[];
-  /** 대기열 통과 후 입장 허용된 시각 (ms). null이면 아직 미입장. */
-  admittedAt: number | null;
+
+  // 대기열 상태
+  queueToken: string | null;
+  queueNumber: number | null;
+  remainingAhead: number | null;
+  estimatedWaitSeconds: number | null;
+  allowedAt: string | null;
+  entryDeadline: string | null;
+
   openFlow: (params: { eventId: number; matchId: number }) => void;
   closeFlow: () => void;
   goToSeat: (sectionId: number) => void;
@@ -22,6 +30,10 @@ interface BookingFlowState {
   toggleSeat: (seat: Seat) => void;
   removeSeat: (seatId: number) => void;
   reset: () => void;
+
+  setQueueEnterResult: (res: QueueEnterResponse) => void;
+  setQueueStatus: (res: QueueStatusResponse) => void;
+  clearQueue: () => void;
 }
 
 const initial = {
@@ -31,42 +43,100 @@ const initial = {
   matchId: null,
   sectionId: null,
   selectedSeats: [],
-  admittedAt: null,
+  queueToken: null,
+  queueNumber: null,
+  remainingAhead: null,
+  estimatedWaitSeconds: null,
+  allowedAt: null,
+  entryDeadline: null,
 };
 
-export const useBookingFlowStore = create<BookingFlowState>((set, get) => ({
-  ...initial,
-  openFlow: ({ eventId, matchId }) =>
-    set({
+export const useBookingFlowStore = create<BookingFlowState>()(
+  persist(
+    (set, get) => ({
       ...initial,
-      open: true,
-      step: "QUEUE",
-      eventId,
-      matchId,
+      openFlow: ({ eventId, matchId }) => {
+        // 다른 매치로 들어오면 이전 큐 상태 초기화. 같은 매치면 토큰/순번 유지
+        const prev = get();
+        const sameMatch = prev.matchId === matchId && !!prev.queueToken;
+        set({
+          ...initial,
+          open: true,
+          step: "QUEUE",
+          eventId,
+          matchId,
+          ...(sameMatch
+            ? {
+                queueToken: prev.queueToken,
+                queueNumber: prev.queueNumber,
+                remainingAhead: prev.remainingAhead,
+                estimatedWaitSeconds: prev.estimatedWaitSeconds,
+              }
+            : {}),
+        });
+      },
+      closeFlow: () => set({ ...initial }),
+      goToSeat: (sectionId) => set({ step: "SEAT", sectionId }),
+      goBackToZone: () => set({ step: "ZONE", sectionId: null }),
+      // 대기열 통과 → 좌석 선택 단계 진입
+      goToZone: () => set({ step: "ZONE", sectionId: null }),
+      goToQueue: () => set({ step: "QUEUE" }),
+      goToPayment: () => set({ step: "PAYMENT" }),
+      toggleSeat: (seat) => {
+        const exists = get().selectedSeats.find((s) => s.id === seat.id);
+        set({
+          selectedSeats: exists
+            ? get().selectedSeats.filter((s) => s.id !== seat.id)
+            : [...get().selectedSeats, seat],
+        });
+      },
+      removeSeat: (seatId) =>
+        set({
+          selectedSeats: get().selectedSeats.filter((s) => s.id !== seatId),
+        }),
+      reset: () => set({ ...initial }),
+
+      setQueueEnterResult: (res) =>
+        set({
+          queueToken: res.queueToken,
+          queueNumber: res.queueNumber,
+          remainingAhead: res.remainingAhead,
+          estimatedWaitSeconds: res.estimatedWaitSeconds,
+        }),
+      setQueueStatus: (res) =>
+        set({
+          queueNumber: res.queueNumber,
+          remainingAhead: res.remainingAhead,
+          estimatedWaitSeconds: res.estimatedWaitSeconds,
+          allowedAt: res.allowedAt,
+          entryDeadline: res.entryDeadline,
+        }),
+      clearQueue: () =>
+        set({
+          queueToken: null,
+          queueNumber: null,
+          remainingAhead: null,
+          estimatedWaitSeconds: null,
+          allowedAt: null,
+          entryDeadline: null,
+        }),
     }),
-  closeFlow: () => set({ ...initial }),
-  goToSeat: (sectionId) => set({ step: "SEAT", sectionId }),
-  goBackToZone: () => set({ step: "ZONE", sectionId: null }),
-  // 대기열 통과 → admittedAt 기록
-  goToZone: () =>
-    set((state) => ({
-      step: "ZONE",
-      sectionId: null,
-      admittedAt: state.admittedAt ?? Date.now(),
-    })),
-  goToQueue: () => set({ step: "QUEUE" }),
-  goToPayment: () => set({ step: "PAYMENT" }),
-  toggleSeat: (seat) => {
-    const exists = get().selectedSeats.find((s) => s.id === seat.id);
-    set({
-      selectedSeats: exists
-        ? get().selectedSeats.filter((s) => s.id !== seat.id)
-        : [...get().selectedSeats, seat],
-    });
-  },
-  removeSeat: (seatId) =>
-    set({
-      selectedSeats: get().selectedSeats.filter((s) => s.id !== seatId),
-    }),
-  reset: () => set({ ...initial }),
-}));
+    {
+      name: "booking-flow",
+      storage: createJSONStorage(() => sessionStorage),
+      // 새로고침 시 복구할 필드 (sectionId / selectedSeats만 휘발)
+      partialize: (state) => ({
+        open: state.open,
+        step: state.step,
+        eventId: state.eventId,
+        matchId: state.matchId,
+        queueToken: state.queueToken,
+        queueNumber: state.queueNumber,
+        remainingAhead: state.remainingAhead,
+        estimatedWaitSeconds: state.estimatedWaitSeconds,
+        allowedAt: state.allowedAt,
+        entryDeadline: state.entryDeadline,
+      }),
+    },
+  ),
+);

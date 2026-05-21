@@ -1,151 +1,181 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { CheckCircle, Clock, Megaphone, Users } from "lucide-react";
+import { isAxiosError } from "axios";
+import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { useBookingFlowStore } from "@/store";
-
-// TODO: 실제 대기열 API로 교체 필요
-const MOCK_TOTAL_WAITING = 1249;
-const MOCK_INITIAL_POSITION = 1250;
-const MOCK_ESTIMATED_MINUTES = 12;
-const SIMULATE_QUEUE_MS = 8000; // 데모용: 8초 후 입장 허용
+import { useEnterQueueMutation, useQueueStatus } from "@/hooks";
+import { ERROR_CODES, QUEUE_TOKEN_ERROR_CODES } from "@/lib/error";
 
 export function QueueStep() {
-  const goToZone = useBookingFlowStore((s) => s.goToZone ?? s.goBackToZone ?? (() => s.goToSeat(0)));
-  const goActuallyToZone = useBookingFlowStore((s) => s.goToZone);
+  const matchId = useBookingFlowStore((s) => s.matchId);
+  const queueToken = useBookingFlowStore((s) => s.queueToken);
+  const queueNumber = useBookingFlowStore((s) => s.queueNumber);
+  const remainingAhead = useBookingFlowStore((s) => s.remainingAhead);
+  const estimatedWaitSeconds = useBookingFlowStore((s) => s.estimatedWaitSeconds);
+  const goToZone = useBookingFlowStore((s) => s.goToZone);
+  const closeFlow = useBookingFlowStore((s) => s.closeFlow);
+  const clearQueue = useBookingFlowStore((s) => s.clearQueue);
 
-  const [position, setPosition] = useState(MOCK_INITIAL_POSITION);
-  const [admitted, setAdmitted] = useState(false);
-  const [countdown, setCountdown] = useState(3);
+  const enterMutation = useEnterQueueMutation();
+  const enterCalledRef = useRef(false);
 
-  // 대기순번 카운트다운 시뮬레이션
+  // 진입 1회만 호출 (StrictMode 대응). store에 토큰이 있으면 enter 스킵
   useEffect(() => {
-    const interval = setInterval(() => {
-      setPosition((prev) => Math.max(0, prev - Math.floor(Math.random() * 15 + 5)));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
+    if (!matchId || queueToken || enterCalledRef.current) return;
+    enterCalledRef.current = true;
+    enterMutation.mutate(matchId, {
+      onError: (error) => {
+        const status = isAxiosError(error) ? error.response?.status : undefined;
+        const code = isAxiosError(error) ? error.response?.data?.code : undefined;
+        toast.error(getEnterErrorMessage(code, status));
+        closeFlow();
+      },
+    });
+  }, [matchId, queueToken, enterMutation, closeFlow]);
 
-  // 일정 시간 후 입장 허용 (데모)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setAdmitted(true);
-    }, SIMULATE_QUEUE_MS);
-    return () => clearTimeout(timer);
-  }, []);
+  const statusQuery = useQueueStatus(matchId, queueToken);
 
-  // 입장 허용 후 카운트다운 → 자동 이동
+  // ALLOWED 되면 좌석 선택으로 이동
   useEffect(() => {
-    if (!admitted) return;
-    if (countdown <= 0) {
-      // goToZone action
-      if (goActuallyToZone) goActuallyToZone();
-      return;
+    if (statusQuery.data?.status === "ALLOWED") {
+      goToZone();
     }
-    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [admitted, countdown, goActuallyToZone]);
+  }, [statusQuery.data?.status, goToZone]);
 
-  const progress = Math.round(
-    ((MOCK_INITIAL_POSITION - position) / MOCK_INITIAL_POSITION) * 100,
-  );
+  // 대기열 토큰 만료/누락/매치 불일치 → toast + 모달 닫기 (한 번만)
+  const tokenErrorHandledRef = useRef(false);
+  useEffect(() => {
+    if (!statusQuery.isError || tokenErrorHandledRef.current) return;
+    if (!isAxiosError(statusQuery.error)) return;
+    const code = statusQuery.error.response?.data?.code;
+    if (QUEUE_TOKEN_ERROR_CODES.includes(code)) {
+      tokenErrorHandledRef.current = true;
+      toast.error("대기열 정보가 만료되었습니다. 다시 시도해 주세요.");
+      clearQueue();
+      closeFlow();
+    }
+  }, [statusQuery.isError, statusQuery.error, clearQueue, closeFlow]);
+
+  // 진입 중 / enter 에러 직후
+  if (!queueToken || queueNumber === null) {
+    return (
+      <div className="py-16 text-center text-sm text-muted-foreground">
+        대기열에 진입하는 중...
+      </div>
+    );
+  }
+
   const estimatedMinutes = Math.max(
     1,
-    Math.round((position / MOCK_INITIAL_POSITION) * MOCK_ESTIMATED_MINUTES),
+    Math.round((estimatedWaitSeconds ?? 0) / 60),
   );
 
-  if (admitted) {
+  // ALLOWED 직전 안전망
+  if (statusQuery.data?.status === "ALLOWED") {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center space-y-6">
-        <div className="mx-auto inline-flex h-20 w-20 items-center justify-center rounded-full bg-green-100 text-green-600 animate-bounce">
-          <CheckCircle className="h-10 w-10" />
+      <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+        <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600 animate-bounce">
+          <CheckCircle className="h-8 w-8" />
         </div>
-        <div>
-          <h2 className="text-2xl font-bold text-green-600">입장 가능</h2>
-          <p className="mt-2 text-muted-foreground">
-            예매 페이지로 이동합니다.
-          </p>
-        </div>
-        <Card className="p-6 w-64 text-center space-y-2">
-          <p className="text-sm text-muted-foreground">제한 시간</p>
-          <p className="text-4xl font-bold text-green-600">10:00</p>
-          <p className="text-xs text-muted-foreground">
-            {countdown}초 후 자동으로 이동합니다
-          </p>
-        </Card>
-        {goActuallyToZone && (
-          <button
-            type="button"
-            onClick={goActuallyToZone}
-            className="mt-2 text-sm font-semibold text-indigo-600 underline underline-offset-2 hover:text-indigo-800"
-          >
-            지금 바로 이동하기
-          </button>
-        )}
+        <h2 className="text-xl font-bold text-green-600">입장 가능</h2>
+        <p className="text-sm text-muted-foreground">좌석 선택 페이지로 이동합니다.</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-5 px-6 py-8">
-      {/* 헤더 */}
+    <div className="mx-auto max-w-2xl space-y-6 px-6 py-10">
       <div className="text-center">
-        <div className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
-          <Clock className="h-7 w-7" />
+        <div className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-100 text-violet-600">
+          <Clock className="h-6 w-6" />
         </div>
-        <h2 className="mt-4 text-2xl font-bold">대기열 접속 중</h2>
+        <h2 className="mt-4 text-2xl font-bold">예매 대기 중입니다</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           현재 접속자가 많아 대기 중입니다.
           <br />
-          잠시만 기다려주시면 순서대로 예매 페이지로 이동합니다.
+          잠시만 기다려주시면, 순서대로 자동으로 예매 페이지로 이동합니다.
         </p>
       </div>
 
-      {/* 메인 카드 - 이미지 디자인 참고 */}
-      <Card className="mx-auto max-w-sm p-8 text-center space-y-5 border-2 border-indigo-100">
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">현재 대기 순번</p>
-          <p className="mt-1 text-6xl font-extrabold text-indigo-600">
-            {position.toLocaleString()}
+      <Card className="p-8">
+        <div className="text-center">
+          <p className="text-sm font-medium">내 대기 순번</p>
+          <p className="mt-3 text-5xl font-bold text-violet-600 tabular-nums leading-none">
+            {queueNumber.toLocaleString()}
+            <span className="ml-2 text-xl font-semibold">번째</span>
           </p>
-          <p className="text-lg font-semibold text-indigo-500">번</p>
         </div>
 
-        <div className="h-px bg-gray-100" />
+        <div className="my-6 h-px bg-border" />
 
-        <div className="grid grid-cols-2 gap-4 text-center">
-          <div>
-            <Users className="mx-auto h-4 w-4 text-muted-foreground mb-1" />
-            <p className="text-xs text-muted-foreground">내 앞 대기자</p>
-            <p className="text-base font-bold">{(position - 1).toLocaleString()}명</p>
-          </div>
-          <div>
-            <Clock className="mx-auto h-4 w-4 text-muted-foreground mb-1" />
-            <p className="text-xs text-muted-foreground">예상 대기시간</p>
-            <p className="text-base font-bold">{estimatedMinutes}분</p>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Progress value={progress} className="h-2.5 [&>div]:bg-indigo-500" />
-          <p className="text-xs text-muted-foreground">
-            {progress}% 진행됨
+        <div className="text-center">
+          <p className="text-sm font-medium">예상 대기 시간</p>
+          <p className="mt-3 text-3xl font-bold text-violet-600 tabular-nums leading-none">
+            약 {estimatedMinutes}분
           </p>
         </div>
       </Card>
 
-      {/* 안내 카드 */}
-      <Card className="flex gap-4 bg-amber-50 border-amber-200 p-5">
-        <Megaphone className="h-5 w-5 shrink-0 text-amber-600 mt-0.5" />
-        <div className="text-sm">
-          <h3 className="font-semibold text-amber-800">안내사항</h3>
-          <ul className="mt-2 list-disc space-y-1 pl-4 text-amber-700">
-            <li>새로고침하거나 창을 닫으면 대기 순번이 초기화됩니다.</li>
-            <li>대기 중에는 페이지를 그대로 유지해 주세요.</li>
-            <li>입장 허용 후 10분 안에 좌석을 선택하지 않으면 자동 취소됩니다.</li>
-          </ul>
+      <Card className="grid grid-cols-2 gap-4 p-5">
+        <Stat
+          icon={Users}
+          label="내 앞 대기자"
+          value={`${(remainingAhead ?? 0).toLocaleString()}명`}
+        />
+        <Stat
+          icon={Clock}
+          label="예상 대기 시간"
+          value={`약 ${estimatedMinutes}분`}
+        />
+      </Card>
+
+      <Card className="flex items-start gap-3 bg-gray-50 p-5">
+        <Megaphone className="h-5 w-5 shrink-0 text-violet-600 mt-0.5" />
+        <div>
+          <p className="text-sm font-semibold">안내사항</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            입장 후 10분 안에 좌석 선택이 필요합니다.
+          </p>
         </div>
       </Card>
     </div>
   );
+}
+
+function Stat({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof Users;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="text-center">
+      <Icon className="mx-auto h-5 w-5 text-violet-600" />
+      <p className="mt-2 text-xs text-muted-foreground">{label}</p>
+      <p className="mt-1 text-base font-bold text-violet-600 tabular-nums">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function getEnterErrorMessage(
+  code: string | undefined,
+  status: number | undefined,
+): string {
+  if (status === 401) return "로그인이 필요합니다.";
+  switch (code) {
+    case ERROR_CODES.MATCH_NOT_FOUND:
+      return "존재하지 않는 회차입니다.";
+    case ERROR_CODES.BOOKING_NOT_OPEN:
+      return "예매 가능 시간이 아닙니다.";
+    case ERROR_CODES.USER_NOT_FOUND:
+      return "사용자 정보를 찾을 수 없습니다.";
+    default:
+      return "대기열 진입에 실패했습니다.";
+  }
 }

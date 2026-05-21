@@ -10,6 +10,7 @@ interface Props {
   selected: Seat[];
   total: number;
   canSubmit: boolean;
+  showGrades: boolean;
   onRemove: (seatId: number) => void;
   onSubmit: () => void;
 }
@@ -19,32 +20,35 @@ export function SeatSidebar({
   selected,
   total,
   canSubmit,
+  showGrades,
   onRemove,
   onSubmit,
 }: Props) {
-  return (
-    <aside className="flex h-full w-80 flex-col bg-white p-6">
-      <div className="space-y-3">
-        <h3 className="font-bold">등급별 잔여 좌석</h3>
-        <ul className="space-y-2 text-sm">
-          {grades.map((g) => (
-            <li
-              key={g.code}
-              className="flex items-center justify-between"
-            >
-              <div className="flex items-center gap-2">
-                <span
-                  className={`h-3 w-3 rounded-sm ${SEAT_GRADE_COLORS[g.code] ?? "bg-gray-400"}`}
-                />
-                <span>{g.name}</span>
-              </div>
-              <span className="text-muted-foreground">{g.remaining}석</span>
-            </li>
-          ))}
-        </ul>
-      </div>
+  const priceMap = new Map(grades.map((g) => [g.code, g.price]));
 
-      <Separator className="my-5" />
+  return (
+    <aside className="flex h-full w-80 flex-col bg-white px-6 pt-16 pb-6">
+      {showGrades && grades.length > 0 && (
+        <>
+          <div className="space-y-3">
+            <h3 className="font-bold">등급별 잔여 좌석</h3>
+            <ul className="space-y-2 text-sm">
+              {grades.map((g) => (
+                <li key={g.code} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`h-3 w-3 rounded-sm ${SEAT_GRADE_COLORS[g.code] ?? "bg-gray-400"}`}
+                    />
+                    <span>{g.name}</span>
+                  </div>
+                  <span className="text-muted-foreground">{g.remaining}석</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <Separator className="my-5" />
+        </>
+      )}
 
       <div className="flex-1 space-y-3 overflow-y-auto">
         <h3 className="font-bold">선택한 좌석</h3>
@@ -54,31 +58,38 @@ export function SeatSidebar({
           </p>
         ) : (
           <ul className="space-y-2">
-            {selected.map((s) => (
-              <li
-                key={s.id}
-                className="flex items-center justify-between rounded-lg bg-orange-50 px-3 py-2 text-sm"
-              >
-                <span>
-                  {gradeLabel(s.gradeCode)} {s.row}
-                  {s.number}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => onRemove(s.id)}
-                  className="text-red-500 hover:text-red-700"
-                  aria-label="좌석 제거"
+            {selected.map((s) => {
+              const price = priceMap.get(s.gradeCode) ?? 0;
+              return (
+                <li
+                  key={s.id}
+                  className="flex items-center justify-between rounded-lg bg-orange-50 px-3 py-2 text-sm"
                 >
-                  <X className="h-4 w-4" />
-                </button>
-              </li>
-            ))}
+                  <div>
+                    <p className="font-medium">
+                      {gradeLabel(s.gradeCode)} {s.row}
+                      {s.number}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatPrice(price)}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onRemove(s.id)}
+                    className="text-red-500 hover:text-red-700"
+                    aria-label="좌석 제거"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
 
       <Separator className="my-5" />
-
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <span className="font-semibold">총 결제금액</span>
@@ -92,7 +103,7 @@ export function SeatSidebar({
           onClick={onSubmit}
           className="w-full bg-[#054EFD] hover:bg-[#3C76FE] disabled:bg-gray-200 disabled:text-gray-400"
         >
-          다음 단계 (결제)
+          좌석 선택 완료
         </Button>
       </div>
     </aside>

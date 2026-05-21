@@ -4,3 +4,4 @@ export * from "./auth/useSignupMutation";
 export * from "./auth/useRefreshTokenMutation";
 export * from "./useBookingMutations";
 export * from "./useMeMutations";
+export * from "./useQueueMutations";

@@ -9,7 +9,6 @@ import {
 import { BookingDialog } from "@/components/main/seat/BookingDialog";
 import HomePage from "@/pages/HomePage";
 import EventDetailPage from "@/pages/EventDetailPage";
-import QueuePage from "@/pages/QueuePage";
 import LoginPage from "@/pages/LoginPage";
 import SignupPage from "@/pages/SignupPage";
 import ProfilePage from "@/pages/my/ProfilePage";
@@ -32,7 +31,6 @@ export default function App() {
           <Route index element={<HomePage />} />
           <Route path="events" element={<HomePage />} />
           <Route path="events/:id" element={<EventDetailPage />} />
-          <Route path="queue" element={<QueuePage />} />
         </Route>
 
         <Route element={<AuthLayout />}>
