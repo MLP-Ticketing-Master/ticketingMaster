@@ -61,7 +61,6 @@ public enum ErrorCode {
     // ====== QUEUE ======
     QUEUE_NOT_FOUND(HttpStatus.NOT_FOUND, "QUEUE_NOT_FOUND", "대기열 정보를 찾을 수 없습니다."),
     QUEUE_TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "QUEUE_TOKEN_NOT_FOUND", "대기열 토큰이 유효하지 않습니다."),
-    QUEUE_ALREADY_ENTERED(HttpStatus.CONFLICT, "QUEUE_ALREADY_ENTERED", "이미 대기열에 진입한 사용자입니다."),
     QUEUE_ACCESS_DENIED(HttpStatus.FORBIDDEN, "QUEUE_ACCESS_DENIED", "대기열 접근이 거부되었습니다."),
     QUEUE_NOT_PASSED(HttpStatus.FORBIDDEN, "QUEUE_NOT_PASSED", "아직 대기열을 통과하지 못했습니다."),
     QUEUE_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "QUEUE_TOKEN_EXPIRED", "대기열 토큰이 만료되었습니다."),

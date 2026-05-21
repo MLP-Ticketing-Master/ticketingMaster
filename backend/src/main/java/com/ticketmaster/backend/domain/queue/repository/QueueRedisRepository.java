@@ -1,8 +1,6 @@
 package com.ticketmaster.backend.domain.queue.repository;
 
 
-import com.ticketmaster.backend.global.exception.BusinessException;
-import com.ticketmaster.backend.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -27,8 +25,10 @@ import java.util.*;
  * <p>
  * 3) queue:user:{userId}:{matchId}      [String]
  * 사용자별 회차 진입 마커, value = 발급된 토큰
- * → 중복 진입 방지용, SETNX로 원자적 검사+저장을 수행해서
- * 동시 요청이 와도 한 사용자당 하나의 토큰만 발급되도록 보장
+ * → 동일 사용자가 enter() 를 다시 호출하면 이 마커를 보고 상태에 따라 idempotent 하게 처리
+ * (정상 세션 = WAITING/ALLOWED 살아있음 → 기존 토큰 재사용,
+ *  좀비 마커 = ALLOWED 권한 만료된 잔재 → 정리 후 새 토큰으로 다시 줄서기)
+ * 새로고침 / 창 닫기 / 시크릿창 같은 클라이언트 측 토큰 손실에도 같은 자리로 복귀시키기 위함
  * <p>
  * 4) queue:allowed:{matchId}:{token}    [String]
  * ALLOWED 권한 표시, value = "1"
@@ -56,26 +56,56 @@ public class QueueRedisRepository {
     private int tokenTtlSeconds;
 
     /**
+     * enter() 결과 — 발급(또는 재사용)된 토큰과 현재 순번을 함께 반환
+     * <p>
+     * - 신규 진입       : token 은 호출자가 넘긴 값 그대로, rank 는 ZSet 의 새 순번
+     * - WAITING 재진입  : token 은 기존에 발급된 값, rank 는 그 토큰의 현재 순번 (자기 자리 유지)
+     * - ALLOWED 재진입  : token 은 기존에 발급된 값, rank 는 0 (ZSet 에서 이미 빠진 상태 — 정상 동작)
+     * 호출 측은 status API 로 ALLOWED 확인 후 좌석 페이지로 복귀
+     * - 권한 만료 재진입: token 은 새로 발급된 값, rank 는 ZSet 의 새 순번 (좀비 마커 정리 후 다시 줄서기)
+     */
+    public record EnterResult(String token, long rank) {}
+
+    /**
      * 대기열 진입을 Redis 에 등록
      * <p>
+     * 동일 사용자가 이미 마커를 가지고 있으면 상태에 따라 분기 (idempotent)
+     * - WAITING / ALLOWED 권한 살아있음 → 기존 토큰 그대로 반환 (새로고침 / 창 닫기 복구용)
+     * - ALLOWED 권한 만료된 좀비 마커     → 잔재 정리 후 새 토큰 발급 (다시 줄서기)
+     * <p>
      * 순서
-     * 1) "이 사용자가 이 회차에 이미 들어와 있냐" 인덱스 키를 SETNX (없을 때만 생성)
-     * → 있으면 false 반환 → 중복 진입이라 예외
+     * 1) 사용자 인덱스 마커 SETNX
+     * → 선점 성공 → 신규 진입 흐름 (ZSet + Hash 등록)
+     * → 선점 실패 + 기존 토큰 유효 (WAITING/ALLOWED) → 그대로 재사용 반환 (ZSet/Hash 건드리지 않음)
+     * → 선점 실패 + 기존 토큰 만료 (좀비)            → Hash 잔재 정리 후 새 토큰으로 신규 진입 흐름 진행
      * 2) Sorted Set 에 토큰 추가 (score 는 진입 시각 ms — 작을수록 앞 순번)
      * 3) Hash 에 토큰 메타 저장
      *
-     * @return 1-based 순번 (ZRANK 가 0-based 라서 +1)
+     * @return 발급(또는 재사용)된 토큰 + 1-based 순번 (ZRANK 가 0-based 라서 +1)
      */
-    public long enter(Long matchId, Long userId, String token, long enteredAtMs) {
+    public EnterResult enter(Long matchId, Long userId, String token, long enteredAtMs) {
         // application.yaml 에서 받은 초 단위 값을 Duration 으로 변환
         Duration tokenTtl = Duration.ofSeconds(tokenTtlSeconds);
 
-        // 1) 중복 진입 차단
-        //    setIfAbsent 는 Redis 의 SETNX 와 같음: "키 없으면 생성하고 true, 있으면 false" 를 원자적으로 처리
+        // 1) 사용자 인덱스 마커 선점 — SETNX 가 false 면 이미 발급된 토큰이 있다는 뜻
+        //    setIfAbsent 는 Redis 의 SETNX 와 같음 ("키 없으면 생성하고 true, 있으면 false" 를 원자적으로 처리)
         String userKey = userIndexKey(userId, matchId);
         Boolean acquired = redis.opsForValue().setIfAbsent(userKey, token, tokenTtl);
         if (Boolean.FALSE.equals(acquired)) {
-            throw new BusinessException(ErrorCode.QUEUE_ALREADY_ENTERED);
+            // 기존 토큰 회수 후 상태에 따라 분기
+            String existingToken = redis.opsForValue().get(userKey);
+            if (existingToken != null) {
+                // (B) WAITING 또는 (C) ALLOWED 권한이 살아있는 정상 세션 → 같은 토큰으로 복귀
+                if (isWaiting(matchId, existingToken) || isAllowed(matchId, existingToken)) {
+                    long existingRank = getRank(matchId, existingToken);
+                    return new EnterResult(existingToken, existingRank);
+                }
+                // (D) ALLOWED 권한이 만료된 좀비 마커 — ZSet/ALLOWED 둘 다 없고 마커+Hash 잔재만 남음
+                //     Hash 잔재까지 정리하고 아래 흐름에서 새 토큰으로 다시 줄서기
+                redis.delete(tokenKey(existingToken));
+            }
+            // 새 토큰으로 마커 갱신 — 좀비 정리 직후 또는 SETNX 실패 직후 TTL 이 만료된 매우 드문 케이스
+            redis.opsForValue().set(userKey, token, tokenTtl);
         }
 
         // 2) Sorted Set 에 토큰 추가 (먼저 들어온 사람이 작은 score → 작은 순번)
@@ -95,7 +125,7 @@ public class QueueRedisRepository {
 
         // 4) 순번 = ZRANK + 1
         Long rank = redis.opsForZSet().rank(matchKey, token);
-        return (rank == null ? 0L : rank) + 1L;
+        return new EnterResult(token, (rank == null ? 0L : rank) + 1L);
     }
 
     /**
@@ -166,13 +196,17 @@ public class QueueRedisRepository {
                 .toList();
 
         // 2) 토큰별 allowed 키 생성 + Hash status/allowedAt 갱신
+        //    Hash TTL 도 sessionTtl 로 줄여서 ALLOWED 키와 동시에 만료되도록 일치시킴
+        //    (둘이 어긋나면 ALLOWED 살아있는데 Hash 만 만료되어 status 조회가 깨지는 엣지케이스 발생)
         String nowMs = String.valueOf(System.currentTimeMillis());
         for (String token : tokens) {
             redis.opsForValue().set(allowedKey(matchId, token), "1", sessionTtl);
             Map<String, String> updates = new HashMap<>();
             updates.put("status", "ALLOWED");
             updates.put("allowedAt", nowMs);
-            redis.opsForHash().putAll(tokenKey(token), updates);
+            String tokenKey = tokenKey(token);
+            redis.opsForHash().putAll(tokenKey, updates);
+            redis.expire(tokenKey, sessionTtl);
         }
 
         return tokens;

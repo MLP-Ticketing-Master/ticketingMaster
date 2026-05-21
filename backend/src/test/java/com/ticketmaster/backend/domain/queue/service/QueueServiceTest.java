@@ -77,9 +77,9 @@ class QueueServiceTest {
         User user = mock(User.class);
         given(userRepository.findById(1000L)).willReturn(Optional.of(user));
 
-        // Redis 가 1번 순번을 반환하도록 설정
+        // 신규 진입 시그널 — Redis 가 서비스가 발급한 토큰을 그대로 + 순번 1 로 반환
         given(queueRedis.enter(eq(1L), eq(1000L), anyString(), anyLong()))
-                .willReturn(1L);
+                .willAnswer(inv -> new QueueRedisRepository.EnterResult(inv.getArgument(2), 1L));
 
         // when
         QueueEnterResponse response = queueService.enter(1L, 1000L);
@@ -96,24 +96,28 @@ class QueueServiceTest {
     }
 
     @Test
-    @DisplayName("TC-02: 이미 대기 중인 사용자가 재진입 → QUEUE_ALREADY_ENTERED")
-    void 중복_진입() {
-        // given - Redis 에서 중복 진입 예외 던지도록 설정
+    @DisplayName("TC-02: 동일 사용자 재진입 → 기존 토큰 그대로 반환 + DB 저장 스킵")
+    void 재진입_idempotent() {
+        // given
         Match match = mock(Match.class);
         given(match.isBookableAt(any(LocalDateTime.class))).willReturn(true);
         given(matchRepository.findById(1L)).willReturn(Optional.of(match));
         User user = mock(User.class);
         given(userRepository.findById(1000L)).willReturn(Optional.of(user));
 
+        // 재진입 시그널 — Redis 가 서비스의 신규 토큰을 무시하고 기존 토큰 / 순번을 그대로 반환
+        String existingToken = "existing-token";
         given(queueRedis.enter(eq(1L), eq(1000L), anyString(), anyLong()))
-                .willThrow(new BusinessException(ErrorCode.QUEUE_ALREADY_ENTERED));
+                .willReturn(new QueueRedisRepository.EnterResult(existingToken, 42L));
 
-        // when & then
-        assertThatThrownBy(() -> queueService.enter(1L, 1000L))
-                .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.QUEUE_ALREADY_ENTERED);
+        // when
+        QueueEnterResponse response = queueService.enter(1L, 1000L);
 
-        // Redis 에서 막혔으니 DB 저장은 일어나지 않아야 함
+        // then — 응답에 기존 토큰과 순번이 그대로 실려야 함
+        assertThat(response.getQueueToken()).isEqualTo(existingToken);
+        assertThat(response.getQueueNumber()).isEqualTo(42L);
+
+        // then — 재진입이라 DB 추가 저장은 발생하지 않아야 함 (queueToken UNIQUE 위반 방지)
         verify(queueRepository, never()).save(any());
     }
 

@@ -9,12 +9,11 @@ import com.ticketmaster.backend.domain.match.repository.MatchRepository;
 import com.ticketmaster.backend.domain.queue.dto.response.QueueEnterResponse;
 import com.ticketmaster.backend.domain.queue.entity.Queue;
 import com.ticketmaster.backend.domain.queue.entity.QueueStatus;
+import com.ticketmaster.backend.domain.queue.repository.QueueRedisRepository;
 import com.ticketmaster.backend.domain.queue.repository.QueueRepository;
 import com.ticketmaster.backend.domain.queue.service.QueueService;
 import com.ticketmaster.backend.domain.user.entity.User;
 import com.ticketmaster.backend.domain.user.repository.UserRepository;
-import com.ticketmaster.backend.global.exception.BusinessException;
-import com.ticketmaster.backend.global.exception.ErrorCode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -92,6 +91,9 @@ class QueueEntryIT {
 
     @Autowired
     private QueueRepository queueRepository;
+
+    @Autowired
+    private QueueRedisRepository queueRedis;
 
     @Autowired
     private StringRedisTemplate redis;
@@ -209,7 +211,7 @@ class QueueEntryIT {
     }
 
     @Test
-    @DisplayName("TC-11: 동일 사용자 동시 진입 시도 → 한 번만 성공, 나머지는 QUEUE_ALREADY_ENTERED")
+    @DisplayName("TC-11: 동일 사용자 동시 진입 5건 → 모두 같은 토큰 + DB 이력 1건 (idempotent)")
     void 동일_사용자_동시_진입() throws Exception {
         // given — 같은 사용자가 5번 동시에 진입 시도
         long uid = userIds.get(0);
@@ -218,8 +220,7 @@ class QueueEntryIT {
         CountDownLatch ready = new CountDownLatch(n);
         CountDownLatch start = new CountDownLatch(1);
         CountDownLatch done = new CountDownLatch(n);
-        AtomicInteger successCount = new AtomicInteger();
-        AtomicInteger conflictCount = new AtomicInteger();
+        Set<String> tokens = ConcurrentHashMap.newKeySet();
         List<Throwable> unexpected = new CopyOnWriteArrayList<>();
 
         // when — 같은 userId 로 5개 스레드가 동시에 enter() 호출
@@ -228,14 +229,8 @@ class QueueEntryIT {
                 try {
                     ready.countDown();
                     start.await();
-                    queueService.enter(matchId, uid);
-                    successCount.incrementAndGet();
-                } catch (BusinessException e) {
-                    if (e.getErrorCode() == ErrorCode.QUEUE_ALREADY_ENTERED) {
-                        conflictCount.incrementAndGet();
-                    } else {
-                        unexpected.add(e);
-                    }
+                    QueueEnterResponse resp = queueService.enter(matchId, uid);
+                    tokens.add(resp.getQueueToken());
                 } catch (Throwable t) {
                     unexpected.add(t);
                 } finally {
@@ -248,10 +243,54 @@ class QueueEntryIT {
         assertThat(done.await(10, TimeUnit.SECONDS)).isTrue();
         executor.shutdown();
 
-        // then — Redis SETNX 가 원자적이라 동시 요청이 와도 정확히 1개만 통과
+        // then — SETNX 가 원자적이라 마커 선점은 1번만 성공, 나머지는 기존 토큰을 회수 → 토큰이 단 하나로 수렴
         assertThat(unexpected).isEmpty();
-        assertThat(successCount.get()).isEqualTo(1);
-        assertThat(conflictCount.get()).isEqualTo(n - 1);
+        assertThat(tokens).hasSize(1);
+
+        // then — DB 이력은 신규 진입 1건만 (재진입은 저장 스킵)
+        assertThat(queueRepository.findAll()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("TC-12: ALLOWED 권한 살아있을 때 재진입 → 같은 토큰 그대로 + DB 이력 1건")
+    void ALLOWED_재진입_같은_토큰() {
+        // given — 진입 후 승격까지 진행 (좌석 페이지에서 새로고침하는 시나리오)
+        long uid = userIds.get(0);
+        QueueEnterResponse first = queueService.enter(matchId, uid);
+        String firstToken = first.getQueueToken();
+        // 스케줄러 대신 직접 promoteTopN 호출 (1명 승격)
+        queueRedis.promoteTopN(matchId, 1, 600);
+
+        // when — 같은 사용자가 다시 enter() 호출
+        QueueEnterResponse second = queueService.enter(matchId, uid);
+
+        // then — ALLOWED 권한 살아있어서 기존 토큰 그대로 반환
+        assertThat(second.getQueueToken()).isEqualTo(firstToken);
+
+        // then — DB 이력은 1건만 (재진입은 저장 스킵)
+        assertThat(queueRepository.findAll()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("TC-13: ALLOWED 권한 만료 후 재진입 → 새 토큰 + DB 이력 2건 (다시 줄서기)")
+    void ALLOWED_만료_후_재진입() {
+        // given — 진입 → 승격 → ALLOWED 키 강제 만료 (좀비 마커만 남은 상태 시뮬레이션)
+        long uid = userIds.get(0);
+        QueueEnterResponse first = queueService.enter(matchId, uid);
+        String firstToken = first.getQueueToken();
+        queueRedis.promoteTopN(matchId, 1, 600);
+        // ALLOWED 키 즉시 삭제 — 좌석 못 잡고 10분 만료된 상태 시뮬레이션
+        redis.delete("queue:allowed:" + matchId + ":" + firstToken);
+
+        // when — 다시 enter() 호출
+        QueueEnterResponse second = queueService.enter(matchId, uid);
+
+        // then — 권한 만료라 새 토큰 발급 + ZSet 비어있어서 1번 자리부터 다시 시작
+        assertThat(second.getQueueToken()).isNotEqualTo(firstToken);
+        assertThat(second.getQueueNumber()).isEqualTo(1L);
+
+        // then — 신규 진입이라 DB 이력 추가 저장 → 총 2건 (재시도별 누적)
+        assertThat(queueRepository.findAll()).hasSize(2);
     }
 
     // ─── 시드 빌더 ─────────────────────────────────────────
