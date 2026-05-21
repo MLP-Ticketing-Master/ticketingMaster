@@ -1,13 +1,13 @@
 import api from "@/lib/axios";
-import type { Round } from "@/types";
+import type { Match } from "@/types";
 
-export const roundApi = {
+export const matchApi = {
   list: (eventId?: number) =>
     api
-      .get<Round[]>("/rounds", {
+      .get<Match[]>("/matches", {
         params: eventId ? { eventId } : {},
       })
       .then((r) => r.data),
   detail: (id: number) =>
-    api.get<Round>(`/rounds/${id}`).then((r) => r.data),
+    api.get<Match>(`/matches/${id}`).then((r) => r.data),
 };

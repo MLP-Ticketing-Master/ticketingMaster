@@ -11,7 +11,7 @@ import {
 import { AdminCard } from "@/components/admin/AdminCard";
 import {
   useEventList,
-  useRounds,
+  useMatches,
   useSeatGrades,
   useSeatLayout,
   useSections,
@@ -37,7 +37,7 @@ export default function SeatsAdminPage() {
         onChangeEvent={setEventId}
       />
       {currentEventId && <SectionsSection eventId={currentEventId} />}
-      {currentEventId && <RoundSeatStatusSection eventId={currentEventId} />}
+      {currentEventId && <MatchSeatStatusSection eventId={currentEventId} />}
     </div>
   );
 }
@@ -129,12 +129,12 @@ function SectionsSection({ eventId }: { eventId: number }) {
   );
 }
 
-function RoundSeatStatusSection({ eventId }: { eventId: number }) {
-  const { data: rounds = [] } = useRounds(eventId);
-  const [roundId, setRoundId] = useState<number | null>(null);
-  const currentRoundId = roundId ?? rounds[0]?.id ?? null;
+function MatchSeatStatusSection({ eventId }: { eventId: number }) {
+  const { data: matches = [] } = useMatches(eventId);
+  const [matchId, setMatchId] = useState<number | null>(null);
+  const currentMatchId = matchId ?? matches[0]?.id ?? null;
   const { data: grades = [] } = useSeatGrades(eventId);
-  const { data: layout } = useSeatLayout(currentRoundId ?? 0, 1);
+  const { data: layout } = useSeatLayout(currentMatchId ?? 0, 1);
 
   const totals = useMemo(() => {
     const seats = layout?.seats ?? [];
@@ -145,7 +145,7 @@ function RoundSeatStatusSection({ eventId }: { eventId: number }) {
     };
   }, [layout]);
 
-  const round = rounds.find((r) => r.id === currentRoundId);
+  const match = matches.find((m) => m.id === currentMatchId);
   const seatsByRow = (layout?.seats ?? []).reduce<Record<string, Seat[]>>(
     (acc, s) => {
       (acc[s.row] ??= []).push(s);
@@ -159,16 +159,16 @@ function RoundSeatStatusSection({ eventId }: { eventId: number }) {
       title="회차별 좌석 현황"
       action={
         <Select
-          value={currentRoundId ? String(currentRoundId) : ""}
-          onValueChange={(v) => setRoundId(Number(v))}
+          value={currentMatchId ? String(currentMatchId) : ""}
+          onValueChange={(v) => setMatchId(Number(v))}
         >
           <SelectTrigger className="w-72">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {rounds.map((r) => (
-              <SelectItem key={r.id} value={String(r.id)}>
-                {formatDate(r.startAt)} {formatTime(r.startAt)} ({r.matchTitle})
+            {matches.map((m) => (
+              <SelectItem key={m.id} value={String(m.id)}>
+                {formatDate(m.startAt)} {formatTime(m.startAt)} ({m.matchTitle})
               </SelectItem>
             ))}
           </SelectContent>
@@ -176,8 +176,8 @@ function RoundSeatStatusSection({ eventId }: { eventId: number }) {
       }
     >
       <div className="space-y-5">
-        {round && (
-          <p className="text-sm text-muted-foreground">대회: {round.matchTitle}</p>
+        {match && (
+          <p className="text-sm text-muted-foreground">대회: {match.matchTitle}</p>
         )}
 
         <div className="space-y-2">

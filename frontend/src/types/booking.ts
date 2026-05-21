@@ -17,6 +17,6 @@ export interface BookingItem {
 }
 
 export interface CreateBookingRequest {
-  roundId: number;
+  matchId: number;
   seatIds: number[];
 }

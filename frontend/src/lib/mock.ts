@@ -2,7 +2,7 @@ import type {
   BookingItem,
   EventDetail,
   EventSummary,
-  Round,
+  Match,
   Seat,
   SeatGrade,
   Section,
@@ -96,11 +96,11 @@ export const MOCK_EVENTS: EventSummary[] = [
   },
 ];
 
-export const MOCK_ROUNDS: Round[] = [
+export const MOCK_MATCHES: Match[] = [
   {
     id: 1,
     eventId: 1,
-    roundNo: 1,
+    matchNo: 1,
     matchTitle: "결승 1경기",
     matchUp: "T1 vs Gen.G",
     startAt: "2026-04-24T18:30:00",
@@ -111,7 +111,7 @@ export const MOCK_ROUNDS: Round[] = [
   {
     id: 2,
     eventId: 1,
-    roundNo: 2,
+    matchNo: 2,
     matchTitle: "결승 2경기",
     matchUp: "T1 vs Gen.G",
     startAt: "2026-04-24T20:00:00",
@@ -122,7 +122,7 @@ export const MOCK_ROUNDS: Round[] = [
   {
     id: 3,
     eventId: 2,
-    roundNo: 1,
+    matchNo: 1,
     matchTitle: "8강 1경기",
     matchUp: "DRX vs DAMWON",
     startAt: "2026-04-25T17:00:00",
@@ -138,7 +138,7 @@ export const MOCK_EVENT_DETAIL: EventDetail = {
   durationMinutes: 240,
   ageLimit: "전체관람가",
   prices: MOCK_PRICES,
-  rounds: MOCK_ROUNDS.filter((r) => r.eventId === 1),
+  matches: MOCK_MATCHES.filter((r) => r.eventId === 1),
 };
 
 export const MOCK_SECTIONS: Section[] = [

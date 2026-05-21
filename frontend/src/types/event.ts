@@ -16,7 +16,7 @@ export interface EventDetail extends EventSummary {
   durationMinutes: number;
   ageLimit: string;
   prices: TicketPrice[];
-  rounds: Round[];
+  matches: Match[];
 }
 
 export interface TicketPrice {
@@ -26,10 +26,10 @@ export interface TicketPrice {
   color: string;
 }
 
-export interface Round {
+export interface Match {
   id: number;
   eventId: number;
-  roundNo: number;
+  matchNo: number;
   matchTitle: string;
   matchUp: string;
   startAt: string;

@@ -4,7 +4,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useBookingFlowStore } from "@/store";
 import {
   useEventDetail,
-  useRounds,
+  useMatches,
   useSeatGrades,
   useSeatLayout,
   useSections,
@@ -20,7 +20,7 @@ export function SeatSelectionDialog() {
   const open = useBookingFlowStore((s) => s.open);
   const step = useBookingFlowStore((s) => s.step);
   const eventId = useBookingFlowStore((s) => s.eventId);
-  const roundId = useBookingFlowStore((s) => s.roundId);
+  const matchId = useBookingFlowStore((s) => s.matchId);
   const sectionId = useBookingFlowStore((s) => s.sectionId);
   const selectedSeats = useBookingFlowStore((s) => s.selectedSeats);
   const closeFlow = useBookingFlowStore((s) => s.closeFlow);
@@ -30,14 +30,14 @@ export function SeatSelectionDialog() {
   const removeSeat = useBookingFlowStore((s) => s.removeSeat);
 
   const { data: event } = useEventDetail(eventId ?? 0);
-  const { data: rounds = [] } = useRounds(eventId ?? undefined);
+  const { data: matches = [] } = useMatches(eventId ?? undefined);
   const { data: sections = [] } = useSections(eventId ?? 0);
   const { data: grades = [] } = useSeatGrades(eventId ?? 0);
-  const { data: layout } = useSeatLayout(roundId ?? 0, sectionId ?? undefined);
+  const { data: layout } = useSeatLayout(matchId ?? 0, sectionId ?? undefined);
 
   const createBooking = useCreateBookingMutation();
 
-  const round = rounds.find((r) => r.id === roundId);
+  const match = matches.find((m) => m.id === matchId);
 
   const total = useMemo(() => {
     if (selectedSeats.length === 0) return 0;
@@ -49,9 +49,9 @@ export function SeatSelectionDialog() {
   }, [selectedSeats, grades]);
 
   const handleSubmit = () => {
-    if (!roundId) return;
+    if (!matchId) return;
     createBooking.mutate(
-      { roundId, seatIds: selectedSeats.map((s) => s.id) },
+      { matchId, seatIds: selectedSeats.map((s) => s.id) },
       {
         onSuccess: () => {
           toast.success("예매가 완료되었습니다.");
@@ -61,7 +61,7 @@ export function SeatSelectionDialog() {
     );
   };
 
-  if (!event || !round) return null;
+  if (!event || !match) return null;
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && closeFlow()}>
@@ -73,7 +73,7 @@ export function SeatSelectionDialog() {
           <div>
             <h2 className="text-xl font-bold">{event.title}</h2>
             <p className="mt-1 text-sm text-gray-300">
-              {formatShortDate(round.startAt)} {formatTime(round.startAt)}
+              {formatShortDate(match.startAt)} {formatTime(match.startAt)}
             </p>
           </div>
           <button

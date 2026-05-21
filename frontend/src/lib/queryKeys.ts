@@ -4,10 +4,10 @@ export const queryKeys = {
     list: (game?: string) => ["events", "list", game ?? "ALL"] as const,
     detail: (id: number) => ["events", "detail", id] as const,
   },
-  rounds: {
-    all: ["rounds"] as const,
-    list: (eventId?: number) => ["rounds", "list", eventId ?? "ALL"] as const,
-    seatLayout: (roundId: number) => ["rounds", "seats", roundId] as const,
+  matches: {
+    all: ["matches"] as const,
+    list: (eventId?: number) => ["matches", "list", eventId ?? "ALL"] as const,
+    seatLayout: (matchId: number) => ["matches", "seats", matchId] as const,
   },
   bookings: {
     me: ["bookings", "me"] as const,

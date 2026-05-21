@@ -35,7 +35,7 @@ export default function EventDetailPage() {
         <div className="space-y-4">
           <BookingWidget
             event={event}
-            onProceed={(roundId) => openFlow({ eventId, roundId })}
+            onProceed={(matchId) => openFlow({ eventId, matchId })}
           />
           <BookingNotice />
         </div>

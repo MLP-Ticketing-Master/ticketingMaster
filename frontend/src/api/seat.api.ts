@@ -8,9 +8,9 @@ export const seatApi = {
       .then((r) => r.data),
   sections: (eventId: number) =>
     api.get<Section[]>(`/events/${eventId}/sections`).then((r) => r.data),
-  layout: (roundId: number, sectionId?: number) =>
+  layout: (matchId: number, sectionId?: number) =>
     api
-      .get<SeatLayout>(`/rounds/${roundId}/seats`, {
+      .get<SeatLayout>(`/matches/${matchId}/seats`, {
         params: sectionId ? { sectionId } : {},
       })
       .then((r) => r.data),

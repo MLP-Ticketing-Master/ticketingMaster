@@ -18,7 +18,7 @@ import EditProfilePage from "@/pages/my/EditProfilePage";
 import ChangePasswordPage from "@/pages/my/ChangePasswordPage";
 import DashboardPage from "@/pages/admin/DashboardPage";
 import EventsAdminPage from "@/pages/admin/EventsAdminPage";
-import RoundsAdminPage from "@/pages/admin/RoundsAdminPage";
+import MatchesAdminPage from "@/pages/admin/MatchesAdminPage";
 import TeamsAdminPage from "@/pages/admin/TeamsAdminPage";
 import SeatsAdminPage from "@/pages/admin/SeatsAdminPage";
 import BookingsAdminPage from "@/pages/admin/BookingsAdminPage";
@@ -50,7 +50,7 @@ export default function App() {
         <Route path="admin" element={<AdminLayout />}>
           <Route index element={<DashboardPage />} />
           <Route path="events" element={<EventsAdminPage />} />
-          <Route path="rounds" element={<RoundsAdminPage />} />
+          <Route path="matches" element={<MatchesAdminPage />} />
           <Route path="teams" element={<TeamsAdminPage />} />
           <Route path="seats" element={<SeatsAdminPage />} />
           <Route path="bookings" element={<BookingsAdminPage />} />

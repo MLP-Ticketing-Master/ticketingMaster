@@ -3,13 +3,13 @@ import { useSeatLayout } from "@/hooks";
 import { SeatGrid } from "../SeatGrid";
 
 export function SeatStep() {
-  const roundId = useBookingFlowStore((s) => s.roundId);
+  const matchId = useBookingFlowStore((s) => s.matchId);
   const sectionId = useBookingFlowStore((s) => s.sectionId);
   const selectedSeats = useBookingFlowStore((s) => s.selectedSeats);
   const goBackToZone = useBookingFlowStore((s) => s.goBackToZone);
   const toggleSeat = useBookingFlowStore((s) => s.toggleSeat);
 
-  const { data: layout } = useSeatLayout(roundId ?? 0, sectionId ?? undefined);
+  const { data: layout } = useSeatLayout(matchId ?? 0, sectionId ?? undefined);
 
   if (!layout) {
     return (
