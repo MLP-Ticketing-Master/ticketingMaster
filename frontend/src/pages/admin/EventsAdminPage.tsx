@@ -11,15 +11,15 @@ import {
 import { AdminCard } from "@/components/admin/AdminCard";
 import { GameBadge } from "@/components/admin/GameBadge";
 import { EventStatusBadge } from "@/components/admin/StatusBadge";
-import { useEventList, useRounds } from "@/hooks";
+import { useEventList, useMatches } from "@/hooks";
 import { formatDateRange } from "@/lib/format";
 
 export default function EventsAdminPage() {
   const { data: events = [] } = useEventList("ALL");
-  const { data: rounds = [] } = useRounds();
+  const { data: matches = [] } = useMatches();
 
-  const roundCountByEvent = rounds.reduce<Record<number, number>>((acc, r) => {
-    acc[r.eventId] = (acc[r.eventId] ?? 0) + 1;
+  const matchCountByEvent = matches.reduce<Record<number, number>>((acc, m) => {
+    acc[m.eventId] = (acc[m.eventId] ?? 0) + 1;
     return acc;
   }, {});
 
@@ -61,7 +61,7 @@ export default function EventsAdminPage() {
               <TableCell>
                 <EventStatusBadge status={event.status} />
               </TableCell>
-              <TableCell>{roundCountByEvent[event.id] ?? 0}회차</TableCell>
+              <TableCell>{matchCountByEvent[event.id] ?? 0}회차</TableCell>
               <TableCell>
                 <div className="flex justify-end gap-2">
                   <Button size="icon" variant="outline">

@@ -1,5 +1,5 @@
 import api from "@/lib/axios";
-import type { EventSummary, Round, SeatGrade, Section } from "@/types";
+import type { EventSummary, Match, SeatGrade, Section } from "@/types";
 
 export interface AdminDashboardStats {
   totalEvents: number;
@@ -14,7 +14,7 @@ export const adminApi = {
       .then((r) => r.data),
   events: () =>
     api.get<EventSummary[]>("/admin/events").then((r) => r.data),
-  rounds: () => api.get<Round[]>("/admin/rounds").then((r) => r.data),
+  matches: () => api.get<Match[]>("/admin/matches").then((r) => r.data),
   seatGrades: (eventId: number) =>
     api
       .get<SeatGrade[]>(`/admin/events/${eventId}/seat-grades`)

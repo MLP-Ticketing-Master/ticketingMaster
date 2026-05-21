@@ -27,11 +27,11 @@ export const useSections = (eventId: number) =>
     enabled: !!eventId,
   });
 
-export const useSeatLayout = (roundId: number, sectionId?: number) =>
+export const useSeatLayout = (matchId: number, sectionId?: number) =>
   useQuery({
-    queryKey: queryKeys.rounds.seatLayout(roundId),
+    queryKey: queryKeys.matches.seatLayout(matchId),
     queryFn: useMock
       ? async () => MOCK_SEAT_LAYOUT
-      : () => seatApi.layout(roundId, sectionId),
-    enabled: !!roundId && !!sectionId,
+      : () => seatApi.layout(matchId, sectionId),
+    enabled: !!matchId && !!sectionId,
   });

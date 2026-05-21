@@ -6,26 +6,26 @@ import { Badge } from "@/components/ui/badge";
 import { GAME_LABEL } from "@/lib/constants";
 import { formatShortDate, formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { EventDetail, Round } from "@/types";
+import type { EventDetail, Match } from "@/types";
 
 interface Props {
   event: EventDetail;
-  onProceed: (roundId: number) => void;
+  onProceed: (matchId: number) => void;
 }
 
 export function BookingWidget({ event, onProceed }: Props) {
   const dates = useMemo(() => {
-    const set = new Set(event.rounds.map((r) => r.startAt.slice(0, 10)));
+    const set = new Set(event.matches.map((m) => m.startAt.slice(0, 10)));
     return Array.from(set);
-  }, [event.rounds]);
+  }, [event.matches]);
 
   const [selectedDate, setSelectedDate] = useState<string>(dates[0] ?? "");
-  const [selectedRoundId, setSelectedRoundId] = useState<number | null>(
-    event.rounds[0]?.id ?? null,
+  const [selectedMatchId, setSelectedMatchId] = useState<number | null>(
+    event.matches[0]?.id ?? null,
   );
 
-  const roundsOfDate = event.rounds.filter((r) =>
-    r.startAt.startsWith(selectedDate),
+  const matchesOfDate = event.matches.filter((m) =>
+    m.startAt.startsWith(selectedDate),
   );
 
   const game = event.game === "ALL" ? "LOL" : event.game;
@@ -70,15 +70,15 @@ export function BookingWidget({ event, onProceed }: Props) {
       <div className="space-y-3">
         <div className="text-sm font-semibold">회차 선택</div>
         <div className="space-y-2">
-          {roundsOfDate.map((round) => (
-            <RoundButton
-              key={round.id}
-              round={round}
-              selected={selectedRoundId === round.id}
-              onSelect={() => setSelectedRoundId(round.id)}
+          {matchesOfDate.map((match) => (
+            <MatchButton
+              key={match.id}
+              match={match}
+              selected={selectedMatchId === match.id}
+              onSelect={() => setSelectedMatchId(match.id)}
             />
           ))}
-          {roundsOfDate.length === 0 && (
+          {matchesOfDate.length === 0 && (
             <p className="text-sm text-muted-foreground">
               해당 날짜의 회차가 없습니다.
             </p>
@@ -88,8 +88,8 @@ export function BookingWidget({ event, onProceed }: Props) {
 
       <Button
         size="lg"
-        disabled={!selectedRoundId}
-        onClick={() => selectedRoundId && onProceed(selectedRoundId)}
+        disabled={!selectedMatchId}
+        onClick={() => selectedMatchId && onProceed(selectedMatchId)}
         className="w-full bg-[#054EFD] hover:bg-[#3C76FE] disabled:bg-gray-200 disabled:text-gray-400"
       >
         예매하기
@@ -99,12 +99,12 @@ export function BookingWidget({ event, onProceed }: Props) {
   );
 }
 
-function RoundButton({
-  round,
+function MatchButton({
+  match,
   selected,
   onSelect,
 }: {
-  round: Round;
+  match: Match;
   selected: boolean;
   onSelect: () => void;
 }) {
@@ -119,7 +119,7 @@ function RoundButton({
           : "border-gray-200 bg-white hover:bg-gray-50",
       )}
     >
-      <span>{formatTime(round.startAt)}</span>
+      <span>{formatTime(match.startAt)}</span>
       <span className="text-xs text-muted-foreground">예매가능</span>
     </button>
   );

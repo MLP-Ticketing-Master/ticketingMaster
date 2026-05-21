@@ -13,11 +13,11 @@ interface Props {
   selectedSeats: Seat[];
   grades: SeatGrade[];
   total: number;
-  roundId: number | null;
+  matchId: number | null;
   onComplete: () => void;
 }
 
-export function PaymentStep({ selectedSeats, grades, total, roundId, onComplete }: Props) {
+export function PaymentStep({ selectedSeats, grades, total, matchId, onComplete }: Props) {
   const createBooking = useCreateBookingMutation();
   const [done, setDone] = useState(false);
 
@@ -25,9 +25,9 @@ export function PaymentStep({ selectedSeats, grades, total, roundId, onComplete 
   const priceMap = new Map(grades.map((g) => [g.code, g.price]));
 
   const handlePayment = () => {
-    if (!roundId) return;
+    if (!matchId) return;
     createBooking.mutate(
-      { roundId, seatIds: selectedSeats.map((s) => s.id) },
+      { matchId, seatIds: selectedSeats.map((s) => s.id) },
       {
         onSuccess: () => {
           setDone(true);

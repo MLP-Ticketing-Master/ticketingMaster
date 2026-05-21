@@ -4,7 +4,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useBookingFlowStore } from "@/store";
 import {
   useEventDetail,
-  useRounds,
+  useMatches,
   useSeatGrades,
   useAdmissionTimer,
   formatCountdown,
@@ -20,17 +20,17 @@ export function BookingDialog() {
   const open = useBookingFlowStore((s) => s.open);
   const step = useBookingFlowStore((s) => s.step);
   const eventId = useBookingFlowStore((s) => s.eventId);
-  const roundId = useBookingFlowStore((s) => s.roundId);
+  const matchId = useBookingFlowStore((s) => s.matchId);
   const selectedSeats = useBookingFlowStore((s) => s.selectedSeats);
   const closeFlow = useBookingFlowStore((s) => s.closeFlow);
   const removeSeat = useBookingFlowStore((s) => s.removeSeat);
   const goToPayment = useBookingFlowStore((s) => s.goToPayment);
 
   const { data: event } = useEventDetail(eventId ?? 0);
-  const { data: rounds = [] } = useRounds(eventId ?? undefined);
+  const { data: matches = [] } = useMatches(eventId ?? undefined);
   const { data: grades = [] } = useSeatGrades(eventId ?? 0);
 
-  const round = rounds.find((r) => r.id === roundId);
+  const match = matches.find((m) => m.id === matchId);
 
   const remaining = useAdmissionTimer();
 
@@ -50,7 +50,7 @@ export function BookingDialog() {
   const showTimer = remaining !== null && (step === "ZONE" || step === "SEAT");
   const isUrgent = remaining !== null && remaining <= 60;
 
-  if (!event || !round) return null;
+  if (!event || !match) return null;
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && closeFlow()}>
@@ -62,7 +62,7 @@ export function BookingDialog() {
           <div>
             <h2 className="text-xl font-bold">{event.title}</h2>
             <p className="mt-1 text-sm text-gray-300">
-              {formatShortDate(round.startAt)} {formatTime(round.startAt)}
+              {formatShortDate(match.startAt)} {formatTime(match.startAt)}
             </p>
           </div>
 
@@ -102,7 +102,7 @@ export function BookingDialog() {
                 selectedSeats={selectedSeats}
                 grades={grades}
                 total={total}
-                roundId={roundId}
+                matchId={matchId}
                 onComplete={closeFlow}
               />
             )}

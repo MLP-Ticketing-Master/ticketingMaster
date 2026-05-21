@@ -19,13 +19,13 @@ import {
 } from "@/components/ui/table";
 import { AdminCard } from "@/components/admin/AdminCard";
 import { EventStatusBadge } from "@/components/admin/StatusBadge";
-import { useEventList, useRounds } from "@/hooks";
+import { useEventList, useMatches } from "@/hooks";
 import { formatDate, formatTime } from "@/lib/format";
 
-export default function RoundsAdminPage() {
+export default function MatchesAdminPage() {
   const [eventFilter, setEventFilter] = useState<string>("ALL");
   const { data: events = [] } = useEventList("ALL");
-  const { data: rounds = [] } = useRounds(
+  const { data: matches = [] } = useMatches(
     eventFilter === "ALL" ? undefined : Number(eventFilter),
   );
 
@@ -71,25 +71,25 @@ export default function RoundsAdminPage() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rounds.map((r) => {
-            const ratio = Math.round((r.soldSeats / r.totalSeats) * 100);
+          {matches.map((m) => {
+            const ratio = Math.round((m.soldSeats / m.totalSeats) * 100);
             return (
-              <TableRow key={r.id}>
-                <TableCell className="font-medium">{r.id}</TableCell>
-                <TableCell>{titleByEventId.get(r.eventId)}</TableCell>
-                <TableCell className="font-semibold">{r.matchTitle}</TableCell>
-                <TableCell>{r.matchUp}</TableCell>
+              <TableRow key={m.id}>
+                <TableCell className="font-medium">{m.id}</TableCell>
+                <TableCell>{titleByEventId.get(m.eventId)}</TableCell>
+                <TableCell className="font-semibold">{m.matchTitle}</TableCell>
+                <TableCell>{m.matchUp}</TableCell>
                 <TableCell className="text-sm">
-                  {formatDate(r.startAt)} {formatTime(r.startAt)}
+                  {formatDate(m.startAt)} {formatTime(m.startAt)}
                 </TableCell>
                 <TableCell>
-                  <EventStatusBadge status={r.status} />
+                  <EventStatusBadge status={m.status} />
                 </TableCell>
                 <TableCell className="w-44 text-xs">
                   <div className="flex items-center justify-between">
                     <span>{ratio}%</span>
                     <span className="text-muted-foreground">
-                      {r.soldSeats} / {r.totalSeats}석
+                      {m.soldSeats} / {m.totalSeats}석
                     </span>
                   </div>
                   <Progress value={ratio} className="mt-1.5 h-1" />

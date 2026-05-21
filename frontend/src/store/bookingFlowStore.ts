@@ -7,12 +7,12 @@ interface BookingFlowState {
   open: boolean;
   step: BookingStep;
   eventId: number | null;
-  roundId: number | null;
+  matchId: number | null;
   sectionId: number | null;
   selectedSeats: Seat[];
   /** 대기열 통과 후 입장 허용된 시각 (ms). null이면 아직 미입장. */
   admittedAt: number | null;
-  openFlow: (params: { eventId: number; roundId: number }) => void;
+  openFlow: (params: { eventId: number; matchId: number }) => void;
   closeFlow: () => void;
   goToSeat: (sectionId: number) => void;
   goBackToZone: () => void;
@@ -28,7 +28,7 @@ const initial = {
   open: false,
   step: "ZONE" as BookingStep,
   eventId: null,
-  roundId: null,
+  matchId: null,
   sectionId: null,
   selectedSeats: [],
   admittedAt: null,
@@ -36,13 +36,13 @@ const initial = {
 
 export const useBookingFlowStore = create<BookingFlowState>((set, get) => ({
   ...initial,
-  openFlow: ({ eventId, roundId }) =>
+  openFlow: ({ eventId, matchId }) =>
     set({
       ...initial,
       open: true,
       step: "QUEUE",
       eventId,
-      roundId,
+      matchId,
     }),
   closeFlow: () => set({ ...initial }),
   goToSeat: (sectionId) => set({ step: "SEAT", sectionId }),

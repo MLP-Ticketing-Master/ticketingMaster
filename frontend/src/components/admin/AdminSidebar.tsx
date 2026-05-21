@@ -19,7 +19,7 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { to: "/admin/events", label: "대회 관리", icon: Calendar },
-  { to: "/admin/rounds", label: "회차 관리", icon: Clock },
+  { to: "/admin/matches", label: "회차 관리", icon: Clock },
   { to: "/admin/teams", label: "팀 관리", icon: Users },
   { to: "/admin/seats", label: "좌석 관리", icon: Armchair },
   { to: "/admin/bookings", label: "예매 관리", icon: Receipt },
