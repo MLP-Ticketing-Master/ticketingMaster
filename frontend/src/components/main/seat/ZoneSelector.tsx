@@ -23,7 +23,7 @@ export function ZoneSelector({ sections, onSelect }: Props) {
   return (
     <div className="flex flex-col items-center gap-6 py-10 px-6">
       {/* 배경 이미지가 있는 경기장 */}
-      <div 
+      <div
         className="w-full max-w-5xl h-96 rounded-3xl bg-cover bg-center relative shadow-2xl"
         style={{
           backgroundImage: `url(${stadia})`,

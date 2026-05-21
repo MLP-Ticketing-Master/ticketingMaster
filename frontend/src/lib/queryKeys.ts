@@ -29,4 +29,7 @@ export const queryKeys = {
       ["admin", "seatGrades", eventId] as const,
     sections: (eventId: number) => ["admin", "sections", eventId] as const,
   },
+  queue: {
+    status: (matchId: number) => ["queue", "status", matchId] as const,
+  },
 };

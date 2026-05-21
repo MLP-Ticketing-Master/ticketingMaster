@@ -72,7 +72,7 @@ export function PaymentStep({ selectedSeats, grades, total, matchId, onComplete 
       <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5">
         <AlertCircle className="h-4 w-4 shrink-0 text-amber-500" />
         <p className="text-xs text-amber-700">
-          입장 허용 후 <span className="font-bold">7분 이내</span>에 결제를 완료해 주세요. 시간이 초과되면 선택한 좌석이 자동으로 해제됩니다.
+          <span className="font-bold">7분 이내</span>에 결제를 완료해 주세요. 시간이 초과되면 선택한 좌석이 자동으로 해제됩니다.
         </p>
       </div>
 

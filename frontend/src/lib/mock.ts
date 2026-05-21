@@ -98,10 +98,10 @@ export const MOCK_EVENTS: EventSummary[] = [
 
 export const MOCK_MATCHES: Match[] = [
   {
-    id: 1,
+    id: 11002,
     eventId: 1,
     matchNo: 1,
-    matchTitle: "결승 1경기",
+    matchTitle: "1경기 - 예매 대기",
     matchUp: "T1 vs Gen.G",
     startAt: "2026-04-24T18:30:00",
     status: "SCHEDULED",
@@ -109,10 +109,10 @@ export const MOCK_MATCHES: Match[] = [
     soldSeats: 234,
   },
   {
-    id: 2,
+    id: 11003,
     eventId: 1,
     matchNo: 2,
-    matchTitle: "결승 2경기",
+    matchTitle: "2경기 - 예매 진행 중",
     matchUp: "T1 vs Gen.G",
     startAt: "2026-04-24T20:00:00",
     status: "SCHEDULED",
@@ -120,11 +120,11 @@ export const MOCK_MATCHES: Match[] = [
     soldSeats: 189,
   },
   {
-    id: 3,
-    eventId: 2,
-    matchNo: 1,
-    matchTitle: "8강 1경기",
-    matchUp: "DRX vs DAMWON",
+    id: 11004,
+    eventId: 1,
+    matchNo: 3,
+    matchTitle: "3경기 - 예매 마감",
+    matchUp: "T1 vs Gen.G",
     startAt: "2026-04-25T17:00:00",
     status: "SCHEDULED",
     totalSeats: 400,

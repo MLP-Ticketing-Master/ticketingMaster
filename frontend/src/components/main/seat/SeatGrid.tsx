@@ -1,30 +1,48 @@
 import { ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { SEAT_GRADE_BG_SOFT, SEAT_GRADE_COLORS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import type { Seat, SeatLayout } from "@/types";
+import type { Seat, SeatGrade, SeatLayout } from "@/types";
+
+const MAX_TICKETS_PER_USER = 2;
 
 interface Props {
+  grades: SeatGrade[];
   layout: SeatLayout;
   selectedIds: number[];
   onToggle: (seat: Seat) => void;
   onBack: () => void;
 }
 
-export function SeatGrid({ layout, selectedIds, onToggle, onBack }: Props) {
+export function SeatGrid({ grades, layout, selectedIds, onToggle, onBack }: Props) {
   const seatsByRow = groupByRow(layout.seats);
 
+  const handleToggle = (seat: Seat) => {
+    const isSelected = selectedIds.includes(seat.id);
+    if (!isSelected && selectedIds.length >= MAX_TICKETS_PER_USER) {
+      toast.error(`1인당 최대 ${MAX_TICKETS_PER_USER}매까지 예매 가능합니다.`);
+      return;
+    }
+    onToggle(seat);
+  };
+
   return (
-    <div className="space-y-6 p-6">
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onBack}
-        className="gap-2"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        구역 선택으로 돌아가기
-      </Button>
+    <div className="space-y-4 px-6 pt-3 pb-6">
+      <div className="flex items-center justify-between">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onBack}
+          className="gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          구역 선택으로 돌아가기
+        </Button>
+        <p className="text-xs text-muted-foreground">
+          1인당 최대 {MAX_TICKETS_PER_USER}매까지 예매 가능합니다.
+        </p>
+      </div>
 
  {/* 스크린 */}
       <div className="flex justify-center">
@@ -59,7 +77,7 @@ export function SeatGrid({ layout, selectedIds, onToggle, onBack }: Props) {
                       <button
                         type="button"
                         disabled={sold}
-                        onClick={() => onToggle(seat)}
+                        onClick={() => handleToggle(seat)}
                         aria-label={`${seat.row}열 ${seat.number}번`}
                         title={`${seat.row}${seat.number} - ${seat.gradeCode}`}
                         className={cn(
@@ -107,19 +125,17 @@ export function SeatGrid({ layout, selectedIds, onToggle, onBack }: Props) {
         </div>
       </div>
  
-      {/* 범례 */}
-      <div className="flex flex-wrap justify-center gap-6 px-6 py-4 bg-gray-50 rounded-lg text-sm">
-        <div className="flex items-center gap-2">
-          <div className="h-4 w-4 rounded bg-blue-500"></div>
-          <span>예매 가능</span>
-        </div>
+      {/* 범례 — 등급별 색상 + 상태 */}
+      <div className="flex flex-wrap justify-center gap-5 px-6 py-4 bg-gray-50 rounded-lg text-sm">
+        {grades.map((g) => (
+          <div key={g.code} className="flex items-center gap-2">
+            <div className={`h-4 w-4 rounded ${SEAT_GRADE_COLORS[g.code] ?? "bg-gray-400"}`}></div>
+            <span>{g.name}</span>
+          </div>
+        ))}
         <div className="flex items-center gap-2">
           <div className="h-4 w-4 rounded bg-gray-400 opacity-40 grayscale"></div>
           <span>판매 완료</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="h-4 w-4 rounded bg-blue-500 ring-2 ring-offset-1 ring-blue-500"></div>
-          <span>선택됨</span>
         </div>
       </div>
  

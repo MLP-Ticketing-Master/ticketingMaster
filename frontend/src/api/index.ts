@@ -6,3 +6,4 @@ export * from "./team.api";
 export * from "./match.api";
 export * from "./me.api";
 export * from "./admin.api";
+export * from "./queue.api";

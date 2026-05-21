@@ -1,14 +1,17 @@
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
 import { BookingWidget } from "@/components/main/BookingWidget";
 import { EventInfo } from "@/components/main/EventInfo";
 import { useEventDetail } from "@/hooks";
-import { useBookingFlowStore } from "@/store";
+import { useAuthStore, useBookingFlowStore } from "@/store";
 
 export default function EventDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const eventId = Number(id);
   const { data: event, isLoading } = useEventDetail(eventId);
   const openFlow = useBookingFlowStore((s) => s.openFlow);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated());
 
   if (isLoading || !event) {
     return (
@@ -35,7 +38,14 @@ export default function EventDetailPage() {
         <div className="space-y-4">
           <BookingWidget
             event={event}
-            onProceed={(matchId) => openFlow({ eventId, matchId })}
+            onProceed={(matchId) => {
+              if (!isAuthenticated) {
+                toast.error("로그인이 필요합니다.");
+                navigate("/login");
+                return;
+              }
+              openFlow({ eventId, matchId });
+            }}
           />
           <BookingNotice />
         </div>
