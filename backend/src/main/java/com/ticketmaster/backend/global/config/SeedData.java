@@ -1,5 +1,6 @@
 package com.ticketmaster.backend.global.config;
 
+import com.ticketmaster.backend.domain.booking.repository.BookingRepository;
 import com.ticketmaster.backend.domain.event.entity.Event;
 import com.ticketmaster.backend.domain.event.entity.EventStatus;
 import com.ticketmaster.backend.domain.event.entity.SportType;
@@ -7,6 +8,8 @@ import com.ticketmaster.backend.domain.event.repository.EventRepository;
 import com.ticketmaster.backend.domain.match.entity.Match;
 import com.ticketmaster.backend.domain.match.entity.MatchStatus;
 import com.ticketmaster.backend.domain.match.repository.MatchRepository;
+import com.ticketmaster.backend.domain.payment.repository.PaymentRepository;
+import com.ticketmaster.backend.domain.queue.repository.QueueRepository;
 import com.ticketmaster.backend.domain.seat.entity.Seat;
 import com.ticketmaster.backend.domain.seat.entity.SeatGrade;
 import com.ticketmaster.backend.domain.seat.entity.Section;
@@ -38,6 +41,9 @@ public class SeedData implements CommandLineRunner {
     private final SeatGradeRepository seatGradeRepository;
     private final SectionRepository sectionRepository;
     private final SeatRepository seatRepository;
+    private final BookingRepository bookingRepository;
+    private final QueueRepository queueRepository;
+    private final PaymentRepository paymentRepository;
 
     private Match match1, match2, match3, match4;
     private SeatGrade VIPGrade, RGrade, SGrade;
@@ -250,8 +256,14 @@ public class SeedData implements CommandLineRunner {
      */
     private void resetData() {
         /**
-         * 삭제 순서 seat -> section & seatgrade -> match -> team & event
+         * 삭제 순서 (FK 자식 → 부모)
+         * payment -> booking(+booking_seat cascade) -> queue -> seat -> section & seat_grade -> match -> team & event
+         * Booking 만 deleteAll() 로 호출해서 cascade=ALL + orphanRemoval 로 booking_seats 자동 정리
+         * 나머지는 자식이 먼저 정리됐으므로 deleteAllInBatch() 로 일괄 삭제
          */
+        paymentRepository.deleteAllInBatch();
+        bookingRepository.deleteAll();
+        queueRepository.deleteAllInBatch();
         seatRepository.deleteAllInBatch();
         sectionRepository.deleteAllInBatch();
         seatGradeRepository.deleteAllInBatch();
