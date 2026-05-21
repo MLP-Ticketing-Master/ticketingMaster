@@ -74,8 +74,8 @@ public class QueueService {
      * 2) 예매 가능 시간인지 검증 — 오픈 전이면 400
      * 3) 사용자 엔티티 조회 — Queue 의 user 필드에 넣을 참조
      * 4) UUID 토큰 발급
-     * 5) Redis 등록 — 중복 진입은 여기서 409
-     * 6) DB 이력 저장
+     * 5) Redis 등록 — 재진입(같은 userId)이면 기존 토큰을 그대로 받아옴 (idempotent)
+     * 6) 신규 진입일 때만 DB 이력 저장 (queueToken UNIQUE 제약 + 이력 중복 방지)
      * 7) 응답 조립 (순번 / 남은 인원 / 예상 대기 시간)
      */
     @Transactional
@@ -95,16 +95,21 @@ public class QueueService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         // 4) UUID 토큰 발급 — 거의 충돌 확률 0 인 무작위 문자열
-        String token = UUID.randomUUID().toString();
+        String newToken = UUID.randomUUID().toString();
         long enteredAtMs = System.currentTimeMillis();
 
-        // 5) Redis 등록 — 중복 진입이면 여기서 QUEUE_ALREADY_ENTERED
-        long queueNumber = queueRedis.enter(matchId, userId, token, enteredAtMs);
+        // 5) Redis 등록 — 재진입이면 newToken 이 무시되고 기존 토큰이 그대로 돌아옴
+        QueueRedisRepository.EnterResult result = queueRedis.enter(matchId, userId, newToken, enteredAtMs);
+        String token = result.token();
+        long queueNumber = result.rank();
 
-        // 6) DB 에 이력 저장 (모니터링 / 디버깅 / 감사 추적용)
-        LocalDateTime expiresAt = now.plusSeconds(tokenTtlSeconds); // 토큰 만료 시각 계산
-        Queue queue = Queue.createWaiting(user, match, token, queueNumber, now, expiresAt);
-        queueRepository.save(queue);
+        // 6) DB 이력 저장 — 신규 진입(서비스가 발급한 토큰이 그대로 사용됨)일 때만
+        //    재진입이면 같은 queueToken 의 레코드가 이미 있어서 UNIQUE 위반 방지
+        if (token.equals(newToken)) {
+            LocalDateTime expiresAt = now.plusSeconds(tokenTtlSeconds); // 토큰 만료 시각 계산
+            Queue queue = Queue.createWaiting(user, match, token, queueNumber, now, expiresAt);
+            queueRepository.save(queue);
+        }
 
         // 7) 응답 조립
         //    remainingAhead = 내 앞에 남은 사람 수 (음수가 안 되도록 max)
