@@ -284,14 +284,14 @@ class BookingControllerTest {
     }
 
     @Test
-    @DisplayName("TC-C08: cancelReason 없이 요청 → 400 BAD_REQUEST")
-    void 취소사유_없음() throws Exception {
+    @DisplayName("TC-C08: cancelReason 없이 요청 → 200 OK (null 허용)")
+    void 취소사유_없이_정상_취소() throws Exception {
         mockMvc.perform(post("/bookings/10/cancel")
                         .with(authentication(userAuth(USER_ID)))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(om.writeValueAsString(Map.of())))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isOk());
     }
 
     // -------------------------------------------------------
