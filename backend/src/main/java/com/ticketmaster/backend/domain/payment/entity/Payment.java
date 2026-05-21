@@ -48,7 +48,7 @@ public class Payment extends BaseEntity {
     private int amount;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(length = 20)
     private PaymentMethod method;
 
     @Enumerated(EnumType.STRING)
