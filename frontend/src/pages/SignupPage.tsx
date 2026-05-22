@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { AxiosError } from "axios";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -74,53 +75,63 @@ export default function SignupPage() {
     if (phone === "") return true;
     return /^010-\d{4}-\d{4}$/.test(phone);
   };
+
+  // 숫자만 추출 후 010-XXXX-XXXX 형식으로 자동 하이픈 부여
+  const formatPhone = (raw: string): string => {
+    const digits = raw.replace(/\D/g, "").slice(0, 11);
+    if (digits.length < 4) return digits;
+    if (digits.length < 8) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+    return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+  };
  
   // ===== 입력 처리 =====
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
- 
-   
-    setFormData((prev) => ({ ...prev, [name]: value }));
- 
+
+    // 전화번호는 입력 즉시 010-XXXX-XXXX 로 포매팅
+    const nextValue = name === "phone" ? formatPhone(value) : value;
+
+    setFormData((prev) => ({ ...prev, [name]: nextValue }));
+
     // 실시간 검증
     switch (name) {
       case "email":
         setValidations((prev) => ({
           ...prev,
-          emailValid: isEmailValid(value),
+          emailValid: isEmailValid(nextValue),
         }));
         break;
- 
-      case "password":
-        const strong = isPasswordStrong(value);
-        const match = value === formData.passwordConfirm;
+
+      case "password": {
+        const strong = isPasswordStrong(nextValue);
+        const match = nextValue === formData.passwordConfirm;
         setValidations((prev) => ({
           ...prev,
           passwordStrong: strong,
           passwordMatch: match,
         }));
         break;
+      }
 
       case "passwordConfirm":
         setValidations((prev) => ({
           ...prev,
-          passwordMatch: value === formData.password,
+          passwordMatch: nextValue === formData.password,
         }));
         break;
 
- 
       case "nickname":
         setValidations((prev) => ({
           ...prev,
-          nicknameValid: isNicknameValid(value),
+          nicknameValid: isNicknameValid(nextValue),
         }));
         break;
- 
+
       case "phone":
         setValidations((prev) => ({
           ...prev,
-          phoneValid: isPhoneValid(value),
+          phoneValid: isPhoneValid(nextValue),
         }));
         break;
     }
@@ -132,6 +143,11 @@ export default function SignupPage() {
  
   const handleBlur = (field: keyof typeof touched) => {
     setTouched((prev) => ({ ...prev, [field]: true }));
+  };
+
+  // 포커스 진입 시 touched 초기화 — 수정 중에는 에러 메시지 숨김
+  const handleFocus = (field: keyof typeof touched) => {
+    setTouched((prev) => ({ ...prev, [field]: false }));
   };
  
   // ===== 폼 유효성 검사 =====
@@ -163,8 +179,9 @@ export default function SignupPage() {
           toast.success("회원가입이 완료되었습니다.");
           navigate("/");
         },
-        onError: (error: any) => {
-          const errorMsg = error.message || "회원가입에 실패했습니다.";
+        onError: (error: AxiosError<{ message?: string }>) => {
+          const errorMsg =
+            error.response?.data?.message ?? "회원가입에 실패했습니다.";
           toast.error(errorMsg);
           setFormData((prev) => ({
             ...prev,
@@ -182,11 +199,13 @@ export default function SignupPage() {
       {/* 로고 */}
       <div className="text-center">
         <div className="flex justify-center">
-          <img
-            src={logo}
-            alt="티켓팅마스터"
-            className="h-40 w-auto scale-80"
-          />
+          <Link to="/">
+            <img
+              src={logo}
+              alt="티켓팅마스터"
+              className="h-40 w-auto scale-80 cursor-pointer"
+            />
+          </Link>
         </div>
         <p className="mt-2 text-sm text-muted-foreground">
           새로운 계정을 만들어 E스포츠 경기 티켓을 예매하세요
@@ -210,8 +229,10 @@ export default function SignupPage() {
  
         <form className="space-y-4" onSubmit={handleSubmit}>
           {/* 이메일 필드 */}
-          <div>
-            <Label htmlFor="email">이메일</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="email">
+              이메일 <span className="text-red-500">*</span>
+            </Label>
             <Input
               id="email"
               name="email"            
@@ -219,8 +240,10 @@ export default function SignupPage() {
               placeholder="example@email.com"
               value={formData.email}
               onChange={handleChange} 
+              onFocus={() => handleFocus("email")}
               onBlur={() => handleBlur("email")}
               disabled={signup.isPending}
+              className="h-10"
             />
             {touched.email && formData.email && !isEmailValid(formData.email) && (
               <p className="mt-1 text-xs font-medium text-red-500">
@@ -236,8 +259,10 @@ export default function SignupPage() {
           </div>
  
           {/* 이름 필드 */}
-          <div>
-            <Label htmlFor="nickname">이름</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="nickname">
+              이름 <span className="text-red-500">*</span>
+            </Label>
             <Input
               id="nickname"
               name="nickname"             
@@ -245,8 +270,10 @@ export default function SignupPage() {
               placeholder="2자 이상 20자 이하"
               value={formData.nickname}
               onChange={handleChange} 
+              onFocus={() => handleFocus("nickname")}
               onBlur={() => handleBlur("nickname")}
               disabled={signup.isPending}
+              className="h-10"
             />
             {touched.nickname && formData.nickname && !isNicknameValid(formData.nickname) && (
               <p className="mt-1 text-xs font-medium text-red-500">
@@ -256,8 +283,8 @@ export default function SignupPage() {
           </div>
  
           {/* 전화번호 필드 */}
-          <div>
-            <Label htmlFor="phone">전화번호 (선택)</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="phone">전화번호</Label>
             <Input
               id="phone"
               name="phone"          
@@ -265,8 +292,10 @@ export default function SignupPage() {
               placeholder="010-1234-5678"
               value={formData.phone}
               onChange={handleChange} 
+              onFocus={() => handleFocus("phone")}
               onBlur={() => handleBlur("phone")}
               disabled={signup.isPending}
+              className="h-10"
             />
             {touched.phone && formData.phone && !isPhoneValid(formData.phone) && (
               <p className="mt-1 text-xs font-medium text-red-500">
@@ -276,8 +305,10 @@ export default function SignupPage() {
           </div>
  
           {/* 비밀번호 필드 */}
-          <div>
-            <Label htmlFor="password">비밀번호</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="password">
+              비밀번호 <span className="text-red-500">*</span>
+            </Label>
             <Input
               id="password"
               name="password"       
@@ -285,8 +316,10 @@ export default function SignupPage() {
               placeholder="8-20자, 영문+숫자+특수문자 필수"
               value={formData.password}
               onChange={handleChange} 
+              onFocus={() => handleFocus("password")}
               onBlur={() => handleBlur("password")}
               disabled={signup.isPending}
+              className="h-10"
             />
             {touched.password && formData.password && !isPasswordStrong(formData.password) && (
               <p className="mt-1 text-xs font-medium text-red-500">
@@ -321,8 +354,10 @@ export default function SignupPage() {
           </div>
 
           {/* 비밀번호 확인 필드 */}
-          <div>
-            <Label htmlFor="passwordConfirm">비밀번호 확인</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="passwordConfirm">
+              비밀번호 확인 <span className="text-red-500">*</span>
+            </Label>
             <Input
               id="passwordConfirm"
               name="passwordConfirm"  // ✅ 필수
@@ -330,8 +365,10 @@ export default function SignupPage() {
               placeholder="비밀번호를 다시 입력해주세요"
               value={formData.passwordConfirm}
               onChange={handleChange} // ✅ 필수
+              onFocus={() => handleFocus("passwordConfirm")}
               onBlur={() => handleBlur("passwordConfirm")}
               disabled={signup.isPending}
+              className="h-10"
             />
             {touched.passwordConfirm &&
               formData.passwordConfirm &&

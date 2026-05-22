@@ -11,6 +11,7 @@ import HomePage from "@/pages/HomePage";
 import EventDetailPage from "@/pages/EventDetailPage";
 import LoginPage from "@/pages/LoginPage";
 import SignupPage from "@/pages/SignupPage";
+import SchedulePage from "@/pages/SchedulePage";
 import ProfilePage from "@/pages/my/ProfilePage";
 import BookingHistoryPage from "@/pages/my/BookingHistoryPage";
 import EditProfilePage from "@/pages/my/EditProfilePage";
@@ -29,7 +30,7 @@ export default function App() {
       <Routes>
         <Route element={<PublicLayout />}>
           <Route index element={<HomePage />} />
-          <Route path="events" element={<HomePage />} />
+          <Route path="events" element={<SchedulePage />} />
           <Route path="events/:id" element={<EventDetailPage />} />
         </Route>
 
