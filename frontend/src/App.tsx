@@ -23,6 +23,7 @@ import TeamsAdminPage from "@/pages/admin/TeamsAdminPage";
 import SeatsAdminPage from "@/pages/admin/SeatsAdminPage";
 import BookingsAdminPage from "@/pages/admin/BookingsAdminPage";
 import StatsAdminPage from "@/pages/admin/StatsAdminPage";
+import PasswordResetPage from "@/pages/PasswordResetPage";
 
 export default function App() {
   return (
@@ -38,6 +39,9 @@ export default function App() {
           <Route path="login" element={<LoginPage />} />
           <Route path="signup" element={<SignupPage />} />
         </Route>
+
+        {/* 이메일 링크로 접근하는 비밀번호 재설정 페이지 (/password-reset?token=...) */}
+        <Route path="password-reset" element={<PasswordResetPage />} />
 
         <Route path="my" element={<MyPageLayout />}>
           <Route index element={<ProfilePage />} />

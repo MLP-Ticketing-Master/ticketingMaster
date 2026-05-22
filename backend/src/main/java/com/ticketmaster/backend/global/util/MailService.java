@@ -12,7 +12,7 @@ public class MailService {
 
 	public void sendResetLink(String email, String token) {
 		// 프론트엔드 도메인 주소 넣어야 함
-		String resetLink = "http://localhost:3000/password-reset?token=" + token;
+		String resetLink = "http://localhost:5173/password-reset?token=" + token;
 
 		SimpleMailMessage message = new SimpleMailMessage();
 		message.setTo(email);
