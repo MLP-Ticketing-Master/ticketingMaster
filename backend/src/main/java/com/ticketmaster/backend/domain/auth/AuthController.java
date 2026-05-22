@@ -1,6 +1,8 @@
 package com.ticketmaster.backend.domain.auth;
 
 import com.ticketmaster.backend.domain.auth.dto.request.*;
+import com.ticketmaster.backend.domain.auth.dto.response.AuthSignupResponse;
+import com.ticketmaster.backend.domain.auth.dto.response.LoginResponse;
 import com.ticketmaster.backend.domain.auth.dto.response.TokenResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,14 +19,14 @@ public class AuthController {
 	private final AuthService authService;
 
 	@PostMapping("/signup")
-	public ResponseEntity<Void> signup(@Valid @RequestBody AuthSignupRequest request) {
-		authService.signup(request);
-		return ResponseEntity.status(HttpStatus.CREATED).build();
+	public ResponseEntity<AuthSignupResponse> signup(@Valid @RequestBody AuthSignupRequest request) {
+		AuthSignupResponse response = authService.signup(request);
+		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
 	@PostMapping("/login")
-	public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest request){
-		TokenResponse response = authService.login(request);
+	public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request){
+		LoginResponse response = authService.login(request);
 		return ResponseEntity.ok(response);
 	}
 
