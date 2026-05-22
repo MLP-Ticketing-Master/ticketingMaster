@@ -5,9 +5,9 @@ export const SPORT_LABEL: Record<Exclude<SportType, "ALL">, string> = {
   LOL: "리그 오브 레전드",
   VALORANT: "발로란트",
   OVERWATCH: "오버워치",
-  TFT: "전략적 팀 전투",
+  TFT: "롤토체스",
   PUBG: "배틀그라운드",
-  STARCRAFT: "스타크래프트 2",
+  SC2: "스타크래프트2",
 };
 
 /** 하위 호환 alias */
@@ -19,8 +19,8 @@ export const SPORT_FILTER_LABEL: Record<SportType, string> = {
   VALORANT: "발로란트",
   OVERWATCH: "오버워치",
   TFT: "TFT",
-  PUBG: "PUBG",
-  STARCRAFT: "스타크래프트",
+  PUBG: "배그",
+  SC2: "스타",
 };
 
 export const GAME_FILTER_LABEL = SPORT_FILTER_LABEL;

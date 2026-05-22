@@ -5,8 +5,8 @@ export interface User {
   nickname: string;
   email: string;
   phone: string;
-  joinedAt: string;
   role: UserRole;
+  joinedAt?: string;
 }
 
 export interface LoginRequest {
@@ -21,7 +21,27 @@ export interface SignupRequest {
   password: string;
 }
 
+// 백엔드 /auth/login 원본 응답 (평탄형)
+export interface LoginResponseRaw {
+  accessToken: string;
+  refreshToken: string;
+  userId: number;
+  email: string;
+  nickname: string;
+  phone: string;
+  role: UserRole;
+}
+
+// 프론트 내부에서 사용하는 정규화 응답
 export interface AuthResponse {
   accessToken: string;
+  refreshToken?: string;
   user: User;
+}
+
+// /auth/refresh 응답 (user 정보 없음)
+export interface TokenRefreshResponse {
+  accessToken: string;
+  refreshToken: string;
+  role: UserRole;
 }

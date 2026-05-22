@@ -3,6 +3,7 @@ import type {
   EventDetail,
   EventListResponse,
   Match,
+  ScheduledMatch,
   Seat,
   SeatGrade,
   Section,
@@ -60,10 +61,10 @@ export const MOCK_EVENTS: EventListResponse[] = [
     status: "OPEN",
   },
   {
-    eventId: 1004,
-    title: "카운터 스트라이크 마스터즈",
-    sportType: "VALORANT",
-    place: "서울 e스포츠 경기장",
+    id: 4,
+    title: "롤토체스 챔피언스 코리아",
+    game: "TFT",
+    venue: "서울 e스포츠 경기장",
     startDate: "2026-05-01",
     endDate: "2026-05-30",
     thumbnailUrl: "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=800",
@@ -285,5 +286,232 @@ export const MOCK_TEAMS: Team[] = [
     logoUrl: "https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=200",
     totalMatches: 10,
     registeredAt: "2025-11-20",
+  },
+];
+
+// ====== 일정표 (SchedulePage 용) ======
+// 백엔드 미연동 — 프론트 표시 전용 mock
+const T1 = { code: "T1", name: "T1", color: "bg-red-500" };
+const GEN = { code: "GEN", name: "Gen.G", color: "bg-zinc-900" };
+const HLE = { code: "HLE", name: "Hanwha Life", color: "bg-orange-500" };
+const KT = { code: "KT", name: "KT Rolster", color: "bg-red-700" };
+const DRX = { code: "DRX", name: "DRX", color: "bg-blue-500" };
+const DK = { code: "DK", name: "Dplus KIA", color: "bg-emerald-500" };
+const NS = { code: "NS", name: "Nongshim", color: "bg-amber-500" };
+const BRO = { code: "BRO", name: "OKBRO", color: "bg-pink-500" };
+const KDF = { code: "KDF", name: "Kwangdong Freecs", color: "bg-indigo-700" };
+const BFX = { code: "BFX", name: "BNK FearX", color: "bg-sky-500" };
+
+const BLG = { code: "BLG", name: "Bilibili Gaming", color: "bg-rose-600" };
+const WBG = { code: "WBG", name: "Weibo Gaming", color: "bg-blue-700" };
+const JDG = { code: "JDG", name: "JD Gaming", color: "bg-red-800" };
+const TES = { code: "TES", name: "Top Esports", color: "bg-yellow-500" };
+
+const G2 = { code: "G2", name: "G2 Esports", color: "bg-zinc-700" };
+const FNC = { code: "FNC", name: "Fnatic", color: "bg-orange-600" };
+
+const VCT_DRX = { code: "DRX", name: "DRX VAL", color: "bg-blue-600" };
+const VCT_GEN = { code: "GEN", name: "Gen.G VAL", color: "bg-zinc-900" };
+
+const SEOUL = { code: "SEO", name: "서울 다이너스티", color: "bg-violet-600" };
+const SFS = { code: "SFS", name: "샌프란시스코 쇼크", color: "bg-amber-600" };
+
+export const MOCK_SCHEDULE: ScheduledMatch[] = [
+  // ===== 진행중(LIVE) =====
+  {
+    id: 9001,
+    leagueCode: "LCK",
+    leagueName: "LCK 2026 Spring",
+    game: "LOL",
+    teamA: T1,
+    teamB: GEN,
+    startAt: "2026-05-22T17:00:00",
+    status: "LIVE",
+    bestOf: 5,
+    scoreA: 1,
+    scoreB: 1,
+    venue: "LoL Park",
+  },
+
+  // ===== 예정(SCHEDULED) =====
+  {
+    id: 9002,
+    leagueCode: "LCK",
+    leagueName: "LCK 2026 Spring",
+    game: "LOL",
+    teamA: HLE,
+    teamB: KT,
+    startAt: "2026-05-22T20:00:00",
+    status: "SCHEDULED",
+    bestOf: 3,
+    venue: "LoL Park",
+  },
+  {
+    id: 9003,
+    leagueCode: "LCK",
+    leagueName: "LCK 2026 Spring",
+    game: "LOL",
+    teamA: DK,
+    teamB: DRX,
+    startAt: "2026-05-23T17:00:00",
+    status: "SCHEDULED",
+    bestOf: 3,
+    venue: "LoL Park",
+  },
+  {
+    id: 9004,
+    leagueCode: "LCK",
+    leagueName: "LCK 2026 Spring",
+    game: "LOL",
+    teamA: NS,
+    teamB: BRO,
+    startAt: "2026-05-23T20:00:00",
+    status: "SCHEDULED",
+    bestOf: 3,
+    venue: "LoL Park",
+  },
+  {
+    id: 9005,
+    leagueCode: "LCK",
+    leagueName: "LCK 2026 Spring",
+    game: "LOL",
+    teamA: KDF,
+    teamB: BFX,
+    startAt: "2026-05-24T17:00:00",
+    status: "SCHEDULED",
+    bestOf: 3,
+    venue: "LoL Park",
+  },
+  {
+    id: 9006,
+    leagueCode: "LPL",
+    leagueName: "LPL 2026 Spring",
+    game: "LOL",
+    teamA: BLG,
+    teamB: WBG,
+    startAt: "2026-05-24T19:00:00",
+    status: "SCHEDULED",
+    bestOf: 3,
+    venue: "Shanghai Arena",
+  },
+  {
+    id: 9007,
+    leagueCode: "LPL",
+    leagueName: "LPL 2026 Spring",
+    game: "LOL",
+    teamA: JDG,
+    teamB: TES,
+    startAt: "2026-05-25T19:00:00",
+    status: "SCHEDULED",
+    bestOf: 3,
+    venue: "Shanghai Arena",
+  },
+  {
+    id: 9008,
+    leagueCode: "MSI",
+    leagueName: "MSI 2026 Play-in",
+    game: "LOL",
+    teamA: G2,
+    teamB: FNC,
+    startAt: "2026-05-28T22:00:00",
+    status: "SCHEDULED",
+    bestOf: 5,
+    venue: "Berlin Studio",
+  },
+  {
+    id: 9009,
+    leagueCode: "VCT",
+    leagueName: "VCT Pacific 2026",
+    game: "VALORANT",
+    teamA: VCT_DRX,
+    teamB: VCT_GEN,
+    startAt: "2026-05-29T18:00:00",
+    status: "SCHEDULED",
+    bestOf: 3,
+    venue: "VCT Studio Seoul",
+  },
+  {
+    id: 9010,
+    leagueCode: "OWCS",
+    leagueName: "OWCS 2026 Season Final",
+    game: "OVERWATCH",
+    teamA: SEOUL,
+    teamB: SFS,
+    startAt: "2026-05-30T19:00:00",
+    status: "SCHEDULED",
+    bestOf: 5,
+    venue: "e스타디움",
+  },
+
+  // ===== 종료(FINISHED) =====
+  {
+    id: 9011,
+    leagueCode: "LCK",
+    leagueName: "LCK 2026 Spring",
+    game: "LOL",
+    teamA: T1,
+    teamB: KT,
+    startAt: "2026-05-21T17:00:00",
+    status: "FINISHED",
+    bestOf: 3,
+    scoreA: 2,
+    scoreB: 1,
+    venue: "LoL Park",
+  },
+  {
+    id: 9012,
+    leagueCode: "LCK",
+    leagueName: "LCK 2026 Spring",
+    game: "LOL",
+    teamA: GEN,
+    teamB: HLE,
+    startAt: "2026-05-21T20:00:00",
+    status: "FINISHED",
+    bestOf: 3,
+    scoreA: 2,
+    scoreB: 0,
+    venue: "LoL Park",
+  },
+  {
+    id: 9013,
+    leagueCode: "LCK",
+    leagueName: "LCK 2026 Spring",
+    game: "LOL",
+    teamA: DRX,
+    teamB: NS,
+    startAt: "2026-05-20T17:00:00",
+    status: "FINISHED",
+    bestOf: 3,
+    scoreA: 0,
+    scoreB: 2,
+    venue: "LoL Park",
+  },
+  {
+    id: 9014,
+    leagueCode: "LPL",
+    leagueName: "LPL 2026 Spring",
+    game: "LOL",
+    teamA: BLG,
+    teamB: JDG,
+    startAt: "2026-05-20T19:00:00",
+    status: "FINISHED",
+    bestOf: 3,
+    scoreA: 2,
+    scoreB: 1,
+    venue: "Shanghai Arena",
+  },
+  {
+    id: 9015,
+    leagueCode: "VCT",
+    leagueName: "VCT Pacific 2026",
+    game: "VALORANT",
+    teamA: VCT_DRX,
+    teamB: VCT_GEN,
+    startAt: "2026-05-19T18:00:00",
+    status: "FINISHED",
+    bestOf: 3,
+    scoreA: 1,
+    scoreB: 2,
+    venue: "VCT Studio Seoul",
   },
 ];
