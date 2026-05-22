@@ -15,16 +15,17 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
     // 관리자 기능
     // -------------------------------------------------------
 
-    /** 회차 내 좌석 코드 중복 체크 — 단건 등록 시 */
-    boolean existsByMatchIdAndSeatCode(Long matchId, String seatCode);
+    /** 회차 내 동일 구역에 같은 좌석 코드가 있는지 검사 — 단건 등록 시 */
+    boolean existsByMatchIdAndSectionIdAndSeatCode(Long matchId, Long sectionId, String seatCode);
 
     /**
-     * 일괄 등록 시 이미 존재하는 좌석 코드만 골라서 반환 - IN절 한 번 쿼리로 N+1 방지
-     * Collection<String> -> 문자열들의 모음, seatCode의 모음
+     * 일괄 등록 시 매치 안에서 이미 존재하는 (구역, 좌석 코드) 페어 반환 - IN절 한 번 쿼리로 N+1 방지
+     * 같은 코드라도 구역이 다르면 허용되므로 코드만으로 검사 불가 — 호출부에서 (sectionId, code) 페어로 충돌 확인 필요
+     * 반환: Object[]{sectionId(Long), seatCode(String)}
      */
-    @Query("SELECT s.seatCode FROM Seat s WHERE s.match.id = :matchId AND s.seatCode IN :codes")
-    List<String> findExistingSeatCodes(@Param("matchId") Long matchId,
-                                       @Param("codes") Collection<String> codes);
+    @Query("SELECT s.section.id, s.seatCode FROM Seat s WHERE s.match.id = :matchId AND s.seatCode IN :codes")
+    List<Object[]> findExistingSectionCodePairs(@Param("matchId") Long matchId,
+                                                @Param("codes") Collection<String> codes);
 
     /**
      * 회차 좌석 전체 조회 — section/seatGrade 까지 fetch join 으로 한 번에 로딩
