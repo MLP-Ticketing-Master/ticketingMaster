@@ -21,7 +21,7 @@ interface Props {
 export function GameFilter({ value, onChange }: Props) {
   return (
     <div className="flex gap-2 overflow-x-auto pb-1">
-      {FILTERS.map((g) => (
+      {FILTERS.map((s) => (
         <Button
           key={s}
           variant={value === s ? "default" : "outline"}
@@ -29,7 +29,7 @@ export function GameFilter({ value, onChange }: Props) {
           onClick={() => onChange(s)}
           className={cn(
             "shrink-0 rounded-full",
-            value === g && "bg-[#316DFD] hover:bg-[#1C5EFD]",
+            value === s && "bg-[#316DFD] hover:bg-[#1C5EFD]",
           )}
         >
           {SPORT_FILTER_LABEL[s]}

@@ -4,7 +4,7 @@ export type SportType =
   | "OVERWATCH"
   | "TFT"
   | "PUBG"
-  | "STARCRAFT"
+  | "SC2"
   | "ALL"; // 프론트 필터 전용
 
 export type GameType = SportType; // 하위 호환 유지
