@@ -30,7 +30,11 @@ export default function ProfilePage() {
 
       <div className="grid gap-5 md:grid-cols-2">
         <ReadOnlyField label="이메일" value={profile.email} />
-        <ReadOnlyField label="휴대폰 번호" value={profile.phone} />
+        <ReadOnlyField
+          label="휴대폰 번호"
+          value={profile.phone}
+          placeholder="등록된 전화번호가 없습니다"
+        />
       </div>
 
       <Separator />
@@ -39,12 +43,25 @@ export default function ProfilePage() {
   );
 }
 
-function ReadOnlyField({ label, value }: { label: string; value: string }) {
+function ReadOnlyField({
+  label,
+  value,
+  placeholder,
+}: {
+  label: string;
+  value?: string | null;
+  placeholder?: string;
+}) {
+  const isEmpty = !value;
   return (
     <div className="space-y-1.5">
       <p className="text-sm text-muted-foreground">{label}</p>
       <div className="rounded-lg bg-gray-50 px-4 py-2.5 text-sm font-medium">
-        {value}
+        {isEmpty ? (
+          <span className="text-muted-foreground">{placeholder ?? "-"}</span>
+        ) : (
+          value
+        )}
       </div>
     </div>
   );
