@@ -233,7 +233,7 @@ public class SeedData implements CommandLineRunner {
                         seatGrade,
                         Character.toString((char) ('A' + (r - 1))),
                         c,
-                        createSeatCode(seatGrade.getGradeCode(), section.getName(),
+                        createSeatCode(seatGrade.getGradeCode(),
                                 Character.toString((char) ('A' + (r - 1))), c)
                 );
                 seatList.add(seat);
@@ -245,10 +245,10 @@ public class SeedData implements CommandLineRunner {
     }
 
     /**
-     * 좌석 코드 생성기 ("구역-열+번호(등급)" ex: "A구역-D7(VIP)")
+     * 좌석 코드 생성기 ("등급-행-번호" ex: "VIP-A-15")
      */
-    private String createSeatCode(String seatGrade, String seatSection, String rowLabel, Integer seatNo) {
-        return seatSection + "-" + rowLabel + seatNo.toString() + "(" + seatGrade + ")";
+    private String createSeatCode(String seatGrade, String rowLabel, Integer seatNo) {
+        return seatGrade + "-" + rowLabel + "-" + seatNo;
     }
 
     /**
