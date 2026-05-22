@@ -33,8 +33,11 @@ spring:
           batch_versioned_data: true
         order_inserts: true            # INSERT 문 정렬 (배치 효율 ↑)
         order_updates: true
-    flyway:
-      enabled: true
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true   # 이미 테이블이 있는 환경(Hibernate ddl-auto=update 가 만들었던 상태)에서 첫 적용 허용
+    baseline-version: 2         # V1, V2 는 Hibernate 가 동일 결과를 이미 만든 상태라 skip, V3 부터 실행
 
   mail:
     host: smtp.gmail.com
