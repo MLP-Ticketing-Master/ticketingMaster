@@ -72,3 +72,22 @@ export async function getRefresh(
   });
   return res.data;
 }
+
+/**
+ * 비밀번호 재설정 링크 요청
+ * POST /auth/password-reset/request
+ */
+export async function requestPasswordReset(email: string): Promise<void> {
+  await api.post("/auth/password-reset/request", { email });
+}
+
+/**
+ * 비밀번호 재설정 확인 (토큰 + 새 비밀번호)
+ * POST /auth/password-reset/confirm
+ */
+export async function confirmPasswordReset(
+  token: string,
+  newPassword: string,
+): Promise<void> {
+  await api.post("/auth/password-reset/confirm", { token, newPassword });
+}
