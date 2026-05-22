@@ -88,7 +88,9 @@ queue:
   session-seconds: 600          # 10분
 
 booking:
-  expiry-scan-interval-ms: 60000   # 1분 주기
+  expiry-scan-interval-ms: 60000             # 1분 주기
+  # 부팅 직후 SeedData reset 트랜잭션과의 락 경합 회피용 — 시드 안정화 후 첫 실행
+  expiry-scan-initial-delay-ms: 60000        # 부팅 후 60초 뒤 첫 실행
 
 toss:
   secret-key: ${TOSS_SECRET_KEY}

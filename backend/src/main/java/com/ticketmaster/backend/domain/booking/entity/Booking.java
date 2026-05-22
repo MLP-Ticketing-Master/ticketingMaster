@@ -124,13 +124,19 @@ public class Booking extends BaseEntity {
         this.canceledAt = LocalDateTime.now();
     }
 
-    /** 결제 시간 초과 자동 만료 — PENDING → EXPIRED */
+    /**
+     * 결제 시간 초과 자동 만료 — PENDING → EXPIRED
+     * BookingSeat 도 같이 비워야 같은 좌석으로 다른 user 가 새 booking 시도할 때
+     * uk_booking_seat_match_seat UK 위반이 발생하지 않음
+     * (orphanRemoval = true 이므로 컬렉션 clear 만으로 자식 row 자동 DELETE)
+     */
     public void expire() {
         if (this.status != BookingStatus.PENDING) {
             throw new BusinessException(ErrorCode.BOOKING_NOT_PENDING);
         }
         this.status = BookingStatus.EXPIRED;
         this.canceledAt = LocalDateTime.now();
+        this.bookingSeats.clear();
     }
 
     /** 좌석 추가 */

@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Optional;
 
 /**
@@ -80,10 +81,15 @@ public class PaymentService {
         }
 
         // 승인 성공 — DB 트랜잭션 일괄 처리
+        // 토스 approvedAt 은 OffsetDateTime (UTC 또는 +09:00 등 토스 응답 오프셋에 따라 다름)
+        // → Asia/Seoul 타임존으로 정규화 후 LocalDateTime 으로 변환해 한국 시간으로 일관 저장
+        LocalDateTime paidAt = tossRes.getApprovedAt() != null
+                ? tossRes.getApprovedAt().atZoneSameInstant(ZoneId.of("Asia/Seoul")).toLocalDateTime()
+                : LocalDateTime.now();
         Payment payment = Payment.success(
                 booking, tossRes.getPaymentKey(), tossRes.getOrderId(),
                 tossRes.getTotalAmount(), PaymentMethod.fromToss(tossRes.getMethod()),
-                tossRes.getApprovedAt()
+                paidAt
         );
 
         try {

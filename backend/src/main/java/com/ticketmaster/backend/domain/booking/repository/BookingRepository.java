@@ -119,4 +119,25 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     /** PENDING 상태 + 좌석 TTL 지난 Booking 목록 (자동 만료 스케줄러용) */
     List<Booking> findByStatusAndCreatedAtBefore(BookingStatus status, LocalDateTime threshold);
-}// NOTE: 이 파일은 interface라 직접 추가 불가 — str_replace로 진행
+
+    /**
+     * 예매 생성 멱등성 검증용 — 같은 user + match 의 PENDING booking 을 좌석까지 함께 로딩
+     * BookingService.createBooking() 에서 요청 seatIds 와 정확히 일치하는 기존 PENDING 이 있으면 재사용
+     */
+    @Query("""
+            SELECT DISTINCT b FROM Booking b
+            JOIN FETCH b.user
+            JOIN FETCH b.match m
+            JOIN FETCH m.event
+            LEFT JOIN FETCH m.homeTeam
+            LEFT JOIN FETCH m.awayTeam
+            JOIN FETCH b.bookingSeats bs
+            JOIN FETCH bs.seat s
+            JOIN FETCH s.seatGrade
+            WHERE b.user.id = :userId
+              AND b.match.id = :matchId
+              AND b.status = 'PENDING'
+            """)
+    List<Booking> findPendingForIdempotency(@Param("userId") Long userId,
+                                           @Param("matchId") Long matchId);
+}

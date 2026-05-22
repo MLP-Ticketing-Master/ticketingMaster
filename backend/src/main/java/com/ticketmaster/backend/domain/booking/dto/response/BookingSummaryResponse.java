@@ -19,6 +19,7 @@ public class BookingSummaryResponse {
     private String bookingNumber;
 
     private String eventTitle;
+    private String place;
     private LocalDateTime matchStartAt;
     private String roundLabel;
 
@@ -39,6 +40,7 @@ public class BookingSummaryResponse {
                 booking.getId(),
                 booking.getBookingNumber(),
                 booking.getMatch().getEvent().getTitle(),
+                booking.getMatch().getEvent().getPlace(),
                 booking.getMatch().getStartAt(),
                 booking.getMatch().getRoundLabel(),
                 seatCodes,

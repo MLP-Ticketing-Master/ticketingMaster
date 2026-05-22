@@ -31,8 +31,12 @@ public class PendingBookingExpirationScheduler {
 
     /**
      * 1분 주기로 실행 — 좌석 TTL(7분) 지난 PENDING Booking 일괄 EXPIRED 전환
+     * initialDelay 로 부팅 직후 SeedData reset 트랜잭션과의 락 경합(데드락) 회피
      */
-    @Scheduled(fixedDelayString = "${booking.expiry-scan-interval-ms}")
+    @Scheduled(
+            fixedDelayString = "${booking.expiry-scan-interval-ms}",
+            initialDelayString = "${booking.expiry-scan-initial-delay-ms}"
+    )
     @Transactional
     public void expirePendingBookings() {
         LocalDateTime threshold = LocalDateTime.now().minusSeconds(seatTtlSeconds);
