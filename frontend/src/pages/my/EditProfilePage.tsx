@@ -1,27 +1,44 @@
-import { useEffect, useState } from "react";
-import { Mail, Phone, User } from "lucide-react";
+import { useState } from "react";
+import { Mail, Phone, User as UserIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useMyProfile, useUpdateProfileMutation, useWithdrawMutation } from "@/hooks";
+import {
+  useMyProfile,
+  useUpdateProfileMutation,
+  useWithdrawMutation,
+} from "@/hooks";
 import { toast } from "sonner";
+import type { User } from "@/types";
 
 export default function EditProfilePage() {
-  const navigate = useNavigate();
   const { data: profile } = useMyProfile();
+
+  if (!profile) {
+    return (
+      <Card className="p-8 text-center text-muted-foreground">
+        불러오는 중...
+      </Card>
+    );
+  }
+
+  return <EditForm profile={profile} />;
+}
+
+// 폼 본체 — profile 이 확정된 시점에만 마운트되므로
+// useEffect 로 외부 데이터를 state 에 복사하지 않고 useState 초기값으로 한 번에 결정
+function EditForm({ profile }: { profile: User }) {
+  const navigate = useNavigate();
   const update = useUpdateProfileMutation();
   const withdraw = useWithdrawMutation();
 
-  // 백엔드 UpdateUserRequest: nickname, phone만 수정 가능 (email 변경 불가)
-  const [form, setForm] = useState({ nickname: "", phone: "" });
-
-  useEffect(() => {
-    if (profile) {
-      setForm({ nickname: profile.nickname, phone: profile.phone });
-    }
-  }, [profile]);
+  // 백엔드 UpdateUserRequest: nickname, phone 만 수정 가능 (email 변경 불가)
+  const [form, setForm] = useState({
+    nickname: profile.nickname,
+    phone: profile.phone,
+  });
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +77,7 @@ export default function EditProfilePage() {
         <Field
           id="nickname"
           label="이름"
-          icon={User}
+          icon={UserIcon}
           value={form.nickname}
           onChange={(v) => setForm({ ...form, nickname: v })}
         />
@@ -73,13 +90,15 @@ export default function EditProfilePage() {
             <Input
               id="email"
               type="email"
-              value={profile?.email ?? ""}
+              value={profile.email}
               readOnly
               disabled
               className="cursor-not-allowed bg-gray-50 pl-10 text-muted-foreground"
             />
           </div>
-          <p className="text-xs text-muted-foreground">이메일은 변경할 수 없습니다.</p>
+          <p className="text-xs text-muted-foreground">
+            이메일은 변경할 수 없습니다.
+          </p>
         </div>
 
         {/* 휴대폰 번호 — 수정 가능 */}

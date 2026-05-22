@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { adminApi } from "@/api";
+import { getAdminDashboard } from "@/api";
 import { queryKeys } from "@/lib/queryKeys";
 
 const useMock = true;
@@ -13,5 +13,5 @@ export const useAdminDashboard = () =>
           totalBookings: 1247,
           totalRevenue: 127_000_000,
         })
-      : () => adminApi.dashboard(),
+      : () => getAdminDashboard(),
   });

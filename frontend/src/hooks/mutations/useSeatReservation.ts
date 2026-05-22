@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { seatApi } from "@/api";
+import { releaseSeats, reserveSeats } from "@/api";
 import { queryKeys } from "@/lib/queryKeys";
 
 /**
@@ -10,9 +10,8 @@ export const useReserveSeatsMutation = (matchId: number) => {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (seatIds: number[]) => seatApi.reserve(matchId, seatIds),
+    mutationFn: (seatIds: number[]) => reserveSeats(matchId, seatIds),
     onSuccess: () => {
-      // 점유 후 좌석/구역 잔여 카운트 갱신
       qc.invalidateQueries({ queryKey: queryKeys.matches.sections(matchId) });
       qc.invalidateQueries({
         queryKey: ["matches", "sections", matchId, "seats"],
@@ -29,7 +28,7 @@ export const useReleaseSeatsMutation = (matchId: number) => {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (seatIds: number[]) => seatApi.release(matchId, seatIds),
+    mutationFn: (seatIds: number[]) => releaseSeats(matchId, seatIds),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.matches.sections(matchId) });
       qc.invalidateQueries({

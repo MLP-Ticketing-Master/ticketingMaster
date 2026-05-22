@@ -78,8 +78,8 @@ export function SeatGrid({
                         type="button"
                         disabled={disabled}
                         onClick={() => handleToggle(seat)}
-                        aria-label={`${seat.rowLabel}열 ${seat.seatNo}번`}
-                        title={`${seat.rowLabel}${seat.seatNo} - ${seat.gradeCode}`}
+                        aria-label={seat.seatCode}
+                        title={seat.seatCode}
                         style={{ backgroundColor: `#${seat.colorHex}` }}
                         className={cn(
                           "h-7 w-7 rounded transition-all duration-200",

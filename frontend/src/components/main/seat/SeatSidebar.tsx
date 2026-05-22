@@ -37,7 +37,7 @@ export function SeatSidebar({
                 >
                   <div className="flex items-center gap-2">
                     <span
-                      className="h-3 w-3 rounded-sm"
+                      className="h-4 w-4 rounded-sm"
                       style={{ backgroundColor: `#${g.colorHex}` }}
                     />
                     <span>{g.gradeCode}석</span>
@@ -68,8 +68,8 @@ export function SeatSidebar({
               >
                 <div>
                   <p className="font-medium">
-                    {s.gradeCode}석 {s.rowLabel}
-                    {s.seatNo}
+                    {s.sectionName ? `${s.sectionName} ` : ""}
+                    {s.seatCode}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {formatPrice(s.price)}

@@ -23,18 +23,40 @@ export interface AdminSection {
   sortOrder: number;
 }
 
-export const adminApi = {
-  dashboard: () =>
-    api.get<AdminDashboardStats>("/admin/dashboard").then((r) => r.data),
-  events: () =>
-    api.get<EventSummary[]>("/admin/events").then((r) => r.data),
-  matches: () => api.get<Match[]>("/admin/matches").then((r) => r.data),
-  seatGrades: (eventId: number) =>
-    api
-      .get<AdminSeatGrade[]>(`/admin/events/${eventId}/seat-grades`)
-      .then((r) => r.data),
-  sections: (eventId: number) =>
-    api
-      .get<AdminSection[]>(`/admin/events/${eventId}/sections`)
-      .then((r) => r.data),
-};
+/** GET /admin/dashboard */
+export async function getAdminDashboard(): Promise<AdminDashboardStats> {
+  const res = await api.get<AdminDashboardStats>("/admin/dashboard");
+  return res.data;
+}
+
+/** GET /admin/events */
+export async function getAdminEvents(): Promise<EventSummary[]> {
+  const res = await api.get<EventSummary[]>("/admin/events");
+  return res.data;
+}
+
+/** GET /admin/matches */
+export async function getAdminMatches(): Promise<Match[]> {
+  const res = await api.get<Match[]>("/admin/matches");
+  return res.data;
+}
+
+/** GET /admin/events/{eventId}/seat-grades */
+export async function getAdminSeatGrades(
+  eventId: number,
+): Promise<AdminSeatGrade[]> {
+  const res = await api.get<AdminSeatGrade[]>(
+    `/admin/events/${eventId}/seat-grades`,
+  );
+  return res.data;
+}
+
+/** GET /admin/events/{eventId}/sections */
+export async function getAdminSections(
+  eventId: number,
+): Promise<AdminSection[]> {
+  const res = await api.get<AdminSection[]>(
+    `/admin/events/${eventId}/sections`,
+  );
+  return res.data;
+}

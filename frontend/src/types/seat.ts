@@ -10,6 +10,8 @@ export interface Seat {
   colorHex: string;
   price: number;
   status: SeatStatus;
+  /** 프론트 표시용 — 좌석 선택 시점에 SectionSeatList.sectionName 붙임 */
+  sectionName?: string;
 }
 
 // GET /matches/{matchId}/sections/{sectionId}/seats 응답

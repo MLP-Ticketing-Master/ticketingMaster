@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { seatApi } from "@/api";
+import { getMatchSections, getSectionSeats } from "@/api";
 import { queryKeys } from "@/lib/queryKeys";
 
 /** GET /matches/{matchId}/sections — 구역 목록 + 등급별 잔여 */
 export const useSeatSections = (matchId: number | null) =>
   useQuery({
     queryKey: queryKeys.matches.sections(matchId ?? 0),
-    queryFn: () => seatApi.sections(matchId!),
+    queryFn: () => getMatchSections(matchId!),
     enabled: !!matchId,
   });
 
@@ -14,6 +14,6 @@ export const useSeatSections = (matchId: number | null) =>
 export const useSectionSeats = (matchId: number, sectionId?: number) =>
   useQuery({
     queryKey: queryKeys.matches.sectionSeats(matchId, sectionId ?? 0),
-    queryFn: () => seatApi.sectionSeats(matchId, sectionId!),
+    queryFn: () => getSectionSeats(matchId, sectionId!),
     enabled: !!matchId && !!sectionId,
   });

@@ -5,16 +5,13 @@ import { Card } from "@/components/ui/card";
 import { SPORT_LABEL } from "@/lib/constants";
 import { formatDateRange } from "@/lib/format";
 import { resolveEventImage } from "@/lib/eventImages";
-import { isMockEvent } from "@/hooks";
 import type { EventListResponse } from "@/types";
 
 interface Props {
   event: EventListResponse;
-  /** mock 이벤트 클릭 시 대신 이동할 실제 이벤트 ID */
-  fallbackEventId: number | null;
 }
 
-export function EventCard({ event, fallbackEventId }: Props) {
+export function EventCard({ event }: Props) {
   const navigate = useNavigate();
 
   const sportLabel =
@@ -22,18 +19,10 @@ export function EventCard({ event, fallbackEventId }: Props) {
       ? SPORT_LABEL[event.sportType as keyof typeof SPORT_LABEL]
       : event.sportType;
 
-  const handleClick = () => {
-    const targetId =
-      isMockEvent(event.eventId) && fallbackEventId != null
-        ? fallbackEventId
-        : event.eventId;
-    navigate(`/events/${targetId}`);
-  };
-
   return (
     <Card
       className="group cursor-pointer overflow-hidden border-0 p-0 shadow-sm transition-shadow hover:shadow-md"
-      onClick={handleClick}
+      onClick={() => navigate(`/events/${event.eventId}`)}
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
         {(() => {

@@ -1,3 +1,4 @@
+import { Ticket } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useMyProfile } from "@/hooks";
@@ -13,9 +14,9 @@ export default function ProfilePage() {
       <h2 className="text-2xl font-bold">내 정보 조회</h2>
 
       <div className="flex items-center gap-5">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 text-2xl font-bold text-[#3C76FE]">
-          {profile.nickname.charAt(0)}
-        </div>
+        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-sky-100">
+          <Ticket className="h-8 w-8 -rotate-45 text-[#054EFD]" />
+        </span>
         <div>
           <p className="text-lg font-bold">{profile.nickname}</p>
           {profile.joinedAt && (

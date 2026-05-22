@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { teamApi } from "@/api";
+import { getTeamList } from "@/api";
 import { queryKeys } from "@/lib/queryKeys";
 import { MOCK_TEAMS } from "@/lib/mock";
 import type { GameType } from "@/types";
@@ -14,5 +14,5 @@ export const useTeams = (game: GameType) =>
           game === "ALL"
             ? MOCK_TEAMS
             : MOCK_TEAMS.filter((t) => t.game === game)
-      : () => teamApi.list(game),
+      : () => getTeamList(game),
   });
