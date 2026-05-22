@@ -71,7 +71,7 @@ public class SeedData implements CommandLineRunner {
         // 3. Match 4개 생성
         // Case 1: 예매 시작 전 (예매 오픈: +7일, 경기: +21일)
         match1 = createMatch(event, homeTeam, awayTeam,
-                "1경기 - 예매 대기",
+                "4경기",
                 today.plusDays(21),
                 now.plusDays(21).withHour(17).withMinute(0),
                 now.plusDays(21).withHour(21).withMinute(0),
@@ -82,7 +82,7 @@ public class SeedData implements CommandLineRunner {
 
         // Case 2: 예매 진행 중 (예매 오픈: -1일, 경기: +7일)
         match2 = createMatch(event, homeTeam, awayTeam,
-                "2경기 - 예매 진행 중",
+                "3경기",
                 today.plusDays(7),
                 now.plusDays(7).withHour(17).withMinute(0),
                 now.plusDays(7).withHour(21).withMinute(0),
@@ -93,7 +93,7 @@ public class SeedData implements CommandLineRunner {
 
         // Case 3: 예매 마감, 경기 전 (예매 오픈: -14일, 예매 종료: -1일, 경기: +1일)
         match3 = createMatch(event, homeTeam, awayTeam,
-                "3경기 - 예매 마감",
+                "2경기",
                 today.plusDays(1),
                 now.plusDays(1).withHour(17).withMinute(0),
                 now.plusDays(1).withHour(21).withMinute(0),
@@ -104,7 +104,7 @@ public class SeedData implements CommandLineRunner {
 
         // Case 4: 예매 마감, 경기 종료 (예매 오픈: -21일, 경기: -7일)
         match4 = createMatch(event, homeTeam, awayTeam,
-                "4경기 - 경기 종료",
+                "1경기",
                 today.minusDays(7),
                 now.minusDays(7).withHour(17).withMinute(0),
                 now.minusDays(7).withHour(21).withMinute(0),

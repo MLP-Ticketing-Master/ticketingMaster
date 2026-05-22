@@ -1,19 +1,29 @@
-import type { GameType } from "@/types";
+import type { SportType } from "@/types";
 
-export const GAME_LABEL: Record<Exclude<GameType, "ALL">, string> = {
+/** 백엔드 SportType → 한글 레이블 */
+export const SPORT_LABEL: Record<Exclude<SportType, "ALL">, string> = {
   LOL: "리그 오브 레전드",
   VALORANT: "발로란트",
   OVERWATCH: "오버워치",
-  TFT: "TFT",
+  TFT: "전략적 팀 전투",
+  PUBG: "배틀그라운드",
+  STARCRAFT: "스타크래프트 2",
 };
 
-export const GAME_FILTER_LABEL: Record<GameType, string> = {
+/** 하위 호환 alias */
+export const GAME_LABEL = SPORT_LABEL;
+
+export const SPORT_FILTER_LABEL: Record<SportType, string> = {
   ALL: "전체",
   LOL: "LOL",
   VALORANT: "발로란트",
   OVERWATCH: "오버워치",
   TFT: "TFT",
+  PUBG: "PUBG",
+  STARCRAFT: "스타크래프트",
 };
+
+export const GAME_FILTER_LABEL = SPORT_FILTER_LABEL;
 
 export const SEAT_GRADE_COLORS: Record<string, string> = {
   VIP: "bg-violet-500",

@@ -36,3 +36,12 @@ export const formatTime = (iso: string) => {
     d.getMinutes(),
   ).padStart(2, "0")}`;
 };
+
+/**
+ * colorHex 정규화: "#" 없으면 붙임
+ * 백엔드 시드 데이터가 "FF0000" 형태로 저장되어 있을 수 있음
+ */
+export const normalizeColorHex = (hex: string | null | undefined): string => {
+  if (!hex) return "#6b7280";
+  return hex.startsWith("#") ? hex : `#${hex}`;
+};

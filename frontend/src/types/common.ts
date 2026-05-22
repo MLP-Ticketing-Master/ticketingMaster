@@ -1,4 +1,13 @@
-export type GameType = "LOL" | "VALORANT" | "OVERWATCH" | "TFT" | "ALL";
+export type SportType =
+  | "LOL"
+  | "VALORANT"
+  | "OVERWATCH"
+  | "TFT"
+  | "PUBG"
+  | "STARCRAFT"
+  | "ALL"; // 프론트 필터 전용
+
+export type GameType = SportType; // 하위 호환 유지
 
 export type EventStatus = "SCHEDULED" | "ON_SALE" | "CLOSED" | "CANCELED";
 
@@ -17,11 +26,12 @@ export interface Pageable {
   size: number;
 }
 
+/** Spring Page 응답 구조 */
 export interface PageResponse<T> {
   content: T[];
   totalElements: number;
   totalPages: number;
-  page: number;
+  number: number;   // 현재 페이지 (0-based)
   size: number;
 }
 

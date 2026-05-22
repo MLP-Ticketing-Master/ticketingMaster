@@ -5,24 +5,31 @@ import { useEventList } from "@/hooks";
 import { useEventFilterStore } from "@/store";
 
 export default function HomePage() {
-  const game = useEventFilterStore((s) => s.game);
-  const setGame = useEventFilterStore((s) => s.setGame);
-  const { data = [], isLoading } = useEventList(game);
+  const sportType = useEventFilterStore((s) => s.sportType);
+  const setSportType = useEventFilterStore((s) => s.setSportType);
+  const { data, isLoading, isError } = useEventList(sportType);
+
+  const events = data?.events ?? [];
+  const fallbackEventId = data?.fallbackEventId ?? null;
 
   return (
     <>
       <HeroSection />
       <section className="mx-auto max-w-7xl px-6 py-12">
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <h2 className="text-2xl font-bold">진행중인 대회</h2>
-          <GameFilter value={game} onChange={setGame} />
+          <GameFilter value={sportType} onChange={setSportType} />
         </div>
         {isLoading ? (
           <div className="py-20 text-center text-muted-foreground">
             불러오는 중...
           </div>
+        ) : isError ? (
+          <div className="py-20 text-center text-red-500">
+            이벤트를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+          </div>
         ) : (
-          <EventGrid events={data} />
+          <EventGrid events={events} fallbackEventId={fallbackEventId} />
         )}
       </section>
     </>
