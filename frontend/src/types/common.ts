@@ -1,4 +1,11 @@
-export type GameType = "LOL" | "VALORANT" | "OVERWATCH" | "TFT" | "ALL";
+export type GameType =
+  | "LOL"
+  | "VALORANT"
+  | "OVERWATCH"
+  | "TFT"
+  | "PUBG"
+  | "SC2"
+  | "ALL";
 
 export type EventStatus = "SCHEDULED" | "ON_SALE" | "CLOSED" | "CANCELED";
 

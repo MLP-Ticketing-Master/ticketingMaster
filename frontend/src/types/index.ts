@@ -5,3 +5,4 @@ export * from "./seat";
 export * from "./booking";
 export * from "./team";
 export * from "./queue";
+export * from "./schedule";

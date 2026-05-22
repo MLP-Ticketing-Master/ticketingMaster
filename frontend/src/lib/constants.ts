@@ -4,7 +4,9 @@ export const GAME_LABEL: Record<Exclude<GameType, "ALL">, string> = {
   LOL: "리그 오브 레전드",
   VALORANT: "발로란트",
   OVERWATCH: "오버워치",
-  TFT: "TFT",
+  TFT: "롤토체스",
+  PUBG: "배틀그라운드",
+  SC2: "스타크래프트2",
 };
 
 export const GAME_FILTER_LABEL: Record<GameType, string> = {
@@ -13,6 +15,8 @@ export const GAME_FILTER_LABEL: Record<GameType, string> = {
   VALORANT: "발로란트",
   OVERWATCH: "오버워치",
   TFT: "TFT",
+  PUBG: "배그",
+  SC2: "스타",
 };
 
 export const SEAT_GRADE_COLORS: Record<string, string> = {

@@ -11,7 +11,7 @@ export function HeroSection() {
 
 
   return (
-    <section className="relative px-6 py-20 overflow-hidden">
+    <section className="relative px-6 py-28 overflow-hidden">
       <div
       className="absolute inset-0 bg-cover bg-center"
       style={{

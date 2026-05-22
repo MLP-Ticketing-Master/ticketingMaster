@@ -18,9 +18,11 @@ export default function ProfilePage() {
         </div>
         <div>
           <p className="text-lg font-bold">{profile.nickname}</p>
-          <p className="text-sm text-muted-foreground">
-            가입일: {formatDate(profile.joinedAt)}
-          </p>
+          {profile.joinedAt && (
+            <p className="text-sm text-muted-foreground">
+              가입일: {formatDate(profile.joinedAt)}
+            </p>
+          )}
         </div>
       </div>
 
