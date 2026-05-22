@@ -64,7 +64,7 @@ public class  AuthControllerTest {
 	}
 
 	@Test
-	@DisplayName("TC-LG-01: 로그인 성공 시 200 + 토큰·사용자 정보 반환")
+	@DisplayName("로그인 성공 시 200 + 토큰·사용자 정보 반환")
 	void login_Success() throws Exception {
 		// given
 		LoginRequest request = new LoginRequest("test@test.com", "Pw123!");
