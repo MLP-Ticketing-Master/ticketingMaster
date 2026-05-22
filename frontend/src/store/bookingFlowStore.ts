@@ -20,10 +20,14 @@ interface BookingFlowState {
   allowedAt: string | null;
   entryDeadline: string | null;
 
+  // 좌석 점유 만료 시각 — reserve 응답의 reservedUntil 저장
+  reservedUntil: string | null;
+
   openFlow: (params: { eventId: number; matchId: number }) => void;
   closeFlow: () => void;
   goToSeat: (sectionId: number) => void;
   goBackToZone: () => void;
+  goBackToSeatStep: () => void;
   goToZone: () => void;
   goToQueue: () => void;
   goToPayment: () => void;
@@ -34,6 +38,9 @@ interface BookingFlowState {
   setQueueEnterResult: (res: QueueEnterResponse) => void;
   setQueueStatus: (res: QueueStatusResponse) => void;
   clearQueue: () => void;
+
+  // 좌석 점유 만료 시각 setter
+  setReservedUntil: (until: string | null) => void;
 }
 
 const initial = {
@@ -49,6 +56,7 @@ const initial = {
   estimatedWaitSeconds: null,
   allowedAt: null,
   entryDeadline: null,
+  reservedUntil: null,
 };
 
 export const useBookingFlowStore = create<BookingFlowState>()(
@@ -78,21 +86,27 @@ export const useBookingFlowStore = create<BookingFlowState>()(
       closeFlow: () => set({ ...initial }),
       goToSeat: (sectionId) => set({ step: "SEAT", sectionId }),
       goBackToZone: () => set({ step: "ZONE", sectionId: null }),
+      // 결제 단계에서 좌석 다시 선택 — 선택 좌석 비우고 SEAT 단계로 복귀
+      goBackToSeatStep: () => set({ step: "SEAT", selectedSeats: [] }),
       // 대기열 통과 → 좌석 선택 단계 진입
       goToZone: () => set({ step: "ZONE", sectionId: null }),
       goToQueue: () => set({ step: "QUEUE" }),
       goToPayment: () => set({ step: "PAYMENT" }),
       toggleSeat: (seat) => {
-        const exists = get().selectedSeats.find((s) => s.id === seat.id);
+        const exists = get().selectedSeats.find(
+          (s) => s.seatId === seat.seatId,
+        );
         set({
           selectedSeats: exists
-            ? get().selectedSeats.filter((s) => s.id !== seat.id)
+            ? get().selectedSeats.filter((s) => s.seatId !== seat.seatId)
             : [...get().selectedSeats, seat],
         });
       },
       removeSeat: (seatId) =>
         set({
-          selectedSeats: get().selectedSeats.filter((s) => s.id !== seatId),
+          selectedSeats: get().selectedSeats.filter(
+            (s) => s.seatId !== seatId,
+          ),
         }),
       reset: () => set({ ...initial }),
 
@@ -120,6 +134,8 @@ export const useBookingFlowStore = create<BookingFlowState>()(
           allowedAt: null,
           entryDeadline: null,
         }),
+
+      setReservedUntil: (until) => set({ reservedUntil: until }),
     }),
     {
       name: "booking-flow",
@@ -136,6 +152,7 @@ export const useBookingFlowStore = create<BookingFlowState>()(
         estimatedWaitSeconds: state.estimatedWaitSeconds,
         allowedAt: state.allowedAt,
         entryDeadline: state.entryDeadline,
+        reservedUntil: state.reservedUntil,
       }),
     },
   ),

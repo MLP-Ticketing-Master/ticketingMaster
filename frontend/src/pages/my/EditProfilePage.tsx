@@ -13,12 +13,15 @@ export default function EditProfilePage() {
   const [form, setForm] = useState({ nickname: "", email: "", phone: "" });
 
   useEffect(() => {
-    if (profile)
+    // profile 로딩 직후 폼 초기값 동기화 — 외부 데이터 → 폼 상태 반영
+    if (profile) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setForm({
         nickname: profile.nickname,
         email: profile.email,
         phone: profile.phone,
       });
+    }
   }, [profile]);
 
   const onSubmit = (e: React.FormEvent) => {

@@ -1,33 +1,22 @@
-import { useMemo } from "react";
 import { useBookingFlowStore } from "@/store";
-import { useEventDetail, useSeatLayout } from "@/hooks";
+import { useSeatSections, useSectionSeats } from "@/hooks";
 import { SeatGrid } from "../SeatGrid";
 
 export function SeatStep() {
-  const eventId = useBookingFlowStore((s) => s.eventId);
   const matchId = useBookingFlowStore((s) => s.matchId);
   const sectionId = useBookingFlowStore((s) => s.sectionId);
   const selectedSeats = useBookingFlowStore((s) => s.selectedSeats);
   const goBackToZone = useBookingFlowStore((s) => s.goBackToZone);
   const toggleSeat = useBookingFlowStore((s) => s.toggleSeat);
 
-  const { data: event } = useEventDetail(eventId ?? 0);
-  const { data: layout } = useSeatLayout(matchId ?? 0, sectionId ?? undefined);
+  const { data: seatList } = useSectionSeats(
+    matchId ?? 0,
+    sectionId ?? undefined,
+  );
+  const { data: sectionList } = useSeatSections(matchId);
+  const grades = sectionList?.gradeAvailability ?? [];
 
-  // event.seatGrades → SeatGrade[] 어댑터
-  const grades = useMemo(() => {
-    if (!event?.seatGrades) return [];
-    return event.seatGrades.map((sg) => ({
-      code: sg.gradeCode,
-      name: `${sg.gradeCode}석`,
-      price: sg.price,
-      color: sg.colorHex,
-      sortOrder: 0,
-      remaining: 0,
-    }));
-  }, [event?.seatGrades]);
-
-  if (!layout) {
+  if (!seatList) {
     return (
       <div className="py-20 text-center text-muted-foreground">
         좌석 정보를 불러오는 중...
@@ -37,9 +26,9 @@ export function SeatStep() {
 
   return (
     <SeatGrid
+      seats={seatList.seats}
       grades={grades}
-      layout={layout}
-      selectedIds={selectedSeats.map((s) => s.id)}
+      selectedIds={selectedSeats.map((s) => s.seatId)}
       onToggle={toggleSeat}
       onBack={goBackToZone}
     />

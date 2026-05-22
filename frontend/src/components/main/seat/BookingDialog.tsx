@@ -1,12 +1,18 @@
 import { useMemo } from "react";
+import { AxiosError } from "axios";
 import { AlertCircle, Timer, X } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useBookingFlowStore } from "@/store";
 import {
   useEventDetail,
+  useSeatSections,
   useAdmissionTimer,
+  usePaymentTimer,
   formatCountdown,
+  useReserveSeatsMutation,
+  useReleaseSeatsMutation,
 } from "@/hooks";
 import { formatShortDate, formatTime } from "@/lib/format";
 import { SeatSidebar } from "./SeatSidebar";
@@ -24,47 +30,100 @@ export function BookingDialog() {
   const closeFlow = useBookingFlowStore((s) => s.closeFlow);
   const removeSeat = useBookingFlowStore((s) => s.removeSeat);
   const goToPayment = useBookingFlowStore((s) => s.goToPayment);
+  const goBackToSeatStep = useBookingFlowStore((s) => s.goBackToSeatStep);
+  const setReservedUntil = useBookingFlowStore((s) => s.setReservedUntil);
 
   const { data: event } = useEventDetail(eventId ?? 0);
+  const { data: sectionList } = useSeatSections(matchId);
+  const grades = sectionList?.gradeAvailability ?? [];
 
-  // matches는 event.matches 배열에서 직접 조회
+  // match는 event.matches 배열에서 직접 조회
   const match = event?.matches.find((m) => m.matchId === matchId);
 
-  // 가격 정보는 event.seatGrades에서 가져옴
-  // SeatSidebar / PaymentStep이 SeatGrade[] 타입을 기대하므로 어댑터 사용
-  const grades = useMemo(() => {
-    if (!event?.seatGrades) return [];
-    return event.seatGrades.map((sg) => ({
-      code: sg.gradeCode,
-      name: `${sg.gradeCode}석`,
-      price: sg.price,
-      color: sg.colorHex,
-      sortOrder: 0,
-      remaining: 0,
-    }));
-  }, [event?.seatGrades]);
+  // 단계별 타이머: ZONE/SEAT 는 entryDeadline(10분), PAYMENT 는 reservedUntil(7분)
+  const admissionRemaining = useAdmissionTimer();
+  const paymentRemaining = usePaymentTimer();
+  const remaining =
+    step === "PAYMENT" ? paymentRemaining : admissionRemaining;
 
-  const remaining = useAdmissionTimer();
+  const reserveSeats = useReserveSeatsMutation(matchId ?? 0);
+  const releaseSeats = useReleaseSeatsMutation(matchId ?? 0);
 
-  const total = useMemo(() => {
-    if (selectedSeats.length === 0) return 0;
-    const priceMap = new Map(grades.map((g) => [g.code, g.price]));
-    return selectedSeats.reduce(
-      (sum, s) => sum + (priceMap.get(s.gradeCode) ?? 0),
-      0,
-    );
-  }, [selectedSeats, grades]);
+  // 좌석 단가 합산 (백엔드 SeatItem 에 price 포함)
+  const total = useMemo(
+    () => selectedSeats.reduce((sum, s) => sum + s.price, 0),
+    [selectedSeats],
+  );
 
+  // 만료: ZONE/SEAT 는 entryDeadline 만료, PAYMENT 는 reservedUntil 만료
   const isExpired = remaining === 0 && step !== "QUEUE";
   const showSidebar = !isExpired && (step === "ZONE" || step === "SEAT");
-  const showTimer =
-    !isExpired && remaining !== null && (step === "ZONE" || step === "SEAT");
+  // PAYMENT 단계에서도 타이머 표시 — reservedUntil 기준 7분 카운트
+  const showTimer = !isExpired && remaining !== null && step !== "QUEUE";
   const isUrgent = remaining !== null && remaining <= 60;
+
+  // 좌석 선택 완료 → 백엔드 점유 요청 → 결제 단계 진입
+  const handleSelectComplete = () => {
+    if (!matchId || selectedSeats.length === 0) return;
+    reserveSeats.mutate(
+      selectedSeats.map((s) => s.seatId),
+      {
+        onSuccess: (res) => {
+          setReservedUntil(res.reservedUntil);
+          goToPayment();
+        },
+        onError: (err) => {
+          const axiosErr = err as AxiosError<{ message?: string }>;
+          const msg =
+            axiosErr.response?.data?.message ??
+            "좌석 점유에 실패했습니다. 다시 시도해주세요.";
+          toast.error(msg);
+        },
+      },
+    );
+  };
+
+  // 결제 단계에서 점유 해제가 필요한지 — 이미 reserve 된 상태
+  const shouldReleaseOnExit = step === "PAYMENT" && selectedSeats.length > 0;
+
+  // 결제 단계에서 닫기 — 점유 좌석을 해제하고 종료
+  const handleClose = () => {
+    if (shouldReleaseOnExit) {
+      releaseSeats.mutate(
+        selectedSeats.map((s) => s.seatId),
+        {
+          onSettled: () => {
+            setReservedUntil(null);
+            closeFlow();
+          },
+        },
+      );
+    } else {
+      closeFlow();
+    }
+  };
+
+  // 결제 단계에서 좌석 다시 선택 — 점유 해제 후 SEAT 단계로 복귀
+  const handleBackToSeat = () => {
+    if (shouldReleaseOnExit) {
+      releaseSeats.mutate(
+        selectedSeats.map((s) => s.seatId),
+        {
+          onSettled: () => {
+            setReservedUntil(null);
+            goBackToSeatStep();
+          },
+        },
+      );
+    } else {
+      goBackToSeatStep();
+    }
+  };
 
   if (!event || !match) return null;
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && closeFlow()}>
+    <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent
         showCloseButton={false}
         className="!max-w-6xl gap-0 overflow-hidden p-0"
@@ -93,7 +152,7 @@ export function BookingDialog() {
 
             <button
               type="button"
-              onClick={closeFlow}
+              onClick={handleClose}
               className="text-muted-foreground hover:text-foreground"
               aria-label="닫기"
             >
@@ -102,10 +161,16 @@ export function BookingDialog() {
           </div>
         </header>
 
-        <div className={showSidebar ? "grid grid-cols-[1fr_320px] items-stretch bg-gray-50" : "bg-gray-50"}>
+        <div
+          className={
+            showSidebar
+              ? "grid grid-cols-[1fr_320px] items-stretch bg-gray-50"
+              : "bg-gray-50"
+          }
+        >
           <div className="max-h-[85vh] min-h-[60vh] overflow-y-auto">
             {isExpired ? (
-              <ExpiredView onClose={closeFlow} />
+              <ExpiredView onClose={handleClose} />
             ) : (
               <>
                 {step === "QUEUE" && <QueueStep />}
@@ -114,10 +179,11 @@ export function BookingDialog() {
                 {step === "PAYMENT" && (
                   <PaymentStep
                     selectedSeats={selectedSeats}
-                    grades={grades}
                     total={total}
                     matchId={matchId}
                     onComplete={closeFlow}
+                    onBack={handleBackToSeat}
+                    isReleasing={releaseSeats.isPending}
                   />
                 )}
               </>
@@ -130,10 +196,10 @@ export function BookingDialog() {
                 grades={grades}
                 selected={selectedSeats}
                 total={total}
-                canSubmit={selectedSeats.length > 0}
+                canSubmit={selectedSeats.length > 0 && !reserveSeats.isPending}
                 showGrades={step === "SEAT"}
                 onRemove={removeSeat}
-                onSubmit={goToPayment}
+                onSubmit={handleSelectComplete}
               />
             </div>
           )}

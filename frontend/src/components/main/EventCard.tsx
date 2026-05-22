@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { SPORT_LABEL } from "@/lib/constants";
 import { formatDateRange } from "@/lib/format";
+import { resolveEventImage } from "@/lib/eventImages";
 import { isMockEvent } from "@/hooks";
 import type { EventListResponse } from "@/types";
 
@@ -35,20 +36,23 @@ export function EventCard({ event, fallbackEventId }: Props) {
       onClick={handleClick}
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
-        {event.thumbnailUrl ? (
-          <img
-            src={event.thumbnailUrl}
-            alt={event.title}
-            loading="lazy"
-            className="h-full w-full object-cover transition-transform group-hover:scale-105"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200">
-            <span className="text-4xl font-bold text-indigo-400 opacity-50">
-              {event.sportType}
-            </span>
-          </div>
-        )}
+        {(() => {
+          const src = resolveEventImage(event.thumbnailUrl);
+          return src ? (
+            <img
+              src={src}
+              alt={event.title}
+              loading="lazy"
+              className="h-full w-full object-cover transition-transform group-hover:scale-105"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200">
+              <span className="text-4xl font-bold text-indigo-400 opacity-50">
+                {event.sportType}
+              </span>
+            </div>
+          );
+        })()}
       </div>
       <div className="space-y-3 p-5">
         <Badge

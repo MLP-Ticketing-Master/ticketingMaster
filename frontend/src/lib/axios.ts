@@ -1,5 +1,12 @@
-import axios, { AxiosError } from "axios";
-import { useAuthStore } from "@/store";
+import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
+import { useAuthStore, useBookingFlowStore } from "@/store";
+
+type RetryRequestConfig = InternalAxiosRequestConfig & { _retry?: boolean };
+
+// 백엔드 QueueAccessFilter 가 Queue-Token 검증하는 경로 — /matches/{id}/seats(/...)
+const SEAT_QUEUE_PATTERN = /\/matches\/\d+\/seats(\/|$)/;
+const needsQueueToken = (url?: string) =>
+  !!url && SEAT_QUEUE_PATTERN.test(url);
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080";
 
@@ -15,11 +22,19 @@ const api = axios.create({
 });
 
 // ====== Request Interceptor ======
-// 모든 요청에 Authorization 헤더 추가
+// 모든 요청에 Authorization 헤더 추가 + 좌석 점유/해제 요청엔 Queue-Token 헤더 첨부
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("accessToken");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  // 좌석 점유/해제 경로면 store 의 queueToken 을 Queue-Token 헤더로 첨부
+  if (needsQueueToken(config.url)) {
+    const queueToken = useBookingFlowStore.getState().queueToken;
+    if (queueToken) {
+      config.headers["Queue-Token"] = queueToken;
+    }
   }
 
   return config;
@@ -29,11 +44,11 @@ api.interceptors.request.use((config) => {
 // 토큰 만료 시 자동 갱신
 let isRefreshing = false;
 let failedQueue: Array<{
-  resolve: (value: any) => void;
-  reject: (reason?: any) => void;
+  resolve: (value: string | null) => void;
+  reject: (reason?: unknown) => void;
 }> = [];
 
-const processQueue = (error: any, token: string | null = null) => {
+const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
@@ -48,7 +63,8 @@ const processQueue = (error: any, token: string | null = null) => {
 api.interceptors.response.use(
   (res) => res,
   async (error: AxiosError) => {
-    const originalRequest = error.config as any;
+    const originalRequest = error.config as RetryRequestConfig | undefined;
+    if (!originalRequest) return Promise.reject(error);
 
     // 인증 엔드포인트(login/signup/refresh) 자체의 401은 갱신 시도 없이 그대로 전달
     // 잘못된 비밀번호 같은 도메인 에러를 자동 갱신이 덮어쓰지 못하도록 차단
@@ -67,19 +83,32 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
+      // store 에 저장된 refreshToken 없으면 갱신 자체 불가 — 즉시 실패 처리
+      const storedRefreshToken = useAuthStore.getState().refreshToken;
+      if (!storedRefreshToken) {
+        useAuthStore.getState().clear();
+        processQueue(error, null);
+        isRefreshing = false;
+        return Promise.reject(error);
+      }
+
       try {
-        // 토큰 갱신 API 호출 — 응답에 user 정보 없음(refresh 전용)
+        // 토큰 갱신 API 호출 — body 에 refreshToken 포함 (백엔드 NotBlank)
         const response = await axios.post<{
           accessToken: string;
           refreshToken: string;
-        }>(`${BASE_URL}/auth/refresh`, {}, { withCredentials: true });
+        }>(
+          `${BASE_URL}/auth/refresh`,
+          { refreshToken: storedRefreshToken },
+          { withCredentials: true },
+        );
 
-        const { accessToken } = response.data;
+        const { accessToken, refreshToken: newRefreshToken } = response.data;
 
         // 기존 user 유지하면서 토큰만 갱신
         const currentUser = useAuthStore.getState().user;
         if (currentUser) {
-          useAuthStore.getState().setAuth(currentUser, accessToken);
+          useAuthStore.getState().setTokens(accessToken, newRefreshToken);
         } else {
           useAuthStore.getState().clear();
         }

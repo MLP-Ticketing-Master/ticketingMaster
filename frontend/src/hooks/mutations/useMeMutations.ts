@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { AxiosError } from "axios";
 import {
   meApi,
   type ChangePasswordRequest,
@@ -28,11 +29,10 @@ export const useUpdateProfileMutation = () => {
       qc.invalidateQueries({ queryKey: queryKeys.me.profile });
     },
 
-    onError: (error: any) => {
+    onError: (error) => {
+      const axiosErr = error as AxiosError<{ message?: string }>;
       const message =
-        error.response?.data?.message ||
-        "프로필 업데이트 실패";
- 
+        axiosErr.response?.data?.message ?? "프로필 업데이트 실패";
       console.error("Update profile error:", message);
     },
   });
@@ -50,11 +50,10 @@ export const useChangePasswordMutation = () => {
       return meApi.changePassword(body);
     },
  
-    onError: (error: any) => {
+    onError: (error) => {
+      const axiosErr = error as AxiosError<{ message?: string }>;
       const message =
-        error.response?.data?.message ||
-        "비밀번호 변경 실패";
- 
+        axiosErr.response?.data?.message ?? "비밀번호 변경 실패";
       console.error("Change password error:", message);
     },
   });
@@ -72,11 +71,10 @@ export const useWithdrawMutation = () => {
       return meApi.withdraw();
     },
  
-    onError: (error: any) => {
+    onError: (error) => {
+      const axiosErr = error as AxiosError<{ message?: string }>;
       const message =
-        error.response?.data?.message ||
-        "회원 탈퇴 실패";
- 
+        axiosErr.response?.data?.message ?? "회원 탈퇴 실패";
       console.error("Withdraw error:", message);
     },
   });

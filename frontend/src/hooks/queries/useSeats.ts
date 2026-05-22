@@ -2,36 +2,18 @@ import { useQuery } from "@tanstack/react-query";
 import { seatApi } from "@/api";
 import { queryKeys } from "@/lib/queryKeys";
 
-/**
- * 구역 목록 + 등급별 잔여 — GET /matches/{matchId}/sections
- * 이벤트 상세 페이지에서 회차 선택 시 호출
- */
+/** GET /matches/{matchId}/sections — 구역 목록 + 등급별 잔여 */
 export const useSeatSections = (matchId: number | null) =>
   useQuery({
-    queryKey: ["seat-sections", matchId],
+    queryKey: queryKeys.matches.sections(matchId ?? 0),
     queryFn: () => seatApi.sections(matchId!),
     enabled: !!matchId,
   });
 
-/** @deprecated mock 전용 — 실 API 없음 */
-export const useSeatGrades = (eventId: number) =>
+/** GET /matches/{matchId}/sections/{sectionId}/seats — 구역 내 좌석 */
+export const useSectionSeats = (matchId: number, sectionId?: number) =>
   useQuery({
-    queryKey: ["seat-grades", eventId],
-    queryFn: () => Promise.resolve([]),
-    enabled: false,
-  });
-
-/** @deprecated mock 전용 */
-export const useSections = (eventId: number) =>
-  useQuery({
-    queryKey: ["sections", eventId],
-    queryFn: () => Promise.resolve([]),
-    enabled: false,
-  });
-
-export const useSeatLayout = (matchId: number, sectionId?: number) =>
-  useQuery({
-    queryKey: queryKeys.matches.seatLayout(matchId),
+    queryKey: queryKeys.matches.sectionSeats(matchId, sectionId ?? 0),
     queryFn: () => seatApi.sectionSeats(matchId, sectionId!),
     enabled: !!matchId && !!sectionId,
   });

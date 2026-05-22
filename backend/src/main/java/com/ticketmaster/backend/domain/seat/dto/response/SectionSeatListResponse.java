@@ -17,7 +17,9 @@ import java.util.List;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class SectionSeatListResponse {
+public class
+
+SectionSeatListResponse {
 
     private Long matchId;          // 경기 ID
     private Long sectionId;        // 구역 ID

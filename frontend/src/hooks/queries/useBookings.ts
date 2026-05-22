@@ -34,7 +34,7 @@ export const useAdminBookings = ({
           }),
           totalElements: MOCK_BOOKINGS.length,
           totalPages: 2,
-          page,
+          number: page,
           size: 10,
         })
       : () => bookingApi.adminList({ q, status, page }),

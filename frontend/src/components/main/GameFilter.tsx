@@ -10,7 +10,6 @@ const FILTERS: SportType[] = [
   "OVERWATCH",
   "TFT",
   "PUBG",
-  "SC2",
 ];
 
 interface Props {
