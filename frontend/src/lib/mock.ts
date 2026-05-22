@@ -1,7 +1,7 @@
 import type {
   BookingItem,
   EventDetail,
-  EventSummary,
+  EventListResponse,
   Match,
   ScheduledMatch,
   Seat,
@@ -28,39 +28,37 @@ export const MOCK_PRICES: TicketPrice[] = [
   { gradeCode: "A", gradeName: "A석", price: 70_000, color: "green" },
 ];
 
-export const MOCK_EVENTS: EventSummary[] = [
+// 백엔드 EventListResponse 필드명과 통일
+export const MOCK_EVENTS: EventListResponse[] = [
   {
-    id: 1,
+    eventId: 1001,
     title: "LOL 챔피언스 코리아 2026 스프링 결승",
-    game: "LOL",
-    venue: "LoL Park",
+    sportType: "LOL",
+    place: "LoL Park",
     startDate: "2026-04-24",
     endDate: "2026-04-26",
-    posterUrl:
-      "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800",
-    status: "ON_SALE",
+    thumbnailUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800",
+    status: "OPEN",
   },
   {
-    id: 2,
+    eventId: 1002,
     title: "발로란트 챔피언스 투어 코리아",
-    game: "VALORANT",
-    venue: "코엑스 컨벤션홀",
+    sportType: "VALORANT",
+    place: "코엑스 컨벤션홀",
     startDate: "2026-04-25",
     endDate: "2026-05-15",
-    posterUrl:
-      "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=800",
-    status: "ON_SALE",
+    thumbnailUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=800",
+    status: "OPEN",
   },
   {
-    id: 3,
+    eventId: 1003,
     title: "오버워치 리그 서울 다이너스티",
-    game: "OVERWATCH",
-    venue: "e스타디움",
+    sportType: "OVERWATCH",
+    place: "e스타디움",
     startDate: "2026-04-28",
     endDate: "2026-05-05",
-    posterUrl:
-      "https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=800",
-    status: "ON_SALE",
+    thumbnailUrl: "https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=800",
+    status: "OPEN",
   },
   {
     id: 4,
@@ -69,31 +67,28 @@ export const MOCK_EVENTS: EventSummary[] = [
     venue: "서울 e스포츠 경기장",
     startDate: "2026-05-01",
     endDate: "2026-05-30",
-    posterUrl:
-      "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=800",
-    status: "ON_SALE",
+    thumbnailUrl: "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=800",
+    status: "OPEN",
   },
   {
-    id: 5,
+    eventId: 1005,
     title: "배틀그라운드 프로리그 시즌3",
-    game: "PUBG",
-    venue: "부산 벡스코",
+    sportType: "PUBG",
+    place: "부산 벡스코",
     startDate: "2026-05-05",
     endDate: "2026-05-12",
-    posterUrl:
-      "https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=800",
-    status: "SCHEDULED",
+    thumbnailUrl: "https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=800",
+    status: "UPCOMING",
   },
   {
-    id: 6,
+    eventId: 1006,
     title: "스타크래프트2 GSL 코드S",
-    game: "SC2",
-    venue: "프릭업 스튜디오",
+    sportType: "STARCRAFT",
+    place: "프릭업 스튜디오",
     startDate: "2026-05-10",
     endDate: "2026-05-20",
-    posterUrl:
-      "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800",
-    status: "SCHEDULED",
+    thumbnailUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800",
+    status: "UPCOMING",
   },
 ];
 
@@ -144,44 +139,16 @@ export const MOCK_EVENT_DETAIL: EventDetail = {
 
 export const MOCK_SECTIONS: Section[] = [
   { id: 1, name: "A", description: "메인 스크린 좌측 영역", sortOrder: 1 },
-  { id: 2, name: "B", description: "메인 스크린 중앙 영역 (최고 시야)", sortOrder: 2},
-  { id: 3, name: "C", description: "메인 스크린 중앙 영역 (최고 시야)", sortOrder: 3},
+  { id: 2, name: "B", description: "메인 스크린 중앙 영역 (최고 시야)", sortOrder: 2 },
+  { id: 3, name: "C", description: "메인 스크린 중앙 영역 (최고 시야)", sortOrder: 3 },
   { id: 4, name: "D", description: "메인 스크린 우측 영역", sortOrder: 4 },
 ];
 
 export const MOCK_SEAT_GRADES: SeatGrade[] = [
-  {
-    code: "VIP",
-    name: "VIP석",
-    price: 150_000,
-    color: "violet",
-    sortOrder: 1,
-    remaining: 56,
-  },
-  {
-    code: "R",
-    name: "R석",
-    price: 120_000,
-    color: "red",
-    sortOrder: 2,
-    remaining: 49,
-  },
-  {
-    code: "S",
-    name: "S석",
-    price: 90_000,
-    color: "blue",
-    sortOrder: 3,
-    remaining: 47,
-  },
-  {
-    code: "A",
-    name: "A석",
-    price: 70_000,
-    color: "green",
-    sortOrder: 4,
-    remaining: 55,
-  },
+  { code: "VIP", name: "VIP석", price: 150_000, color: "violet", sortOrder: 1, remaining: 56 },
+  { code: "R",   name: "R석",   price: 120_000, color: "red",    sortOrder: 2, remaining: 49 },
+  { code: "S",   name: "S석",   price:  90_000, color: "blue",   sortOrder: 3, remaining: 47 },
+  { code: "A",   name: "A석",   price:  70_000, color: "green",  sortOrder: 4, remaining: 55 },
 ];
 
 const buildRow = (
@@ -205,14 +172,14 @@ export const MOCK_SEAT_LAYOUT = {
   seats: [
     ...buildRow("A", 10, "VIP", 100),
     ...buildRow("B", 10, "VIP", 200),
-    ...buildRow("C", 10, "R", 300),
-    ...buildRow("D", 10, "R", 400),
-    ...buildRow("E", 10, "S", 500),
-    ...buildRow("F", 10, "S", 600),
-    ...buildRow("G", 10, "A", 700),
-    ...buildRow("H", 10, "A", 800),
-    ...buildRow("I", 10, "A", 900),
-    ...buildRow("J", 10, "A", 1000),
+    ...buildRow("C", 10, "R",   300),
+    ...buildRow("D", 10, "R",   400),
+    ...buildRow("E", 10, "S",   500),
+    ...buildRow("F", 10, "S",   600),
+    ...buildRow("G", 10, "A",   700),
+    ...buildRow("H", 10, "A",   800),
+    ...buildRow("I", 10, "A",   900),
+    ...buildRow("J", 10, "A",  1000),
   ],
 };
 
@@ -284,8 +251,7 @@ export const MOCK_TEAMS: Team[] = [
     id: 1,
     name: "T1",
     game: "LOL",
-    logoUrl:
-      "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200",
+    logoUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200",
     totalMatches: 15,
     registeredAt: "2025-12-01",
   },
@@ -293,8 +259,7 @@ export const MOCK_TEAMS: Team[] = [
     id: 2,
     name: "Gen.G",
     game: "LOL",
-    logoUrl:
-      "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=200",
+    logoUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=200",
     totalMatches: 12,
     registeredAt: "2025-12-01",
   },
@@ -302,8 +267,7 @@ export const MOCK_TEAMS: Team[] = [
     id: 3,
     name: "DRX",
     game: "VALORANT",
-    logoUrl:
-      "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=200",
+    logoUrl: "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=200",
     totalMatches: 8,
     registeredAt: "2025-12-15",
   },
@@ -311,8 +275,7 @@ export const MOCK_TEAMS: Team[] = [
     id: 4,
     name: "DAMWON",
     game: "VALORANT",
-    logoUrl:
-      "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=200",
+    logoUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=200",
     totalMatches: 6,
     registeredAt: "2025-12-15",
   },
@@ -320,8 +283,7 @@ export const MOCK_TEAMS: Team[] = [
     id: 5,
     name: "서울 다이너스티",
     game: "OVERWATCH",
-    logoUrl:
-      "https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=200",
+    logoUrl: "https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=200",
     totalMatches: 10,
     registeredAt: "2025-11-20",
   },

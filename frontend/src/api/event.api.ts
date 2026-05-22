@@ -1,17 +1,25 @@
 import api from "@/lib/axios";
-import type { EventDetail, EventSummary, GameType } from "@/types";
+import type { EventDetailResponse, EventListResponse, SportType } from "@/types";
+import type { PageResponse } from "@/types/common";
 
 export const eventApi = {
-  list: (game?: GameType) =>
+  /**
+   * GET /events
+   * 쿼리 파라미터: sportType?, status?, page, size, sort
+   */
+  list: (params?: {
+    sportType?: Exclude<SportType, "ALL">;
+    status?: string;
+    page?: number;
+    size?: number;
+  }) =>
     api
-      .get<EventSummary[]>("/events", {
-        params: game && game !== "ALL" ? { game } : {},
-      })
+      .get<PageResponse<EventListResponse>>("/events", { params })
       .then((r) => r.data),
-  detail: (id: number) =>
-    api.get<EventDetail>(`/events/${id}`).then((r) => r.data),
-  search: (keyword: string) =>
-    api
-      .get<EventSummary[]>("/events/search", { params: { q: keyword } })
-      .then((r) => r.data),
+
+  /**
+   * GET /events/{eventId}
+   */
+  detail: (eventId: number) =>
+    api.get<EventDetailResponse>(`/events/${eventId}`).then((r) => r.data),
 };

@@ -1,5 +1,6 @@
+import { useMemo } from "react";
 import { useBookingFlowStore } from "@/store";
-import { useSeatGrades, useSeatLayout } from "@/hooks";
+import { useEventDetail, useSeatLayout } from "@/hooks";
 import { SeatGrid } from "../SeatGrid";
 
 export function SeatStep() {
@@ -10,8 +11,21 @@ export function SeatStep() {
   const goBackToZone = useBookingFlowStore((s) => s.goBackToZone);
   const toggleSeat = useBookingFlowStore((s) => s.toggleSeat);
 
+  const { data: event } = useEventDetail(eventId ?? 0);
   const { data: layout } = useSeatLayout(matchId ?? 0, sectionId ?? undefined);
-  const { data: grades = [] } = useSeatGrades(eventId ?? 0);
+
+  // event.seatGrades → SeatGrade[] 어댑터
+  const grades = useMemo(() => {
+    if (!event?.seatGrades) return [];
+    return event.seatGrades.map((sg) => ({
+      code: sg.gradeCode,
+      name: `${sg.gradeCode}석`,
+      price: sg.price,
+      color: sg.colorHex,
+      sortOrder: 0,
+      remaining: 0,
+    }));
+  }, [event?.seatGrades]);
 
   if (!layout) {
     return (

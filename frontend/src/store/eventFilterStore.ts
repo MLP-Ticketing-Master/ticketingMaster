@@ -1,18 +1,23 @@
 import { create } from "zustand";
-import type { GameType } from "@/types";
+import type { SportType } from "@/types";
 
 interface EventFilterState {
-  game: GameType;
+  sportType: SportType;
   keyword: string;
-  setGame: (game: GameType) => void;
+  setSportType: (sportType: SportType) => void;
   setKeyword: (keyword: string) => void;
   reset: () => void;
+  // 하위 호환
+  game: SportType;
+  setGame: (game: SportType) => void;
 }
 
 export const useEventFilterStore = create<EventFilterState>((set) => ({
-  game: "ALL",
+  sportType: "ALL",
   keyword: "",
-  setGame: (game) => set({ game }),
+  game: "ALL", // alias
+  setSportType: (sportType) => set({ sportType, game: sportType }),
+  setGame: (game) => set({ game, sportType: game }),
   setKeyword: (keyword) => set({ keyword }),
-  reset: () => set({ game: "ALL", keyword: "" }),
+  reset: () => set({ sportType: "ALL", game: "ALL", keyword: "" }),
 }));

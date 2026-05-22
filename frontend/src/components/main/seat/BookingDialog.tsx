@@ -5,8 +5,6 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useBookingFlowStore } from "@/store";
 import {
   useEventDetail,
-  useMatches,
-  useSeatGrades,
   useAdmissionTimer,
   formatCountdown,
 } from "@/hooks";
@@ -28,10 +26,23 @@ export function BookingDialog() {
   const goToPayment = useBookingFlowStore((s) => s.goToPayment);
 
   const { data: event } = useEventDetail(eventId ?? 0);
-  const { data: matches = [] } = useMatches(eventId ?? undefined);
-  const { data: grades = [] } = useSeatGrades(eventId ?? 0);
 
-  const match = matches.find((m) => m.id === matchId);
+  // matches는 event.matches 배열에서 직접 조회
+  const match = event?.matches.find((m) => m.matchId === matchId);
+
+  // 가격 정보는 event.seatGrades에서 가져옴
+  // SeatSidebar / PaymentStep이 SeatGrade[] 타입을 기대하므로 어댑터 사용
+  const grades = useMemo(() => {
+    if (!event?.seatGrades) return [];
+    return event.seatGrades.map((sg) => ({
+      code: sg.gradeCode,
+      name: `${sg.gradeCode}석`,
+      price: sg.price,
+      color: sg.colorHex,
+      sortOrder: 0,
+      remaining: 0,
+    }));
+  }, [event?.seatGrades]);
 
   const remaining = useAdmissionTimer();
 
@@ -44,14 +55,8 @@ export function BookingDialog() {
     );
   }, [selectedSeats, grades]);
 
-  // 좌석 선택 데드라인 만료 (entryDeadline이 있어야 의미 있음 → QUEUE 단계는 제외)
   const isExpired = remaining === 0 && step !== "QUEUE";
-
-  // 사이드바는 구역/좌석 선택 단계 둘 다 표시 (레이아웃 폭 유지)
-  // 총 결제금액 / 결제 버튼은 좌석이 1개 이상 선택됐을 때만 노출 — SeatSidebar 내부에서 처리
   const showSidebar = !isExpired && (step === "ZONE" || step === "SEAT");
-
-  // 타이머는 대기열 이후 단계에서 표시 (만료 시엔 컨텐츠 자체가 만료 화면이라 헤더 뱃지도 숨김)
   const showTimer =
     !isExpired && remaining !== null && (step === "ZONE" || step === "SEAT");
   const isUrgent = remaining !== null && remaining <= 60;
@@ -73,7 +78,6 @@ export function BookingDialog() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* 카운트다운 타이머 뱃지 */}
             {showTimer && (
               <div
                 className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-bold tabular-nums transition-colors ${

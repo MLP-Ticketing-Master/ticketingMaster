@@ -1,9 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { GAME_FILTER_LABEL } from "@/lib/constants";
+import { SPORT_FILTER_LABEL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import type { GameType } from "@/types";
+import type { SportType } from "@/types";
 
-const FILTERS: GameType[] = [
+const FILTERS: SportType[] = [
   "ALL",
   "LOL",
   "VALORANT",
@@ -14,8 +14,8 @@ const FILTERS: GameType[] = [
 ];
 
 interface Props {
-  value: GameType;
-  onChange: (game: GameType) => void;
+  value: SportType;
+  onChange: (sport: SportType) => void;
 }
 
 export function GameFilter({ value, onChange }: Props) {
@@ -23,16 +23,16 @@ export function GameFilter({ value, onChange }: Props) {
     <div className="flex gap-2 overflow-x-auto pb-1">
       {FILTERS.map((g) => (
         <Button
-          key={g}
-          variant={value === g ? "default" : "outline"}
+          key={s}
+          variant={value === s ? "default" : "outline"}
           size="sm"
-          onClick={() => onChange(g)}
+          onClick={() => onChange(s)}
           className={cn(
             "shrink-0 rounded-full",
             value === g && "bg-[#316DFD] hover:bg-[#1C5EFD]",
           )}
         >
-          {GAME_FILTER_LABEL[g]}
+          {SPORT_FILTER_LABEL[s]}
         </Button>
       ))}
     </div>
