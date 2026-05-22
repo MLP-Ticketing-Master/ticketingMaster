@@ -1,6 +1,5 @@
 import type {
   BookingItem,
-  EventListResponse,
   ScheduledMatch,
   Team,
   TicketPrice,
@@ -21,65 +20,6 @@ export const MOCK_PRICES: TicketPrice[] = [
   { gradeCode: "R", gradeName: "R석", price: 120_000, color: "red" },
   { gradeCode: "S", gradeName: "S석", price: 90_000, color: "blue" },
   { gradeCode: "A", gradeName: "A석", price: 70_000, color: "green" },
-];
-
-// 백엔드 EventListResponse 필드명과 통일
-export const MOCK_EVENTS: EventListResponse[] = [
-  {
-    eventId: 1001,
-    title: "LOL 챔피언스 코리아 2026 스프링 결승",
-    sportType: "LOL",
-    place: "LoL Park",
-    startDate: "2026-04-24",
-    endDate: "2026-04-26",
-    thumbnailUrl:
-      "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800",
-    status: "OPEN",
-  },
-  {
-    eventId: 1002,
-    title: "발로란트 챔피언스 투어 코리아",
-    sportType: "VALORANT",
-    place: "코엑스 컨벤션홀",
-    startDate: "2026-04-25",
-    endDate: "2026-05-15",
-    thumbnailUrl:
-      "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=800",
-    status: "OPEN",
-  },
-  {
-    eventId: 1003,
-    title: "오버워치 리그 서울 다이너스티",
-    sportType: "OVERWATCH",
-    place: "e스타디움",
-    startDate: "2026-04-28",
-    endDate: "2026-05-05",
-    thumbnailUrl:
-      "https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=800",
-    status: "OPEN",
-  },
-  {
-    eventId: 1004,
-    title: "롤토체스 챔피언스 코리아",
-    sportType: "TFT",
-    place: "서울 e스포츠 경기장",
-    startDate: "2026-05-01",
-    endDate: "2026-05-30",
-    thumbnailUrl:
-      "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=800",
-    status: "OPEN",
-  },
-  {
-    eventId: 1005,
-    title: "배틀그라운드 프로리그 시즌3",
-    sportType: "PUBG",
-    place: "부산 벡스코",
-    startDate: "2026-05-05",
-    endDate: "2026-05-12",
-    thumbnailUrl:
-      "https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=800",
-    status: "UPCOMING",
-  },
 ];
 
 export const MOCK_BOOKINGS: BookingItem[] = [

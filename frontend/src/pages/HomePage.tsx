@@ -7,10 +7,7 @@ import { useEventFilterStore } from "@/store";
 export default function HomePage() {
   const sportType = useEventFilterStore((s) => s.sportType);
   const setSportType = useEventFilterStore((s) => s.setSportType);
-  const { data, isLoading, isError } = useEventList(sportType);
-
-  const events = data?.events ?? [];
-  const fallbackEventId = data?.fallbackEventId ?? null;
+  const { data: events = [], isLoading, isError } = useEventList(sportType);
 
   return (
     <>
@@ -29,7 +26,7 @@ export default function HomePage() {
             이벤트를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
           </div>
         ) : (
-          <EventGrid events={events} fallbackEventId={fallbackEventId} />
+          <EventGrid events={events} />
         )}
       </section>
     </>

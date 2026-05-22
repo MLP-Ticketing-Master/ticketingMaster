@@ -93,7 +93,7 @@ export function ZoneSelector({ sections, onSelect }: Props) {
 
               flex flex-col items-center justify-center
               w-50 h-25
-              bg-purple-600 hover:bg-purple-700
+              bg-emerald-500 hover:bg-emerald-600
               text-white text-center
               rounded-2xl shadow-xl
               hover:scale-110 active:scale-95
@@ -127,39 +127,23 @@ export function ZoneSelector({ sections, onSelect }: Props) {
           )}
         </div>
       </div>
-      {/* 범례 */}
+      {/* 범례 — 백엔드 구역명 그대로 표시 (displayOrder 순) */}
       <div className="flex flex-wrap justify-center gap-8 mt-6 p-6 bg-gradient-to-r from-blue-50 to-red-50 rounded-xl w-full max-w-5xl border border-gray-200">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-blue-500 shadow-md"></div>
-          <div>
-            <div className="text-sm font-bold text-gray-900">A</div>
-            <div className="text-xs text-gray-600">좌측</div>
+        {ordered.map((section, idx) => (
+          <div key={section.sectionId} className="flex items-center gap-3">
+            <div className={`w-12 h-12 rounded-xl shadow-md ${LEGEND_COLORS[idx] ?? "bg-gray-400"}`} />
+            <div>
+              <div className="text-sm font-bold text-gray-900">{section.name}</div>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-purple-600 shadow-md"></div>
-          <div>
-            <div className="text-sm font-bold text-gray-900">B</div>
-            <div className="text-xs text-gray-600">중앙</div>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-purple-600 shadow-md"></div>
-          <div>
-            <div className="text-sm font-bold text-gray-900">C</div>
-            <div className="text-xs text-gray-600">중앙</div>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-red-500 shadow-md"></div>
-          <div>
-            <div className="text-sm font-bold text-gray-900">D</div>
-            <div className="text-xs text-gray-600">우측</div>
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   );
 }
  
 const sectionLabel = (name: string) => name.replace(/\s?구역$/, "");
+
+// 범례 색상 — displayOrder 순서대로 매칭 (스타디움 버튼 색과 일치)
+// 0: 좌측(blue), 1: 좌측 스테이지(lime), 2: 우측 스테이지(purple), 3: 우측(red)
+const LEGEND_COLORS = ["bg-blue-500", "bg-emerald-500", "bg-purple-600", "bg-red-500"];

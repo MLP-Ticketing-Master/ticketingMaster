@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { bookingApi } from "@/api";
+import { getAdminBookings, getMyBookings } from "@/api";
 import { queryKeys } from "@/lib/queryKeys";
 import { MOCK_BOOKINGS } from "@/lib/mock";
 
@@ -13,7 +13,7 @@ export const useMyBookings = (params?: {
 }) =>
   useQuery({
     queryKey: [...queryKeys.bookings.me, params?.status, params?.page],
-    queryFn: () => bookingApi.myList(params),
+    queryFn: () => getMyBookings(params),
     staleTime: 1000 * 30,
   });
 
@@ -39,5 +39,5 @@ export const useAdminBookings = ({ q, status, page = 0 }: AdminBookingsParams) =
           number: page,
           size: 10,
         })
-      : () => bookingApi.adminList({ q, status, page }),
+      : () => getAdminBookings({ q, status, page }),
   });

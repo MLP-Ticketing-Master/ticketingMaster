@@ -1,7 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import {
-  meApi,
+  changePassword,
+  updateProfile,
+  withdraw,
   type ChangePasswordRequest,
   type UpdateProfileRequest,
 } from "@/api";
@@ -15,12 +17,11 @@ import { useAuthStore } from "@/store";
 export const useUpdateProfileMutation = () => {
   const qc = useQueryClient();
   const setAuth = useAuthStore((s) => s.setAuth);
-  const currentUser = useAuthStore((s) => s.user);
   const accessToken = useAuthStore((s) => s.accessToken);
   const refreshToken = useAuthStore((s) => s.refreshToken);
 
   return useMutation({
-    mutationFn: (body: UpdateProfileRequest) => meApi.updateProfile(body),
+    mutationFn: (body: UpdateProfileRequest) => updateProfile(body),
 
     onSuccess: (updatedUser) => {
       // 프로필 캐시 무효화
@@ -46,7 +47,7 @@ export const useUpdateProfileMutation = () => {
  */
 export const useChangePasswordMutation = () => {
   return useMutation({
-    mutationFn: (body: ChangePasswordRequest) => meApi.changePassword(body),
+    mutationFn: (body: ChangePasswordRequest) => changePassword(body),
 
     onError: (error) => {
       const axiosErr = error as AxiosError<{ message?: string }>;
@@ -65,7 +66,7 @@ export const useWithdrawMutation = () => {
   const clear = useAuthStore((s) => s.clear);
 
   return useMutation({
-    mutationFn: () => meApi.withdraw(),
+    mutationFn: () => withdraw(),
 
     onSuccess: () => {
       // 탈퇴 완료 후 인증 정보 초기화

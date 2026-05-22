@@ -24,6 +24,8 @@ import SeatsAdminPage from "@/pages/admin/SeatsAdminPage";
 import BookingsAdminPage from "@/pages/admin/BookingsAdminPage";
 import StatsAdminPage from "@/pages/admin/StatsAdminPage";
 import PasswordResetPage from "@/pages/PasswordResetPage";
+import PaymentSuccessPage from "@/pages/PaymentSuccessPage";
+import PaymentFailPage from "@/pages/PaymentFailPage";
 
 export default function App() {
   return (
@@ -42,6 +44,10 @@ export default function App() {
 
         {/* 이메일 링크로 접근하는 비밀번호 재설정 페이지 (/password-reset?token=...) */}
         <Route path="password-reset" element={<PasswordResetPage />} />
+
+        {/* 토스 결제 redirect 콜백 */}
+        <Route path="payment/success" element={<PaymentSuccessPage />} />
+        <Route path="payment/fail" element={<PaymentFailPage />} />
 
         <Route path="my" element={<MyPageLayout />}>
           <Route index element={<ProfilePage />} />

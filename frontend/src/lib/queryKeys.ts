@@ -14,6 +14,7 @@ export const queryKeys = {
   },
   bookings: {
     me: ["bookings", "me"] as const,
+    detail: (id: number) => ["bookings", "detail", id] as const,
     admin: (q?: string, status?: string, page?: number) =>
       ["bookings", "admin", q ?? "", status ?? "ALL", page ?? 0] as const,
   },

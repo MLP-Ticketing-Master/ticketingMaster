@@ -1,17 +1,33 @@
 import api from "@/lib/axios";
 import type { GameType, Team } from "@/types";
 
-export const teamApi = {
-  list: (game?: GameType) =>
-    api
-      .get<Team[]>("/teams", {
-        params: game && game !== "ALL" ? { game } : {},
-      })
-      .then((r) => r.data),
-  create: (body: Omit<Team, "id" | "registeredAt" | "totalMatches">) =>
-    api.post<Team>("/admin/teams", body).then((r) => r.data),
-  update: (id: number, body: Partial<Team>) =>
-    api.put<Team>(`/admin/teams/${id}`, body).then((r) => r.data),
-  remove: (id: number) =>
-    api.delete(`/admin/teams/${id}`).then((r) => r.data),
-};
+/** GET /teams */
+export async function getTeamList(game?: GameType): Promise<Team[]> {
+  const res = await api.get<Team[]>("/teams", {
+    params: game && game !== "ALL" ? { game } : {},
+  });
+  return res.data;
+}
+
+/** POST /admin/teams */
+export async function createTeam(
+  body: Omit<Team, "id" | "registeredAt" | "totalMatches">,
+): Promise<Team> {
+  const res = await api.post<Team>("/admin/teams", body);
+  return res.data;
+}
+
+/** PUT /admin/teams/{id} */
+export async function updateTeam(
+  id: number,
+  body: Partial<Team>,
+): Promise<Team> {
+  const res = await api.put<Team>(`/admin/teams/${id}`, body);
+  return res.data;
+}
+
+/** DELETE /admin/teams/{id} */
+export async function deleteTeam(id: number): Promise<unknown> {
+  const res = await api.delete(`/admin/teams/${id}`);
+  return res.data;
+}

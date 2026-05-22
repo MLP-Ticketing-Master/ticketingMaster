@@ -61,10 +61,3 @@ export async function changePassword(
 export async function withdraw(): Promise<void> {
   await api.delete("/users/me");
 }
-
-export const meApi = {
-  profile: getProfile,
-  updateProfile,
-  changePassword,
-  withdraw,
-};

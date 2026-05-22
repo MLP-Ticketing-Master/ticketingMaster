@@ -114,7 +114,7 @@ export function BookingWidget({ event, onProceed }: Props) {
                 >
                   <div className="flex items-center gap-2">
                     <span
-                      className="h-2.5 w-2.5 rounded-full"
+                      className="h-4 w-4 rounded-sm"
                       style={{ backgroundColor: normalizeColorHex(grade.colorHex) }}
                     />
                     <span className="text-sm font-semibold">{grade.gradeCode}석</span>

@@ -127,6 +127,11 @@ export function BookingDialog() {
       <DialogContent
         showCloseButton={false}
         className="!max-w-6xl gap-0 overflow-hidden p-0"
+        // 토스 위젯이 body 포털로 떠도 다이얼로그가 자동 닫히지 않도록 차단
+        // 닫기는 명시적 X 버튼 / "좌석 다시 선택" 으로만
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
       >
         <header className="flex items-center justify-between border-b bg-white px-6 py-4">
           <div>
@@ -181,7 +186,6 @@ export function BookingDialog() {
                     selectedSeats={selectedSeats}
                     total={total}
                     matchId={matchId}
-                    onComplete={closeFlow}
                     onBack={handleBackToSeat}
                     isReleasing={releaseSeats.isPending}
                   />
