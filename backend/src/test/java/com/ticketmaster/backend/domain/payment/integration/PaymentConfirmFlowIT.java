@@ -46,6 +46,7 @@ import org.testcontainers.utility.DockerImageName;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -203,7 +204,7 @@ public class PaymentConfirmFlowIT {
         ReflectionTestUtils.setField(res, "status", "DONE");
         ReflectionTestUtils.setField(res, "method", "카드");
         ReflectionTestUtils.setField(res, "totalAmount", amount);
-        ReflectionTestUtils.setField(res, "approvedAt", LocalDateTime.now());
+        ReflectionTestUtils.setField(res, "approvedAt", OffsetDateTime.now());
         return res;
     }
 

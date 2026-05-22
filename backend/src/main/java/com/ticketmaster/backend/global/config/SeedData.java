@@ -1,6 +1,5 @@
 package com.ticketmaster.backend.global.config;
 
-import com.ticketmaster.backend.domain.booking.repository.BookingRepository;
 import com.ticketmaster.backend.domain.event.entity.Event;
 import com.ticketmaster.backend.domain.event.entity.EventStatus;
 import com.ticketmaster.backend.domain.event.entity.SportType;
@@ -8,8 +7,6 @@ import com.ticketmaster.backend.domain.event.repository.EventRepository;
 import com.ticketmaster.backend.domain.match.entity.Match;
 import com.ticketmaster.backend.domain.match.entity.MatchStatus;
 import com.ticketmaster.backend.domain.match.repository.MatchRepository;
-import com.ticketmaster.backend.domain.payment.repository.PaymentRepository;
-import com.ticketmaster.backend.domain.queue.repository.QueueRepository;
 import com.ticketmaster.backend.domain.seat.entity.Seat;
 import com.ticketmaster.backend.domain.seat.entity.SeatGrade;
 import com.ticketmaster.backend.domain.seat.entity.Section;
@@ -41,9 +38,8 @@ public class SeedData implements CommandLineRunner {
     private final SeatGradeRepository seatGradeRepository;
     private final SectionRepository sectionRepository;
     private final SeatRepository seatRepository;
-    private final BookingRepository bookingRepository;
-    private final QueueRepository queueRepository;
-    private final PaymentRepository paymentRepository;
+    // reset 은 별도 빈에 위임 — REQUIRES_NEW 트랜잭션으로 즉시 commit (스케줄러 데드락 회피)
+    private final DataResetService dataResetService;
 
     /** 모든 이벤트 공통 예매 안내 — 실제 BookingService 환불 정책과 일치 */
     private static final String BOOKING_NOTICE = """
@@ -56,8 +52,8 @@ public class SeedData implements CommandLineRunner {
     @Transactional
     @Override
     public void run(String... args) throws Exception {
-        // 실행전 테이블 초기화 코드
-        resetData();
+        // 실행 전 테이블 초기화 — 별도 트랜잭션(REQUIRES_NEW)으로 즉시 commit
+        dataResetService.reset();
 
         // 날짜 기준점
         LocalDate today = LocalDate.now();
@@ -314,27 +310,6 @@ public class SeedData implements CommandLineRunner {
      */
     private String createSeatCode(String seatGrade, String rowLabel, Integer seatNo) {
         return seatGrade + "-" + rowLabel + "-" + seatNo;
-    }
-
-    /**
-     * 전체 테이블 데이터 초기화 메소드
-     */
-    private void resetData() {
-        /**
-         * 삭제 순서 (FK 자식 → 부모)
-         * payment -> booking(+booking_seat cascade) -> queue -> seat -> section & seat_grade -> match -> team & event
-         * Booking 만 deleteAll() 로 호출해서 cascade=ALL + orphanRemoval 로 booking_seats 자동 정리
-         * 나머지는 자식이 먼저 정리됐으므로 deleteAllInBatch() 로 일괄 삭제
-         */
-        paymentRepository.deleteAllInBatch();
-        bookingRepository.deleteAll();
-        queueRepository.deleteAllInBatch();
-        seatRepository.deleteAllInBatch();
-        sectionRepository.deleteAllInBatch();
-        seatGradeRepository.deleteAllInBatch();
-        matchRepository.deleteAllInBatch();
-        teamRepository.deleteAllInBatch();
-        eventRepository.deleteAllInBatch();
     }
 
     /**

@@ -9,6 +9,12 @@ spring:
   application:
     name: backend
 
+  # 통합 테스트는 Testcontainers 의 깨끗한 컨테이너 사용
+  # ddl-auto 가 entity 매핑 기준으로 스키마를 만들므로 Flyway 마이그레이션은 비활성화
+  # (V3 ALTER seats 가 테이블 생성 전 실행되면 ORA-00942 로 컨텍스트 로드 실패)
+  flyway:
+    enabled: false
+
   datasource:
     url: jdbc:oracle:thin:@localhost:1522/FREEPDB1
     username: ${ORACLE_USER}
@@ -80,6 +86,7 @@ queue:
 # PENDING 예매 자동 만료 스케줄러 주기 (운영과 동일)
 booking:
   expiry-scan-interval-ms: 60000
+  expiry-scan-initial-delay-ms: 60000
 
 # 토스페이먼츠 — 통합 테스트에서 TossPaymentsClient 빈 생성 시 placeholder 충족용 더미
 # 실제 호출은 @MockitoBean 으로 대체되므로 운영 키 아님

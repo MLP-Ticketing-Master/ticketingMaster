@@ -29,8 +29,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -51,6 +54,18 @@ public class BookingService {
 
     @Transactional
     public BookingResponse createBooking(Long userId, BookingCreateRequest request) {
+        // 0. 멱등성 — 같은 user + match + seats 조합의 PENDING booking 이 있으면 기존 것 재사용
+        //    프론트 결제하기 중복 클릭 시 uk_booking_seat_match_seat 중복 위반 방지
+        Set<Long> requestedSeatIds = new HashSet<>(request.getSeatIds());
+        for (Booking existing : bookingRepository.findPendingForIdempotency(userId, request.getMatchId())) {
+            Set<Long> existingSeatIds = existing.getBookingSeats().stream()
+                    .map(bs -> bs.getSeat().getId())
+                    .collect(Collectors.toSet());
+            if (existingSeatIds.equals(requestedSeatIds)) {
+                return BookingResponse.from(existing);
+            }
+        }
+
         // 1. 회차 조회
         Match match = matchRepository.findById(request.getMatchId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.MATCH_NOT_FOUND));

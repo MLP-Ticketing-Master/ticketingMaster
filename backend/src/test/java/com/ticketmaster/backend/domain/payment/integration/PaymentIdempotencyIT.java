@@ -43,6 +43,7 @@ import org.testcontainers.utility.DockerImageName;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -234,7 +235,7 @@ public class PaymentIdempotencyIT {
         ReflectionTestUtils.setField(res, "status", "DONE");
         ReflectionTestUtils.setField(res, "method", "카드");
         ReflectionTestUtils.setField(res, "totalAmount", amount);
-        ReflectionTestUtils.setField(res, "approvedAt", LocalDateTime.now());
+        ReflectionTestUtils.setField(res, "approvedAt", OffsetDateTime.now());
         return res;
     }
 
