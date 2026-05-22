@@ -42,8 +42,8 @@ public class AdminSeatService {
         // 2) seatCode 자동 조합 — {gradeCode}-{rowLabel}-{seatNo}  ex) "VIP-A-1"
         String seatCode = buildSeatCode(grade, req.getRowLabel(), req.getSeatNo());
 
-        // 3) 회차 내 seatCode 중복 차단
-        if (seatRepository.existsByMatchIdAndSeatCode(matchId, seatCode)) {
+        // 3) 회차 + 구역 안에서 seatCode 중복 차단 — 다른 구역에 동일 코드 좌석은 허용
+        if (seatRepository.existsByMatchIdAndSectionIdAndSeatCode(matchId, req.getSectionId(), seatCode)) {
             throw new BusinessException(ErrorCode.DUPLICATE_SEAT_CODE);
         }
 
@@ -81,22 +81,26 @@ public class AdminSeatService {
             throw new BusinessException(ErrorCode.SEAT_GRADE_NOT_FOUND);
         }
 
-        // 2) seatCode 자동 조합 + 페이로드 내부 중복 검증 (같은 요청 안에 같은 코드 둘 이상)
-        //    ex) 관리자가 실수로 sectionId 1, gradeId 1, A, 1 을 두 번 넣었다면 → "VIP-A-1" 중복
+        // 2) seatCode 자동 조합 + 페이로드 내 중복 검증 — (sectionId, code) 튜플 키로 검사
+        //    같은 코드라도 구역이 다르면 허용. 같은 구역에 같은 코드 두 번 들어오면 중복
+        //    ex) 같은 sectionId 에 sectionId/gradeId/rowLabel/seatNo 가 동일한 요청이 두 번 들어가면 → 중복
         Map<AdminSeatCreateRequest, String> codeMap = new LinkedHashMap<>();
-        Set<String> codes = new HashSet<>();
+        Set<SectionCodeKey> payloadKeys = new HashSet<>();
         for (AdminSeatCreateRequest s : req.getSeats()) {
             SeatGrade grade = gradeMap.get(s.getSeatGradeId());
             String code = buildSeatCode(grade, s.getRowLabel(), s.getSeatNo());
-            if (!codes.add(code)) { // 코드 중복 검사
+            if (!payloadKeys.add(new SectionCodeKey(s.getSectionId(), code))) {
                 throw new BusinessException(ErrorCode.DUPLICATE_SEAT_CODE);
             }
             codeMap.put(s, code);
         }
 
-        // 3) DB 와의 중복 — IN 절 한 번 쿼리로 모든 코드 검사 (N+1 방지)
-        List<String> existing = seatRepository.findExistingSeatCodes(matchId, codes);
-        if (!existing.isEmpty()) {
+        // 3) DB 와의 중복 — 코드 IN 절로 한 번 가져와 (sectionId, code) 페어 충돌 확인 (N+1 방지)
+        Set<String> codes = new HashSet<>(codeMap.values());
+        Set<SectionCodeKey> dbKeys = seatRepository.findExistingSectionCodePairs(matchId, codes).stream()
+                .map(arr -> new SectionCodeKey((Long) arr[0], (String) arr[1]))
+                .collect(Collectors.toSet());
+        if (payloadKeys.stream().anyMatch(dbKeys::contains)) {
             throw new BusinessException(ErrorCode.DUPLICATE_SEAT_CODE);
         }
 
@@ -181,4 +185,7 @@ public class AdminSeatService {
         return seatGradeRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SEAT_GRADE_NOT_FOUND));
     }
+
+    /** 매치 내 구역+좌석 코드 충돌 검사용 튜플 키 */
+    private record SectionCodeKey(Long sectionId, String code) {}
 }

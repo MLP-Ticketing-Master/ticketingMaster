@@ -25,7 +25,7 @@ import java.time.LocalDateTime;
 @Table(
         name = "seats",
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_seat_match_code", columnNames = {"match_id", "seat_code"})
+                @UniqueConstraint(name = "uk_seat_match_section_code", columnNames = {"match_id", "section_id", "seat_code"})
         },
         indexes = {
                 @Index(name = "idx_seat_match_status", columnList = "match_id,status"),

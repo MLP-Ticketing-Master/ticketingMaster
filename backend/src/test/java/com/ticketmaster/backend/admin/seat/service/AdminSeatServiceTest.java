@@ -95,7 +95,7 @@ class AdminSeatServiceTest {
         // given
         given(sectionRepository.findById(SECTION_ID)).willReturn(Optional.of(section));
         given(seatGradeRepository.findById(GRADE_ID)).willReturn(Optional.of(grade));
-        given(seatRepository.existsByMatchIdAndSeatCode(MATCH_ID, "VIP-A-2")).willReturn(false);
+        given(seatRepository.existsByMatchIdAndSectionIdAndSeatCode(MATCH_ID, SECTION_ID, "VIP-A-2")).willReturn(false);
         given(seatRepository.save(any(Seat.class)))
                 .willAnswer(inv -> {
                     Seat s = inv.getArgument(0);
@@ -124,7 +124,7 @@ class AdminSeatServiceTest {
         // given
         given(sectionRepository.findById(SECTION_ID)).willReturn(Optional.of(section));
         given(seatGradeRepository.findById(GRADE_ID)).willReturn(Optional.of(grade));
-        given(seatRepository.existsByMatchIdAndSeatCode(MATCH_ID, "VIP-A-1")).willReturn(true);
+        given(seatRepository.existsByMatchIdAndSectionIdAndSeatCode(MATCH_ID, SECTION_ID, "VIP-A-1")).willReturn(true);
 
         // when & then
         assertThatThrownBy(() -> service.create(MATCH_ID, createReq(SECTION_ID, GRADE_ID, "A", 1)))
@@ -179,7 +179,7 @@ class AdminSeatServiceTest {
         // given
         given(sectionRepository.findAllById(Set.of(SECTION_ID))).willReturn(List.of(section));
         given(seatGradeRepository.findAllById(Set.of(GRADE_ID))).willReturn(List.of(grade));
-        given(seatRepository.findExistingSeatCodes(eq(MATCH_ID), anyCollection()))
+        given(seatRepository.findExistingSectionCodePairs(eq(MATCH_ID), anyCollection()))
                 .willReturn(List.of());
         AdminSeatBulkCreateRequest req = bulkReq(List.of(
                 createReq(SECTION_ID, GRADE_ID, "A", 1),
@@ -281,8 +281,8 @@ class AdminSeatServiceTest {
         // given — DB 에 이미 "VIP-A-1" 존재
         given(sectionRepository.findAllById(any())).willReturn(List.of(section));
         given(seatGradeRepository.findAllById(any())).willReturn(List.of(grade));
-        given(seatRepository.findExistingSeatCodes(eq(MATCH_ID), anyCollection()))
-                .willReturn(List.of("VIP-A-1"));
+        given(seatRepository.findExistingSectionCodePairs(eq(MATCH_ID), anyCollection()))
+                .willReturn(List.<Object[]>of(new Object[]{SECTION_ID, "VIP-A-1"}));
         AdminSeatBulkCreateRequest req = bulkReq(List.of(
                 createReq(SECTION_ID, GRADE_ID, "A", 1)
         ));
@@ -291,6 +291,53 @@ class AdminSeatServiceTest {
         assertThatThrownBy(() -> service.bulkCreate(MATCH_ID, req))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DUPLICATE_SEAT_CODE);
+    }
+
+    @Test
+    @DisplayName("좌석_일괄등록_다른구역_같은코드_허용_(VIP-A-1)을_두_구역에_각각_등록")
+    void 좌석_일괄등록_다른구역_같은코드_허용() {
+        // given — 같은 코드 "VIP-A-1" 이지만 sectionId 가 다름 → 페이로드 내 충돌 없음
+        Long otherSectionId = 11L;
+        Section otherSection = Section.create(event, "중앙", 2, "");
+        ReflectionTestUtils.setField(otherSection, "id", otherSectionId);
+        given(sectionRepository.findAllById(any())).willReturn(List.of(section, otherSection));
+        given(seatGradeRepository.findAllById(any())).willReturn(List.of(grade));
+        given(seatRepository.findExistingSectionCodePairs(eq(MATCH_ID), anyCollection()))
+                .willReturn(List.of());
+        AdminSeatBulkCreateRequest req = bulkReq(List.of(
+                createReq(SECTION_ID, GRADE_ID, "A", 1),
+                createReq(otherSectionId, GRADE_ID, "A", 1)
+        ));
+
+        // when
+        service.bulkCreate(MATCH_ID, req);
+
+        // then — 두 좌석 모두 saveAll
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<Seat>> captor = ArgumentCaptor.forClass(List.class);
+        verify(seatRepository).saveAll(captor.capture());
+        assertThat(captor.getValue()).hasSize(2);
+        assertThat(captor.getValue()).extracting(Seat::getSeatCode)
+                .containsExactly("VIP-A-1", "VIP-A-1");
+    }
+
+    @Test
+    @DisplayName("좌석_일괄등록_DB에_다른구역_같은코드_있어도_통과")
+    void 좌석_일괄등록_DB다른구역_같은코드_허용() {
+        // given — DB 에는 11L 구역에 "VIP-A-1" 이 있고, 페이로드는 SECTION_ID(10L) + "VIP-A-1" → 충돌 X
+        given(sectionRepository.findAllById(any())).willReturn(List.of(section));
+        given(seatGradeRepository.findAllById(any())).willReturn(List.of(grade));
+        given(seatRepository.findExistingSectionCodePairs(eq(MATCH_ID), anyCollection()))
+                .willReturn(List.<Object[]>of(new Object[]{11L, "VIP-A-1"}));
+        AdminSeatBulkCreateRequest req = bulkReq(List.of(
+                createReq(SECTION_ID, GRADE_ID, "A", 1)
+        ));
+
+        // when
+        service.bulkCreate(MATCH_ID, req);
+
+        // then
+        verify(seatRepository).saveAll(any());
     }
 
     // ─── 좌석 전체 조회 ─────────────────────────────────────
