@@ -2,6 +2,9 @@ package com.ticketmaster.backend.domain.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ticketmaster.backend.domain.auth.dto.request.AuthSignupRequest;
+import com.ticketmaster.backend.domain.auth.dto.request.LoginRequest;
+import com.ticketmaster.backend.domain.auth.dto.response.LoginResponse;
+import com.ticketmaster.backend.domain.user.entity.Role;
 import com.ticketmaster.backend.global.config.SecurityConfig;
 import com.ticketmaster.backend.global.security.auth.CustomUserDetailsService;
 import com.ticketmaster.backend.global.security.jwt.JwtTokenProvider;
@@ -13,7 +16,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -55,6 +61,39 @@ public class  AuthControllerTest {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	@DisplayName("로그인 성공 시 200 + 토큰·사용자 정보 반환")
+	void login_Success() throws Exception {
+		// given
+		LoginRequest request = new LoginRequest("test@test.com", "Pw123!");
+		LoginResponse mockResponse = LoginResponse.builder()
+			.accessToken("at_token")
+			.refreshToken("rt_token")
+			.userId(1L)
+			.email("test@test.com")
+			.nickname("nick")
+			.phone("010-1234-5678")
+			.role(Role.USER)
+			.build();
+		given(authService.login(any(LoginRequest.class))).willReturn(mockResponse);
+
+		// when
+		ResultActions result = mockMvc.perform(post("/auth/login")
+			.with(csrf())
+			.contentType(MediaType.APPLICATION_JSON)
+			.content(objectMapper.writeValueAsString(request)));
+
+		// then
+		result.andExpect(status().isOk())
+			.andExpect(jsonPath("$.accessToken").value("at_token"))
+			.andExpect(jsonPath("$.refreshToken").value("rt_token"))
+			.andExpect(jsonPath("$.userId").value(1))
+			.andExpect(jsonPath("$.email").value("test@test.com"))
+			.andExpect(jsonPath("$.nickname").value("nick"))
+			.andExpect(jsonPath("$.phone").value("010-1234-5678"))
+			.andExpect(jsonPath("$.role").value("USER"));
 	}
 
 }

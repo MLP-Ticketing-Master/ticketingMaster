@@ -1,6 +1,7 @@
 package com.ticketmaster.backend.domain.auth;
 
 import com.ticketmaster.backend.domain.auth.dto.request.PasswordConfirmRequest;
+import com.ticketmaster.backend.domain.auth.dto.response.LoginResponse;
 import com.ticketmaster.backend.domain.auth.dto.response.TokenResponse;
 import com.ticketmaster.backend.domain.auth.dto.request.LoginRequest;
 import com.ticketmaster.backend.domain.auth.dto.request.AuthSignupRequest;
@@ -29,7 +30,7 @@ public class AuthService {
 	private final StringRedisTemplate redisTemplate;
 	private final MailService mailService;
 
-	public TokenResponse login(LoginRequest request) {
+	public LoginResponse login(LoginRequest request) {
 		// 1. 이메일로 사용자 조회
 		User user = userRepository.findByEmail(request.getEmail())
 			.orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
@@ -52,7 +53,8 @@ public class AuthService {
 			TimeUnit.DAYS
 		);
 
-		return new TokenResponse(accessToken, refreshToken, user.getRole().name());
+		// 5. 토큰 + 사용자 정보 묶어 응답 (프론트 표시·라우팅용)
+		return LoginResponse.of(user, accessToken, refreshToken);
 	}
 
 	@Transactional

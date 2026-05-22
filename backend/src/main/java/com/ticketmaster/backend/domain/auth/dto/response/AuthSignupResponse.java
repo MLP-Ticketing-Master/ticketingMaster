@@ -12,6 +12,7 @@ public class AuthSignupResponse {
 	private Long userId;
 	private String email;
 	private String nickname;
+	private String phone;
 	private Role role;
 
 	public static AuthSignupResponse from(User user) {
@@ -19,6 +20,7 @@ public class AuthSignupResponse {
 			.userId(user.getId())
 			.email(user.getEmail())
 			.nickname(user.getNickname())
+			.phone(user.getPhone())
 			.role(user.getRole())
 			.build();
 	}
