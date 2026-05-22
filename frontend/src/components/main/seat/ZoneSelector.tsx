@@ -1,14 +1,16 @@
 import { Button } from "@/components/ui/button";
 import stadia from "@/image/stadium-bg.png"; // 경기장 배경 이미지 경로 수정
-import type { Section } from "@/types";
- 
+import type { SectionItem } from "@/types";
+
 interface Props {
-  sections: Section[];
+  sections: SectionItem[];
   onSelect: (sectionId: number) => void;
 }
  
 export function ZoneSelector({ sections, onSelect }: Props) {
-  const ordered = [...sections].sort((a, b) => a.sortOrder - b.sortOrder);
+  const ordered = [...sections].sort(
+    (a, b) => a.displayOrder - b.displayOrder,
+  );
  
   // 4개 구역으로 분할
   const [homeSection, stageSection, stageSection2,awaySection] = ordered.length >= 4
@@ -38,7 +40,7 @@ export function ZoneSelector({ sections, onSelect }: Props) {
           {/* 좌측 구역 (홈) */}
           {homeSection && (
             <Button
-              onClick={() => onSelect(homeSection.id)}
+              onClick={() => onSelect(homeSection.sectionId)}
               className="absolute
               left-[40px]
               top-[40%]
@@ -60,7 +62,7 @@ export function ZoneSelector({ sections, onSelect }: Props) {
           {/* 중앙 구역 (스테이지) */}
           {stageSection && (
             <Button
-              onClick={() => onSelect(stageSection.id)}
+              onClick={() => onSelect(stageSection.sectionId)}
               className=" absolute
               left-[609px]
               top-[87%]
@@ -82,7 +84,7 @@ export function ZoneSelector({ sections, onSelect }: Props) {
           {/* 중앙 구역 (스테이지) */}
           {stageSection2 && (
             <Button
-              onClick={() => onSelect(stageSection2.id)}
+              onClick={() => onSelect(stageSection2.sectionId)}
               className=" absolute
               left-[170px]
               top-[87%]
@@ -105,7 +107,7 @@ export function ZoneSelector({ sections, onSelect }: Props) {
           {/* 우측 구역 (원정) */}
           {awaySection && (
             <Button
-              onClick={() => onSelect(awaySection.id)}
+              onClick={() => onSelect(awaySection.sectionId)}
               className="absolute
               right-[35px]
               top-[40%]

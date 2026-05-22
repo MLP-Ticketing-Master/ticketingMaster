@@ -1,12 +1,11 @@
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { SEAT_GRADE_COLORS } from "@/lib/constants";
 import { formatPrice } from "@/lib/format";
-import type { Seat, SeatGrade } from "@/types";
+import type { GradeAvailability, Seat } from "@/types";
 
 interface Props {
-  grades: SeatGrade[];
+  grades: GradeAvailability[];
   selected: Seat[];
   total: number;
   canSubmit: boolean;
@@ -24,8 +23,6 @@ export function SeatSidebar({
   onRemove,
   onSubmit,
 }: Props) {
-  const priceMap = new Map(grades.map((g) => [g.code, g.price]));
-
   return (
     <aside className="flex h-full w-80 flex-col bg-white px-6 pt-16 pb-6">
       {showGrades && grades.length > 0 && (
@@ -34,14 +31,20 @@ export function SeatSidebar({
             <h3 className="font-bold">등급별 잔여 좌석</h3>
             <ul className="space-y-2 text-sm">
               {grades.map((g) => (
-                <li key={g.code} className="flex items-center justify-between">
+                <li
+                  key={g.gradeCode}
+                  className="flex items-center justify-between"
+                >
                   <div className="flex items-center gap-2">
                     <span
-                      className={`h-3 w-3 rounded-sm ${SEAT_GRADE_COLORS[g.code] ?? "bg-gray-400"}`}
+                      className="h-3 w-3 rounded-sm"
+                      style={{ backgroundColor: `#${g.colorHex}` }}
                     />
-                    <span>{g.name}</span>
+                    <span>{g.gradeCode}석</span>
                   </div>
-                  <span className="text-muted-foreground">{g.remaining}석</span>
+                  <span className="text-muted-foreground">
+                    {g.availableCount}석
+                  </span>
                 </li>
               ))}
             </ul>
@@ -58,33 +61,30 @@ export function SeatSidebar({
           </p>
         ) : (
           <ul className="space-y-2">
-            {selected.map((s) => {
-              const price = priceMap.get(s.gradeCode) ?? 0;
-              return (
-                <li
-                  key={s.id}
-                  className="flex items-center justify-between rounded-lg bg-orange-50 px-3 py-2 text-sm"
+            {selected.map((s) => (
+              <li
+                key={s.seatId}
+                className="flex items-center justify-between rounded-lg bg-orange-50 px-3 py-2 text-sm"
+              >
+                <div>
+                  <p className="font-medium">
+                    {s.gradeCode}석 {s.rowLabel}
+                    {s.seatNo}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatPrice(s.price)}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onRemove(s.seatId)}
+                  className="text-red-500 hover:text-red-700"
+                  aria-label="좌석 제거"
                 >
-                  <div>
-                    <p className="font-medium">
-                      {gradeLabel(s.gradeCode)} {s.row}
-                      {s.number}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatPrice(price)}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => onRemove(s.id)}
-                    className="text-red-500 hover:text-red-700"
-                    aria-label="좌석 제거"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </li>
-              );
-            })}
+                  <X className="h-4 w-4" />
+                </button>
+              </li>
+            ))}
           </ul>
         )}
       </div>
@@ -109,5 +109,3 @@ export function SeatSidebar({
     </aside>
   );
 }
-
-const gradeLabel = (code: string) => `${code}석`;

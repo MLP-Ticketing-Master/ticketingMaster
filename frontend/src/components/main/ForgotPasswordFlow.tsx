@@ -16,11 +16,13 @@ async function mockSendCode(email: string) {
   await new Promise((r) => setTimeout(r, 800));
   console.log("[mock] 인증코드 발송 →", email);
 }
-async function mockVerifyCode(_code: string) {
+async function mockVerifyCode(_code: string): Promise<boolean> {
+  void _code;
   await new Promise((r) => setTimeout(r, 600));
   return true; // 항상 성공 (mock)
 }
-async function mockResetPassword(_password: string) {
+async function mockResetPassword(_password: string): Promise<void> {
+  void _password;
   await new Promise((r) => setTimeout(r, 800));
 }
 
@@ -200,7 +202,12 @@ export function ForgotPasswordFlow({ onBack }: Props) {
           </Button>
           <button
             type="button"
-            onClick={() => { setCode(""); handleSendCode(new Event("click") as any); }}
+            onClick={() => {
+              setCode("");
+              handleSendCode(
+                new Event("click") as unknown as React.FormEvent,
+              );
+            }}
             className="w-full text-center text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
           >
             인증코드 재발송

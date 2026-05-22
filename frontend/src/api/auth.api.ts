@@ -63,8 +63,12 @@ export async function getMe(): Promise<User> {
   return res.data;
 }
 
-/** refresh */
-export async function getRefresh(): Promise<TokenRefreshResponse> {
-  const res = await api.post<TokenRefreshResponse>("/auth/refresh");
+/** refresh — body 에 refreshToken 필수 */
+export async function getRefresh(
+  refreshToken: string,
+): Promise<TokenRefreshResponse> {
+  const res = await api.post<TokenRefreshResponse>("/auth/refresh", {
+    refreshToken,
+  });
   return res.data;
 }

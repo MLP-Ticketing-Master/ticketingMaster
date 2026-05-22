@@ -45,14 +45,15 @@ export default function LoginPage() {
       { email, password },
       {
         onSuccess: () => {
-          toast.success("로그인되었습니다.");
+          toast.success("로그인 되었습니다.");
           setEmail("");
           setPassword("");
           navigate("/");
         },
-        onError: (error: AxiosError<{ message?: string }>) => {
+        onError: (error) => {
+          const axiosErr = error as AxiosError<{ message?: string }>;
           const errorMsg =
-            error.response?.data?.message ?? "로그인에 실패했습니다.";
+            axiosErr.response?.data?.message ?? "로그인에 실패했습니다.";
           toast.error(errorMsg);
           // 비밀번호 필드 초기화 (보안)
           setPassword("");

@@ -179,9 +179,10 @@ export default function SignupPage() {
           toast.success("회원가입이 완료되었습니다.");
           navigate("/");
         },
-        onError: (error: AxiosError<{ message?: string }>) => {
+        onError: (error) => {
+          const axiosErr = error as AxiosError<{ message?: string }>;
           const errorMsg =
-            error.response?.data?.message ?? "회원가입에 실패했습니다.";
+            axiosErr.response?.data?.message ?? "회원가입에 실패했습니다.";
           toast.error(errorMsg);
           setFormData((prev) => ({
             ...prev,

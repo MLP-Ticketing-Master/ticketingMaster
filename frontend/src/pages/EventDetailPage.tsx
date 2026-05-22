@@ -5,6 +5,7 @@ import { EventInfo } from "@/components/main/EventInfo";
 import { useEventDetail } from "@/hooks";
 import { useAuthStore, useBookingFlowStore } from "@/store";
 import { SPORT_LABEL } from "@/lib/constants";
+import { resolveEventImage } from "@/lib/eventImages";
 import { Badge } from "@/components/ui/badge";
 
 export default function EventDetailPage() {
@@ -53,19 +54,22 @@ export default function EventDetailPage() {
         {/* 좌측: 포스터 + 상세 정보 */}
         <div className="space-y-6">
           <div className="aspect-[16/9] overflow-hidden rounded-2xl bg-gray-100">
-            {event.detailImageUrl ? (
-              <img
-                src={event.detailImageUrl}
-                alt={event.title}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200">
-                <span className="text-6xl font-bold text-indigo-400 opacity-30">
-                  {event.sportType}
-                </span>
-              </div>
-            )}
+            {(() => {
+              const src = resolveEventImage(event.detailImageUrl);
+              return src ? (
+                <img
+                  src={src}
+                  alt={event.title}
+                  className="h-full w-full object-cover object-top"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200">
+                  <span className="text-6xl font-bold text-indigo-400 opacity-30">
+                    {event.sportType}
+                  </span>
+                </div>
+              );
+            })()}
           </div>
           <EventInfo event={event} />
         </div>

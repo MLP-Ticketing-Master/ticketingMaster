@@ -6,7 +6,7 @@ import type { EventDetailResponse } from "@/types";
 export function EventInfo({ event }: { event: EventDetailResponse }) {
   return (
     <div className="space-y-6">
-      {/* 경기 정보 — 위로 */}
+      {/* 경기 정보 */}
       <Card className="p-6">
         <h3 className="text-xl font-bold">경기 정보</h3>
         <div className="mt-4 space-y-3 text-sm">
@@ -17,7 +17,11 @@ export function EventInfo({ event }: { event: EventDetailResponse }) {
             value={formatDateRange(event.startDate, event.endDate)}
           />
           {event.matchDurationText && (
-            <InfoRow icon={Clock} label="경기시간" value={event.matchDurationText} />
+            <InfoRow
+              icon={Clock}
+              label="경기시간"
+              value={event.matchDurationText}
+            />
           )}
           {event.ageRating && (
             <InfoRow icon={Users} label="관람등급" value={event.ageRating} />
@@ -25,7 +29,7 @@ export function EventInfo({ event }: { event: EventDetailResponse }) {
         </div>
       </Card>
 
-      {/* 대회 소개 — 아래로 */}
+      {/* 대회 소개 */}
       {event.description && (
         <Card className="p-6">
           <h3 className="text-xl font-bold">대회 소개</h3>

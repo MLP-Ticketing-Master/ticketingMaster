@@ -1,32 +1,33 @@
-import type { SeatGradeCode, SeatStatus } from "./common";
+import type { SeatStatus } from "./common";
 
-export interface SeatGrade {
-  code: SeatGradeCode;
-  name: string;
-  price: number;
-  color: string;
-  sortOrder: number;
-  remaining: number;
-}
-
-export interface Section {
-  id: number;
-  name: string;
-  description: string;
-  sortOrder: number;
-}
-
+// 백엔드 SeatItem 매핑
 export interface Seat {
-  id: number;
-  row: string;
-  number: number;
-  sectionId: number;
-  gradeCode: SeatGradeCode;
+  seatId: number;
+  seatCode: string;
+  rowLabel: string;
+  seatNo: number;
+  gradeCode: string;
+  colorHex: string;
+  price: number;
   status: SeatStatus;
 }
 
-export interface SeatLayout {
-  rows: string[];
-  cols: number;
+// GET /matches/{matchId}/sections/{sectionId}/seats 응답
+export interface SectionSeatList {
+  matchId: number;
+  sectionId: number;
+  sectionName: string;
   seats: Seat[];
+}
+
+// POST /matches/{matchId}/seats/reserve 응답
+export interface SeatReserveResult {
+  reservedSeatIds: number[];
+  reservedUntil: string;
+  totalPrice: number;
+}
+
+// DELETE /matches/{matchId}/seats/reserve 응답
+export interface SeatReleaseResult {
+  releasedSeatIds: number[];
 }

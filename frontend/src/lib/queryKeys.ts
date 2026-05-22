@@ -7,7 +7,10 @@ export const queryKeys = {
   matches: {
     all: ["matches"] as const,
     list: (eventId?: number) => ["matches", "list", eventId ?? "ALL"] as const,
-    seatLayout: (matchId: number) => ["matches", "seats", matchId] as const,
+    sections: (matchId: number) =>
+      ["matches", "sections", matchId] as const,
+    sectionSeats: (matchId: number, sectionId: number) =>
+      ["matches", "sections", matchId, "seats", sectionId] as const,
   },
   bookings: {
     me: ["bookings", "me"] as const,

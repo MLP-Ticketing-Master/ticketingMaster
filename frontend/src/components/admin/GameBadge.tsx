@@ -7,13 +7,15 @@ const COLORS: Record<string, string> = {
   OVERWATCH: "bg-amber-100 text-amber-700",
   TFT: "bg-purple-100 text-purple-600",
   PUBG: "bg-yellow-100 text-yellow-700",
-  STARCRAFT: "bg-sky-100 text-sky-700",
 };
 
 export function GameBadge({ game }: { game: GameType }) {
   if (game === "ALL") return null;
   return (
-    <Badge variant="secondary" className={COLORS[game] ?? "bg-gray-100 text-gray-600"}>
+    <Badge
+      variant="secondary"
+      className={COLORS[game] ?? "bg-gray-100 text-gray-600"}
+    >
       {game}
     </Badge>
   );

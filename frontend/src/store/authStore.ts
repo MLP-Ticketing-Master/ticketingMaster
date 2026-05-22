@@ -5,19 +5,22 @@ import type { User } from "@/types";
 interface AuthState {
   user: User | null;
   accessToken: string | null;
+  refreshToken: string | null;
   isLoading: boolean;
   error: string | null;
 
   // Actions
-  setAuth: (user: User, accessToken: string) => void;
+  setAuth: (user: User, accessToken: string, refreshToken?: string) => void;
+  setTokens: (accessToken: string, refreshToken?: string) => void;
   clear: () => void;
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
-  
+
   // Selectors
   isAuthenticated: () => boolean;
   isAdmin: () => boolean;
   getToken: () => string | null;
+  getRefreshToken: () => string | null;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -25,63 +28,55 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       user: null,
       accessToken: null,
+      refreshToken: null,
       isLoading: false,
       error: null,
- 
+
       /**
-       * 인증 정보 설정
-       * - user와 accessToken을 저장
-       * - localStorage에 자동 저장 (persist 미들웨어)
+       * 인증 정보 설정 — 로그인/회원가입 직후 호출
+       * refreshToken 옵셔널 (호출자가 응답에 포함된 경우만 전달)
        */
-      setAuth: (user, accessToken) => {
+      setAuth: (user, accessToken, refreshToken) => {
         localStorage.setItem("accessToken", accessToken);
-        set({ user, accessToken, error: null });
+        set((prev) => ({
+          user,
+          accessToken,
+          refreshToken: refreshToken ?? prev.refreshToken,
+          error: null,
+        }));
       },
- 
+
       /**
-       * 인증 정보 삭제
-       * - 로그아웃 또는 토큰 갱신 실패 시 호출
+       * 토큰만 갱신 (refresh 응답 처리용) — user 정보는 유지
+       */
+      setTokens: (accessToken, refreshToken) => {
+        localStorage.setItem("accessToken", accessToken);
+        set((prev) => ({
+          accessToken,
+          refreshToken: refreshToken ?? prev.refreshToken,
+        }));
+      },
+
+      /**
+       * 인증 정보 삭제 — 로그아웃 / 갱신 실패 시 호출
        */
       clear: () => {
         localStorage.removeItem("accessToken");
-        set({ user: null, accessToken: null, error: null });
+        set({
+          user: null,
+          accessToken: null,
+          refreshToken: null,
+          error: null,
+        });
       },
- 
-      /**
-       * 로딩 상태 설정
-       */
-      setLoading: (isLoading) => {
-        set({ isLoading });
-      },
- 
-      /**
-       * 에러 메시지 설정
-       */
-      setError: (error) => {
-        set({ error });
-      },
- 
-      /**
-       * 인증 여부 확인
-       */
-      isAuthenticated: () => {
-        const token = get().accessToken;
-        return !!token;
-      },
- 
-      /**
-       * 관리자 여부 확인
-       */
-      isAdmin: () => {
-        return get().user?.role === "ADMIN";
-      },
- 
-      /**
-       * 현재 토큰 반환
-       */
-      getToken: () => {
-        return get().accessToken;
-      },
+
+      setLoading: (isLoading) => set({ isLoading }),
+      setError: (error) => set({ error }),
+
+      isAuthenticated: () => !!get().accessToken,
+      isAdmin: () => get().user?.role === "ADMIN",
+      getToken: () => get().accessToken,
+      getRefreshToken: () => get().refreshToken,
     }),
     {
       name: "auth-storage",
@@ -89,27 +84,18 @@ export const useAuthStore = create<AuthState>()(
       partialize: (state) => ({
         user: state.user,
         accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
       }),
-    }
-  )
+    },
+  ),
 );
- 
+
 /**
  * 인증 상태를 선택적으로 구독하는 훅
  * - 불필요한 리렌더링 방지
  */
-export const useAuthUser = () => {
-  return useAuthStore((state) => state.user);
-};
- 
-export const useAuthToken = () => {
-  return useAuthStore((state) => state.accessToken);
-};
- 
-export const useIsAuthenticated = () => {
-  return useAuthStore((state) => state.isAuthenticated());
-};
- 
-export const useIsAdmin = () => {
-  return useAuthStore((state) => state.isAdmin());
-};
+export const useAuthUser = () => useAuthStore((state) => state.user);
+export const useAuthToken = () => useAuthStore((state) => state.accessToken);
+export const useIsAuthenticated = () =>
+  useAuthStore((state) => state.isAuthenticated());
+export const useIsAdmin = () => useAuthStore((state) => state.isAdmin());

@@ -1,35 +1,53 @@
 import api from "@/lib/axios";
-import type { SeatSectionListResponse } from "@/types/event";
-import type { SeatLayout, Section, SeatGrade } from "@/types";
+import type {
+  SeatSectionListResponse,
+  SectionSeatList,
+  SeatReleaseResult,
+  SeatReserveResult,
+} from "@/types";
 
+/**
+ * 좌석 선택 1단계 — 구역 목록 + 등급별 잔여
+ * GET /matches/{matchId}/sections
+ */
+export const fetchMatchSections = (matchId: number) =>
+  api
+    .get<SeatSectionListResponse>(`/matches/${matchId}/sections`)
+    .then((r) => r.data);
+
+/**
+ * 좌석 선택 2단계 — 구역 내 좌석 목록
+ * GET /matches/{matchId}/sections/{sectionId}/seats
+ */
+export const fetchSectionSeats = (matchId: number, sectionId: number) =>
+  api
+    .get<SectionSeatList>(`/matches/${matchId}/sections/${sectionId}/seats`)
+    .then((r) => r.data);
+
+/**
+ * 좌석 일괄 점유 (USER 인증 필요)
+ * POST /matches/{matchId}/seats/reserve
+ */
+export const reserveSeats = (matchId: number, seatIds: number[]) =>
+  api
+    .post<SeatReserveResult>(`/matches/${matchId}/seats/reserve`, { seatIds })
+    .then((r) => r.data);
+
+/**
+ * 본인 점유 좌석 해제 (USER 인증 필요)
+ * DELETE /matches/{matchId}/seats/reserve
+ */
+export const releaseSeats = (matchId: number, seatIds: number[]) =>
+  api
+    .delete<SeatReleaseResult>(`/matches/${matchId}/seats/reserve`, {
+      data: { seatIds },
+    })
+    .then((r) => r.data);
+
+// 호출 형태 호환용 모음
 export const seatApi = {
-  /**
-   * GET /matches/{matchId}/sections
-   * 구역 목록 + 등급별 잔여 (이벤트 상세 페이지에서 회차 선택 후 호출)
-   */
-  sections: (matchId: number) =>
-    api
-      .get<SeatSectionListResponse>(`/matches/${matchId}/sections`)
-      .then((r) => r.data),
-
-  /**
-   * GET /matches/{matchId}/sections/{sectionId}/seats
-   * 구역 내 개별 좌석 목록 (좌석 선택 다이얼로그용)
-   */
-  sectionSeats: (matchId: number, sectionId: number) =>
-    api
-      .get(`/matches/${matchId}/sections/${sectionId}/seats`)
-      .then((r) => r.data),
-
-  // 하위 호환 (기존 코드에서 사용)
-  grades: (eventId: number) =>
-    api
-      .get<SeatGrade[]>(`/events/${eventId}/seat-grades`)
-      .then((r) => r.data),
-  layout: (matchId: number, sectionId?: number) =>
-    api
-      .get<SeatLayout>(`/matches/${matchId}/seats`, {
-        params: sectionId ? { sectionId } : {},
-      })
-      .then((r) => r.data),
+  sections: fetchMatchSections,
+  sectionSeats: fetchSectionSeats,
+  reserve: reserveSeats,
+  release: releaseSeats,
 };

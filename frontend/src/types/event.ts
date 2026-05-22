@@ -88,4 +88,4 @@ export interface TicketPrice {
   price: number;
   color: string;
 }
-export interface Match extends MatchResponse {}
+export type Match = MatchResponse;
