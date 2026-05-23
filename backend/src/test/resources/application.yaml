@@ -82,6 +82,7 @@ queue:
   admission-batch-size: 200      # 한 번에 처리하는 입장 인원
   admission-interval-seconds: 30 # 입장 승격 스케줄러 주기
   session-seconds: 600           # ALLOWED 토큰 만료 (10분)
+  burst-enabled: false           # 테스트 기본은 OFF (burst 검증 전용 IT 만 true 로 override)
 
 # PENDING 예매 자동 만료 스케줄러 주기 (운영과 동일)
 booking:

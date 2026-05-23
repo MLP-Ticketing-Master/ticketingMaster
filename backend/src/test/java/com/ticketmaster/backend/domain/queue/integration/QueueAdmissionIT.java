@@ -58,7 +58,8 @@ import static org.assertj.core.api.Assertions.assertThatCode;
         "queue.token-ttl-seconds=1800",
         "queue.admission-batch-size=200",
         "queue.admission-interval-seconds=30",
-        "queue.session-seconds=600"
+        "queue.session-seconds=600",
+        "queue.burst-enabled=false"   // 승격 스케줄러 동작 검증이라 burst 차단 (첫 200 명이 자동 통과되면 TC-17 의 전제 깨짐)
 })
 @DisplayName("대기열 승격 통합 테스트")
 public class QueueAdmissionIT {

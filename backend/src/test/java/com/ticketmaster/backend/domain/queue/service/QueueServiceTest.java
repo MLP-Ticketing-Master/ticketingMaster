@@ -6,6 +6,7 @@ import com.ticketmaster.backend.domain.match.repository.MatchRepository;
 import com.ticketmaster.backend.domain.queue.dto.response.QueueEnterResponse;
 import com.ticketmaster.backend.domain.queue.dto.response.QueueStatusResponse;
 import com.ticketmaster.backend.domain.queue.entity.Queue;
+import com.ticketmaster.backend.domain.queue.entity.QueueStatus;
 import com.ticketmaster.backend.domain.queue.repository.QueueRedisRepository;
 import com.ticketmaster.backend.domain.queue.repository.QueueRepository;
 import com.ticketmaster.backend.domain.user.entity.User;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -65,6 +67,7 @@ class QueueServiceTest {
         ReflectionTestUtils.setField(queueService, "admissionIntervalSeconds", 30);
         ReflectionTestUtils.setField(queueService, "tokenTtlSeconds", 1800);
         ReflectionTestUtils.setField(queueService, "sessionSeconds", 600);
+        ReflectionTestUtils.setField(queueService, "burstEnabled", false);   // 기본은 OFF, burst 검증 케이스에서 true 로 전환
     }
 
     @Test
@@ -77,9 +80,10 @@ class QueueServiceTest {
         User user = mock(User.class);
         given(userRepository.findById(1000L)).willReturn(Optional.of(user));
 
-        // 신규 진입 시그널 — Redis 가 서비스가 발급한 토큰을 그대로 + 순번 1 로 반환
-        given(queueRedis.enter(eq(1L), eq(1000L), anyString(), anyLong()))
-                .willAnswer(inv -> new QueueRedisRepository.EnterResult(inv.getArgument(2), 1L));
+        // 신규 진입 시그널 — Redis 가 서비스가 발급한 토큰을 그대로 + 순번 1 로 반환 (allowed=false 일반 WAITING)
+        given(queueRedis.enter(eq(1L), eq(1000L), anyString(), anyLong(),
+                eq(200), eq(600), eq(false)))
+                .willAnswer(inv -> new QueueRedisRepository.EnterResult(inv.getArgument(2), 1L, false));
 
         // when
         QueueEnterResponse response = queueService.enter(1L, 1000L);
@@ -105,10 +109,11 @@ class QueueServiceTest {
         User user = mock(User.class);
         given(userRepository.findById(1000L)).willReturn(Optional.of(user));
 
-        // 재진입 시그널 — Redis 가 서비스의 신규 토큰을 무시하고 기존 토큰 / 순번을 그대로 반환
+        // 재진입 시그널 — Redis 가 서비스의 신규 토큰을 무시하고 기존 토큰 / 순번을 그대로 반환 (allowed=false)
         String existingToken = "existing-token";
-        given(queueRedis.enter(eq(1L), eq(1000L), anyString(), anyLong()))
-                .willReturn(new QueueRedisRepository.EnterResult(existingToken, 42L));
+        given(queueRedis.enter(eq(1L), eq(1000L), anyString(), anyLong(),
+                eq(200), eq(600), eq(false)))
+                .willReturn(new QueueRedisRepository.EnterResult(existingToken, 42L, false));
 
         // when
         QueueEnterResponse response = queueService.enter(1L, 1000L);
@@ -301,6 +306,132 @@ class QueueServiceTest {
             assertThat(response.getStatus()).isEqualTo("EXPIRED");
             assertThat(response.getEnteredAt()).isNotNull();
             assertThat(response.getQueueNumber()).isNull();
+            assertThat(response.getAllowedAt()).isNull();
+        }
+    }
+
+    @Nested
+    @DisplayName("burst 즉시승격 (즉시 ALLOWED 진입)")
+    class BurstAdmission {
+
+        @Test
+        @DisplayName("TC-14: burst 통과 → ALLOWED 응답 + DB Queue 도 ALLOWED 로 저장")
+        void burst_통과() {
+            // given — burst 게이트 ON 으로 전환
+            ReflectionTestUtils.setField(queueService, "burstEnabled", true);
+
+            Match match = mock(Match.class);
+            given(match.isBookableAt(any(LocalDateTime.class))).willReturn(true);
+            given(matchRepository.findById(1L)).willReturn(Optional.of(match));
+            User user = mock(User.class);
+            given(userRepository.findById(1000L)).willReturn(Optional.of(user));
+
+            // Redis 가 burst 통과 시그널 — allowed=true 반환
+            given(queueRedis.enter(eq(1L), eq(1000L), anyString(), anyLong(),
+                    eq(200), eq(600), eq(true)))
+                    .willAnswer(inv -> new QueueRedisRepository.EnterResult(
+                            inv.getArgument(2), 1L, true));
+
+            // when
+            QueueEnterResponse response = queueService.enter(1L, 1000L);
+
+            // then — 응답이 ALLOWED 로 조립됨
+            assertThat(response.getStatus()).isEqualTo("ALLOWED");
+            assertThat(response.getAllowedAt()).isNotNull();
+            assertThat(response.getEntryDeadline()).isAfter(response.getAllowedAt());
+
+            // then — DB 저장 시 markAllowed 가 호출되어 ALLOWED 상태로 들어감
+            ArgumentCaptor<Queue> captor = ArgumentCaptor.forClass(Queue.class);
+            verify(queueRepository).save(captor.capture());
+            assertThat(captor.getValue().getStatus()).isEqualTo(QueueStatus.ALLOWED);
+        }
+
+        @Test
+        @DisplayName("TC-15: burst 초과 → WAITING 응답 + DB Queue 도 WAITING")
+        void burst_초과() {
+            // given — burst 게이트는 ON 이지만 이미 200 명이 차서 201 번째는 통과 못 함
+            ReflectionTestUtils.setField(queueService, "burstEnabled", true);
+
+            Match match = mock(Match.class);
+            given(match.isBookableAt(any(LocalDateTime.class))).willReturn(true);
+            given(matchRepository.findById(1L)).willReturn(Optional.of(match));
+            User user = mock(User.class);
+            given(userRepository.findById(1000L)).willReturn(Optional.of(user));
+
+            // Redis 가 burst 초과 시그널 — allowed=false, rank=201
+            given(queueRedis.enter(eq(1L), eq(1000L), anyString(), anyLong(),
+                    eq(200), eq(600), eq(true)))
+                    .willAnswer(inv -> new QueueRedisRepository.EnterResult(
+                            inv.getArgument(2), 201L, false));
+
+            // when
+            QueueEnterResponse response = queueService.enter(1L, 1000L);
+
+            // then — WAITING 응답
+            assertThat(response.getStatus()).isEqualTo("WAITING");
+            assertThat(response.getQueueNumber()).isEqualTo(201L);
+            assertThat(response.getAllowedAt()).isNull();
+            assertThat(response.getEntryDeadline()).isNull();
+
+            // then — DB Queue 는 WAITING 상태로 저장
+            ArgumentCaptor<Queue> captor = ArgumentCaptor.forClass(Queue.class);
+            verify(queueRepository).save(captor.capture());
+            assertThat(captor.getValue().getStatus()).isEqualTo(QueueStatus.WAITING);
+        }
+
+        @Test
+        @DisplayName("TC-16: 재진입 → allowed=false 로 들어와도 DB 저장 스킵")
+        void 재진입_burst_무관() {
+            // given — burst 게이트 ON, 그러나 재진입 시그널 (Redis 가 기존 토큰 + allowed=false 반환)
+            ReflectionTestUtils.setField(queueService, "burstEnabled", true);
+
+            Match match = mock(Match.class);
+            given(match.isBookableAt(any(LocalDateTime.class))).willReturn(true);
+            given(matchRepository.findById(1L)).willReturn(Optional.of(match));
+            User user = mock(User.class);
+            given(userRepository.findById(1000L)).willReturn(Optional.of(user));
+
+            // 재진입 시그널 — 기존 토큰 그대로 반환 + allowed=false (Repository 가 카운터 안 건드림)
+            String existingToken = "existing-token";
+            given(queueRedis.enter(eq(1L), eq(1000L), anyString(), anyLong(),
+                    eq(200), eq(600), eq(true)))
+                    .willReturn(new QueueRedisRepository.EnterResult(existingToken, 42L, false));
+
+            // when
+            QueueEnterResponse response = queueService.enter(1L, 1000L);
+
+            // then — 기존 토큰 그대로 + WAITING 응답
+            assertThat(response.getQueueToken()).isEqualTo(existingToken);
+            assertThat(response.getStatus()).isEqualTo("WAITING");
+
+            // then — 재진입이라 DB 저장 스킵 (이력 중복 방지)
+            verify(queueRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("TC-17: burstEnabled=false → 첫 진입자도 WAITING (피처 플래그 OFF)")
+        void 피처플래그_OFF() {
+            // given — burst 게이트 OFF (시연 / 로컬 환경 가정)
+            ReflectionTestUtils.setField(queueService, "burstEnabled", false);
+
+            Match match = mock(Match.class);
+            given(match.isBookableAt(any(LocalDateTime.class))).willReturn(true);
+            given(matchRepository.findById(1L)).willReturn(Optional.of(match));
+            User user = mock(User.class);
+            given(userRepository.findById(1000L)).willReturn(Optional.of(user));
+
+            // burstEnabled=false 가 그대로 Repository 로 전달됨 — 결과는 allowed=false
+            given(queueRedis.enter(eq(1L), eq(1000L), anyString(), anyLong(),
+                    eq(200), eq(600), eq(false)))
+                    .willAnswer(inv -> new QueueRedisRepository.EnterResult(
+                            inv.getArgument(2), 1L, false));
+
+            // when
+            QueueEnterResponse response = queueService.enter(1L, 1000L);
+
+            // then — 1 명째여도 WAITING 응답 (피처 플래그 OFF 의도)
+            assertThat(response.getStatus()).isEqualTo("WAITING");
+            assertThat(response.getQueueNumber()).isEqualTo(1L);
             assertThat(response.getAllowedAt()).isNull();
         }
     }
