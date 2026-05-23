@@ -25,6 +25,12 @@ export function QueueStep() {
     if (!matchId || queueToken || enterCalledRef.current) return;
     enterCalledRef.current = true;
     enterMutation.mutate(matchId, {
+      onSuccess: (data) => {
+        // burst 게이트 통과 — 대기열 UI 거치지 않고 좌석 선택으로 직행
+        if (data.status === "ALLOWED") {
+          goToZone();
+        }
+      },
       onError: (error) => {
         const status = isAxiosError(error) ? error.response?.status : undefined;
         const code = isAxiosError(error) ? error.response?.data?.code : undefined;
@@ -32,7 +38,7 @@ export function QueueStep() {
         closeFlow();
       },
     });
-  }, [matchId, queueToken, enterMutation, closeFlow]);
+  }, [matchId, queueToken, enterMutation, closeFlow, goToZone]);
 
   const statusQuery = useQueueStatus(matchId, queueToken);
 

@@ -116,6 +116,8 @@ export const useBookingFlowStore = create<BookingFlowState>()(
           queueNumber: res.queueNumber,
           remainingAhead: res.remainingAhead,
           estimatedWaitSeconds: res.estimatedWaitSeconds,
+          allowedAt: res.allowedAt,
+          entryDeadline: res.entryDeadline,
         }),
       setQueueStatus: (res) =>
         set({
