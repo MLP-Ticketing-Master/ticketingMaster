@@ -7,6 +7,9 @@ export interface QueueEnterResponse {
   remainingAhead: number;
   estimatedWaitSeconds: number;
   enteredAt: string;
+  // burst 게이트 통과 시 즉시 ALLOWED. WAITING 응답에서는 null
+  allowedAt: string | null;
+  entryDeadline: string | null;
 }
 
 export interface QueueStatusResponse {
