@@ -58,7 +58,8 @@ import static org.assertj.core.api.Assertions.assertThat;
         "queue.token-ttl-seconds=1800",
         "queue.admission-batch-size=200",
         "queue.admission-interval-seconds=30",
-        "queue.session-seconds=600"
+        "queue.session-seconds=600",
+        "queue.burst-enabled=false"   // 기존 TC-08~13 은 burst OFF 환경 가정 (burst ON 검증은 QueueBurstAdmissionIT 참고)
 })
 @DisplayName("대기열 진입 통합 테스트")
 class QueueEntryIT {

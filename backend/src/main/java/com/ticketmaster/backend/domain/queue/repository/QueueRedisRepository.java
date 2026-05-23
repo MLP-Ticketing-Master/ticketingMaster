@@ -63,8 +63,10 @@ public class QueueRedisRepository {
      * - ALLOWED 재진입  : token 은 기존에 발급된 값, rank 는 0 (ZSet 에서 이미 빠진 상태 — 정상 동작)
      * 호출 측은 status API 로 ALLOWED 확인 후 좌석 페이지로 복귀
      * - 권한 만료 재진입: token 은 새로 발급된 값, rank 는 ZSet 의 새 순번 (좀비 마커 정리 후 다시 줄서기)
+     * - 신규 진입 시 burst 게이트 통과 여부도 함께 반환
+     * - 재진입(idempotent) 케이스는 항상 false — 이미 자리 있음
      */
-    public record EnterResult(String token, long rank) {}
+    public record EnterResult(String token, long rank, boolean allowed) {}
 
     /**
      * 대기열 진입을 Redis 에 등록
@@ -80,10 +82,15 @@ public class QueueRedisRepository {
      * → 선점 실패 + 기존 토큰 만료 (좀비)            → Hash 잔재 정리 후 새 토큰으로 신규 진입 흐름 진행
      * 2) Sorted Set 에 토큰 추가 (score 는 진입 시각 ms — 작을수록 앞 순번)
      * 3) Hash 에 토큰 메타 저장
+     * 4) ZRANK + 1 로 순번 계산
+     * 5) burst 게이트 시도 — burstEnabled=true 이고 신규 진입일 때만, INCR 결과 ≤ admissionBatchSize 면 즉시 ALLOWED
      *
-     * @return 발급(또는 재사용)된 토큰 + 1-based 순번 (ZRANK 가 0-based 라서 +1)
+     * @return 발급(또는 재사용)된 토큰 + 1-based 순번 + burst 게이트 통과 여부
+     *         (재진입 케이스는 allowed 항상 false — 이미 자리 있어 카운터를 건드리지 않기 위함)
      */
-    public EnterResult enter(Long matchId, Long userId, String token, long enteredAtMs) {
+    public EnterResult enter(Long matchId, Long userId, String token, long enteredAtMs,
+                             int admissionBatchSize, int sessionSeconds,
+                             boolean burstEnabled) {
         // application.yaml 에서 받은 초 단위 값을 Duration 으로 변환
         Duration tokenTtl = Duration.ofSeconds(tokenTtlSeconds);
 
@@ -95,19 +102,20 @@ public class QueueRedisRepository {
             // 기존 토큰 회수 후 상태에 따라 분기
             String existingToken = redis.opsForValue().get(userKey);
             if (existingToken != null) {
-                // (B) WAITING 또는 (C) ALLOWED 권한이 살아있는 정상 세션 → 같은 토큰으로 복귀
+                // WAITING 또는 ALLOWED 권한이 살아있는 정상 세션 → 같은 토큰으로 복귀
                 if (isWaiting(matchId, existingToken) || isAllowed(matchId, existingToken)) {
                     long existingRank = getRank(matchId, existingToken);
-                    return new EnterResult(existingToken, existingRank);
+                    return new EnterResult(existingToken, existingRank, false);
                 }
-                // (D) ALLOWED 권한이 만료된 좀비 마커 — ZSet/ALLOWED 둘 다 없고 마커+Hash 잔재만 남음
-                //     Hash 잔재까지 정리하고 아래 흐름에서 새 토큰으로 다시 줄서기
+                // ALLOWED 권한이 만료된 좀비 마커 — ZSet/ALLOWED 둘 다 없고 마커+Hash 잔재만 남음
+                // Hash 잔재까지 정리하고 아래 흐름에서 새 토큰으로 다시 줄서기
                 redis.delete(tokenKey(existingToken));
             }
             // 새 토큰으로 마커 갱신 — 좀비 정리 직후 또는 SETNX 실패 직후 TTL 이 만료된 매우 드문 케이스
             redis.opsForValue().set(userKey, token, tokenTtl);
         }
 
+        // SETNX 성공 — 신규 진입 메인 흐름
         // 2) Sorted Set 에 토큰 추가 (먼저 들어온 사람이 작은 score → 작은 순번)
         String matchKey = matchKey(matchId);
         redis.opsForZSet().add(matchKey, token, enteredAtMs);
@@ -125,7 +133,47 @@ public class QueueRedisRepository {
 
         // 4) 순번 = ZRANK + 1
         Long rank = redis.opsForZSet().rank(matchKey, token);
-        return new EnterResult(token, (rank == null ? 0L : rank) + 1L);
+        long rankValue = (rank == null ? 0L : rank) + 1L;
+
+        // 5) burst 게이트 시도 — burstEnabled=true 일 때만
+        //    재진입은 위에서 빠져나가서 여긴 신규 진입만 도달함
+        boolean burstAcquired = burstEnabled && tryAcquireBurst(matchId, admissionBatchSize);
+        if (burstAcquired) {
+            applyAllowed(matchId, token, sessionSeconds);
+        }
+        return new EnterResult(token, rankValue, burstAcquired);
+    }
+
+    // burst 슬롯 점유 시도
+    // INCR 결과가 한도 이하면 점유 성공, 초과면 DECR로 롤백
+    // 키 자체는 token-ttl-seconds 의 TTL로 자연 정리됨
+    private boolean tryAcquireBurst(Long matchId, int limit) {
+        String key = burstKey(matchId);
+        Long count = redis.opsForValue().increment(key);
+        if (count != null && count == 1L) {
+            // 첫 INCR 직후에만 TTL 적용 — 이미 있는 키의 TTL을 갱신하지 않기 위함
+            redis.expire(key, Duration.ofSeconds(tokenTtlSeconds));
+        }
+        if (count != null && count <= limit) {
+            return true;
+        }
+        redis.opsForValue().decrement(key);
+        return false;
+    }
+
+    // 단건 즉시승격 전용 — 배치는 promoteTopN 참고
+    // ZSet 에서 제거(WAITING 명단에서 빠짐) + allowed 키 생성 + Hash status/allowedAt 갱신
+    private void applyAllowed(Long matchId, String token, int sessionSeconds) {
+        Duration sessionTtl = Duration.ofSeconds(sessionSeconds);
+        redis.opsForZSet().remove(matchKey(matchId), token);
+        redis.opsForValue().set(allowedKey(matchId, token), "1", sessionTtl);
+
+        Map<String, String> updates = new HashMap<>();
+        updates.put("status", "ALLOWED");
+        updates.put("allowedAt", String.valueOf(System.currentTimeMillis()));
+        String tokenKey = tokenKey(token);
+        redis.opsForHash().putAll(tokenKey, updates);
+        redis.expire(tokenKey, sessionTtl);
     }
 
     /**
@@ -228,5 +276,9 @@ public class QueueRedisRepository {
 
     private String allowedKey(Long matchId, String token) {
         return "queue:allowed:" + matchId + ":" + token;
+    }
+
+    private String burstKey(Long matchId) {
+        return "queue:burst:" + matchId;
     }
 }

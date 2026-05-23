@@ -60,6 +60,13 @@ public class QueueService {
     @Value("${queue.session-seconds}")
     private int sessionSeconds;
 
+    /**
+     * burst 게이트 ON/OFF — application.yaml 의 queue.burst-enabled
+     * 운영 = true, 시연/로컬 = false
+     */
+    @Value("${queue.burst-enabled}")
+    private boolean burstEnabled;
+
     private final MatchRepository matchRepository;
     private final UserRepository userRepository;
     private final QueueRepository queueRepository;
@@ -99,7 +106,9 @@ public class QueueService {
         long enteredAtMs = System.currentTimeMillis();
 
         // 5) Redis 등록 — 재진입이면 newToken 이 무시되고 기존 토큰이 그대로 돌아옴
-        QueueRedisRepository.EnterResult result = queueRedis.enter(matchId, userId, newToken, enteredAtMs);
+        QueueRedisRepository.EnterResult result =
+                queueRedis.enter(matchId, userId, newToken, enteredAtMs,
+                        admissionBatchSize, sessionSeconds, burstEnabled);
         String token = result.token();
         long queueNumber = result.rank();
 
@@ -108,10 +117,22 @@ public class QueueService {
         if (token.equals(newToken)) {
             LocalDateTime expiresAt = now.plusSeconds(tokenTtlSeconds); // 토큰 만료 시각 계산
             Queue queue = Queue.createWaiting(user, match, token, queueNumber, now, expiresAt);
+            if (result.allowed()) {
+                queue.markAllowed(now); // 즉시 ALLOWED 인 경우 상태 바로 갱신
+            }
             queueRepository.save(queue);
         }
 
         // 7) 응답 조립
+
+        // burst 통과 시 즉시 ALLOWED 응답 — entryDeadline = now + sessionSeconds
+        if (result.allowed()) {
+            LocalDateTime entryDeadline = now.plusSeconds(sessionSeconds);
+            log.info("[Queue] burst 즉시승격 matchId={} userId={} token={}", matchId, userId, token);
+            return QueueEnterResponse.allowed(token, now, now, entryDeadline);
+        }
+
+        // 그 외 — WAITING 응답
         //    remainingAhead = 내 앞에 남은 사람 수 (음수가 안 되도록 max)
         long remainingAhead = Math.max(0L, queueNumber - 1L);
         //    예상 대기 시간 = (내 앞 사람 수 / 한 번에 처리하는 인원) * 처리 주기
@@ -121,7 +142,7 @@ public class QueueService {
         log.info("[Queue] 진입 matchId={} userId={} token={} number={}",
                 matchId, userId, token, queueNumber);
 
-        return QueueEnterResponse.of(token, queueNumber, remainingAhead, estimatedWaitSeconds, now);
+        return QueueEnterResponse.waiting(token, queueNumber, remainingAhead, estimatedWaitSeconds, now);
     }
 
     /**

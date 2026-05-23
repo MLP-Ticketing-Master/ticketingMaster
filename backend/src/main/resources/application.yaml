@@ -81,6 +81,10 @@ queue:
   token-ttl-seconds: 1800       # 30분
   # 한 번에 처리하는 입장 인원
   admission-batch-size: 200
+  # burst 게이트 ON/OFF
+  # true  → 첫 200명 즉시 입장 (운영 가정)
+  # false → 모두 WAITING으로 시작 (시연/로컬 테스트)
+  burst-enabled: true
   # 입장 승격 스케줄러 주기(초) WAITING → ALLOWED
   admission-interval-seconds: 30
   # ALLOWED 토큰 만료(초) — 좌석 페이지 진입 후 좌석 점유까지의 데드라인

@@ -63,7 +63,7 @@ class QueueControllerTest {
     void 정상_응답() throws Exception {
         // given - 인증된 사용자
         CustomUserDetails principal = mockedPrincipal(1000L);
-        QueueEnterResponse response = QueueEnterResponse.of(
+        QueueEnterResponse response = QueueEnterResponse.waiting(
                 "test-token-abc", 1L, 0L, 0L, LocalDateTime.of(2026, 1, 1, 10, 0));
         given(queueService.enter(eq(1L), eq(1000L))).willReturn(response);
 
@@ -89,7 +89,7 @@ class QueueControllerTest {
         // given — 모든 필드 채운 응답을 service mock 이 돌려주도록 설정
         CustomUserDetails principal = mockedPrincipal(1000L);
         LocalDateTime now = LocalDateTime.of(2026, 1, 1, 10, 0);
-        QueueEnterResponse response = QueueEnterResponse.of(
+        QueueEnterResponse response = QueueEnterResponse.waiting(
                 "test-token", 50L, 49L, 7L, now);
         given(queueService.enter(eq(1L), eq(1000L))).willReturn(response);
 
