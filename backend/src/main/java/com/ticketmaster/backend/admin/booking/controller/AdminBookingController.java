@@ -1,5 +1,6 @@
 package com.ticketmaster.backend.admin.booking.controller;
 
+import com.ticketmaster.backend.admin.booking.dto.response.AdminBookingDetailResponse;
 import com.ticketmaster.backend.admin.booking.dto.response.AdminBookingListResponse;
 import com.ticketmaster.backend.admin.booking.service.AdminBookingService;
 import com.ticketmaster.backend.domain.booking.entity.BookingStatus;
@@ -9,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,9 +31,9 @@ public class AdminBookingController {
         return ResponseEntity.ok(service.getAllListBooking(status,pageable));
     }
 
-//    /** 예매 상세 조회 — 200 OK */
-//    @GetMapping("/bookings/{bookingId}")
-//    public ResponseEntity<AdminBookingDetailResponse> getDetailBooking(@PathVariable Long bookingId) {
-//        return ResponseEntity.ok(service.getDetailBooking(bookingId));
-//    }
+    /** 예매 상세 조회 */
+    @GetMapping("/bookings/{bookingId}")
+    public ResponseEntity<AdminBookingDetailResponse> getDetailBooking(@PathVariable Long bookingId) {
+        return ResponseEntity.ok(service.getDetailBooking(bookingId));
+    }
 }

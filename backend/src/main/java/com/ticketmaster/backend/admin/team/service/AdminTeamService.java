@@ -4,6 +4,7 @@ import com.ticketmaster.backend.admin.team.dto.request.AdminTeamCreateRequest;
 import com.ticketmaster.backend.admin.team.dto.request.AdminTeamUpdateRequest;
 import com.ticketmaster.backend.admin.team.dto.response.AdminTeamResponse;
 import com.ticketmaster.backend.domain.event.entity.SportType;
+import com.ticketmaster.backend.domain.match.repository.MatchRepository;
 import com.ticketmaster.backend.domain.team.entity.Team;
 import com.ticketmaster.backend.domain.team.repository.TeamRepository;
 import com.ticketmaster.backend.global.exception.BusinessException;
@@ -21,6 +22,7 @@ import java.util.Optional;
 public class AdminTeamService {
 
     private final TeamRepository teamRepository;
+    private final MatchRepository matchRepository;
 
     /** 팀 목록 조회 (sportType이 null이면 전체 조회, 삭제되지 않은 팀만) */
     public List<AdminTeamResponse> getTeams(SportType sportType) {
@@ -73,16 +75,16 @@ public class AdminTeamService {
         return AdminTeamResponse.from(team);
     }
 
-    /** 팀 삭제 (soft delete)*/
+    /** 팀 삭제 (soft delete) */
     @Transactional
     public void deleteTeam(Long teamId) {
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_NOT_FOUND));
 
-        // TODO [MatchRepository 머지 후 활성화]
-        // if (matchRepository.existsByTeamIdAndStatusInProgress(teamId)) {
-        //     throw new BusinessException(ErrorCode.TEAM_IN_USE);
-        // }
+        // 진행 중 회차에 배정된 팀은 삭제 불가
+        if (matchRepository.existsByTeamIdAndStatusInProgress(teamId)) {
+            throw new BusinessException(ErrorCode.TEAM_IN_USE);
+        }
 
         team.softDelete();
     }

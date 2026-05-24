@@ -20,6 +20,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     boolean existsByMatch_Event_IdAndStatusNot(Long eventId, BookingStatus status);
 
+    boolean existsByMatch_IdAndStatusNot(Long matchId, BookingStatus status);
+
     @Query("""
             SELECT b FROM Booking b
             LEFT JOIN FETCH b.user
