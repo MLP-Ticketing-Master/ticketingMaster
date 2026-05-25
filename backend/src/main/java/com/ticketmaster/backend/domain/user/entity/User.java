@@ -51,6 +51,16 @@ public class User extends BaseEntity {
         return user;
     }
 
+    /** 시드 전용 - 관리자(ADMIN) 계정 생성 */
+    public static User createAdmin(String email, String encodedPassword, String nickname) {
+        User user = new User();
+        user.email = email;
+        user.password = encodedPassword;
+        user.nickname = nickname;
+        user.role = Role.ADMIN;
+        return user;
+    }
+
     public void withdraw() {
         softDelete();
     }
