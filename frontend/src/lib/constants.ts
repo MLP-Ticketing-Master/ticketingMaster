@@ -9,9 +9,6 @@ export const SPORT_LABEL: Record<Exclude<SportType, "ALL">, string> = {
   PUBG: "배틀그라운드",
 };
 
-/** 하위 호환 alias */
-export const GAME_LABEL = SPORT_LABEL;
-
 export const SPORT_FILTER_LABEL: Record<SportType, string> = {
   ALL: "전체",
   LOL: "LOL",
@@ -20,8 +17,6 @@ export const SPORT_FILTER_LABEL: Record<SportType, string> = {
   TFT: "TFT",
   PUBG: "배그",
 };
-
-export const GAME_FILTER_LABEL = SPORT_FILTER_LABEL;
 
 export const BRAND = {
   primary: "#FF6B47",

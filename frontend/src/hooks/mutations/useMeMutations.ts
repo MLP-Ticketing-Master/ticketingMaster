@@ -1,13 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AxiosError } from "axios";
-import {
-  changePassword,
-  updateProfile,
-  withdraw,
-  type ChangePasswordRequest,
-  type UpdateProfileRequest,
-} from "@/api";
+import { changePassword, updateProfile, withdraw } from "@/api";
+import type { ChangePasswordRequest, UpdateProfileRequest } from "@/types";
 import { queryKeys } from "@/lib/queryKeys";
+import { resolveErrorMessage } from "@/lib/error";
 import { useAuthStore } from "@/store";
 
 /**
@@ -33,10 +28,10 @@ export const useUpdateProfileMutation = () => {
     },
 
     onError: (error) => {
-      const axiosErr = error as AxiosError<{ message?: string }>;
-      const message =
-        axiosErr.response?.data?.message ?? "프로필 업데이트에 실패했습니다.";
-      console.error("Update profile error:", message);
+      console.error(
+        "Update profile error:",
+        resolveErrorMessage(error, "프로필 업데이트에 실패했습니다."),
+      );
     },
   });
 };
@@ -50,10 +45,10 @@ export const useChangePasswordMutation = () => {
     mutationFn: (body: ChangePasswordRequest) => changePassword(body),
 
     onError: (error) => {
-      const axiosErr = error as AxiosError<{ message?: string }>;
-      const message =
-        axiosErr.response?.data?.message ?? "비밀번호 변경에 실패했습니다.";
-      console.error("Change password error:", message);
+      console.error(
+        "Change password error:",
+        resolveErrorMessage(error, "비밀번호 변경에 실패했습니다."),
+      );
     },
   });
 };
@@ -74,10 +69,10 @@ export const useWithdrawMutation = () => {
     },
 
     onError: (error) => {
-      const axiosErr = error as AxiosError<{ message?: string }>;
-      const message =
-        axiosErr.response?.data?.message ?? "회원 탈퇴에 실패했습니다.";
-      console.error("Withdraw error:", message);
+      console.error(
+        "Withdraw error:",
+        resolveErrorMessage(error, "회원 탈퇴에 실패했습니다."),
+      );
     },
   });
 };

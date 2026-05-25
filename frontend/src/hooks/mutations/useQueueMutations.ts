@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { enterQueue } from "@/api/queue.api";
+import { enterQueue } from "@/api/queue";
 import { useBookingFlowStore } from "@/store";
 
 export const useEnterQueueMutation = () => {

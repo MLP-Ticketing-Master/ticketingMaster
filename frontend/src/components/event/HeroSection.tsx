@@ -2,7 +2,7 @@ import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useEventFilterStore } from "@/store";
-import backgroundImage from "@/image/background.png"
+import backgroundImage from "@/assets/background.png"
 
 export function HeroSection() {
   const keyword = useEventFilterStore((s) => s.keyword);

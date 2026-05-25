@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { AxiosError } from "axios";
 import { CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useConfirmPaymentMutation } from "@/hooks";
+import { resolveErrorMessage } from "@/lib/error";
 import { useBookingFlowStore } from "@/store";
 
 export default function PaymentSuccessPage() {
@@ -68,9 +68,10 @@ export default function PaymentSuccessPage() {
 
   // 백엔드 confirm 호출 실패
   if (confirm.isError) {
-    const axiosErr = confirm.error as AxiosError<{ message?: string }>;
-    const errMsg =
-      axiosErr.response?.data?.message ?? "결제 승인에 실패했습니다.";
+    const errMsg = resolveErrorMessage(
+      confirm.error,
+      "결제 승인에 실패했습니다.",
+    );
     return (
       <Card className="mx-auto max-w-md mt-20 p-10 text-center space-y-4">
         <p className="text-lg font-bold text-red-600">결제 승인 실패</p>

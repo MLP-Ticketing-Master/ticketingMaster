@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { confirmPasswordReset } from "@/api/auth.api";
+import { confirmPasswordReset } from "@/api/auth";
+import { resolveErrorMessage } from "@/lib/error";
 
 // 백엔드 @Pattern: 8~20자, 영문+숫자+특수문자(@$!%*#?&) 필수
 const PASSWORD_PATTERN =
@@ -52,10 +53,7 @@ export default function PasswordResetPage() {
         // 토큰 만료 or 유효하지 않음
         setPageState("INVALID");
       } else {
-        const msg =
-          (err as { response?: { data?: { message?: string } } })?.response
-            ?.data?.message ?? "비밀번호 변경에 실패했습니다.";
-        toast.error(msg);
+        toast.error(resolveErrorMessage(err, "비밀번호 변경에 실패했습니다."));
       }
     } finally {
       setLoading(false);

@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { BookingWidget } from "@/components/main/BookingWidget";
-import { EventInfo } from "@/components/main/EventInfo";
+import { BookingWidget } from "@/components/event/BookingWidget";
+import { EventInfo } from "@/components/event/EventInfo";
 import { useEventDetail } from "@/hooks";
 import { useAuthStore, useBookingFlowStore } from "@/store";
 import { SPORT_LABEL } from "@/lib/constants";

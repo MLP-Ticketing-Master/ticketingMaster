@@ -6,12 +6,12 @@ import {
   MyPageLayout,
   PublicLayout,
 } from "@/components/layout";
-import { BookingDialog } from "@/components/main/seat/BookingDialog";
+import { BookingDialog } from "@/components/seat/BookingDialog";
 import HomePage from "@/pages/HomePage";
-import EventDetailPage from "@/pages/EventDetailPage";
-import LoginPage from "@/pages/LoginPage";
-import SignupPage from "@/pages/SignupPage";
-import SchedulePage from "@/pages/SchedulePage";
+import EventDetailPage from "@/pages/event/EventDetailPage";
+import LoginPage from "@/pages/auth/LoginPage";
+import SignupPage from "@/pages/auth/SignupPage";
+import SchedulePage from "@/pages/event/SchedulePage";
 import ProfilePage from "@/pages/my/ProfilePage";
 import BookingHistoryPage from "@/pages/my/BookingHistoryPage";
 import EditProfilePage from "@/pages/my/EditProfilePage";
@@ -23,9 +23,9 @@ import TeamsAdminPage from "@/pages/admin/TeamsAdminPage";
 import SeatsAdminPage from "@/pages/admin/SeatsAdminPage";
 import BookingsAdminPage from "@/pages/admin/BookingsAdminPage";
 import StatsAdminPage from "@/pages/admin/StatsAdminPage";
-import PasswordResetPage from "@/pages/PasswordResetPage";
-import PaymentSuccessPage from "@/pages/PaymentSuccessPage";
-import PaymentFailPage from "@/pages/PaymentFailPage";
+import PasswordResetPage from "@/pages/auth/PasswordResetPage";
+import PaymentSuccessPage from "@/pages/payment/PaymentSuccessPage";
+import PaymentFailPage from "@/pages/payment/PaymentFailPage";
 
 export default function App() {
   return (

@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { AxiosError } from "axios";
 import { AlertCircle, Timer, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -15,6 +14,7 @@ import {
   useReleaseSeatsMutation,
 } from "@/hooks";
 import { formatShortDate, formatTime } from "@/lib/format";
+import { resolveErrorMessage } from "@/lib/error";
 import { SeatSidebar } from "./SeatSidebar";
 import { ZoneStep } from "./steps/ZoneStep";
 import { SeatStep } from "./steps/SeatStep";
@@ -73,11 +73,9 @@ export function BookingDialog() {
           goToPayment();
         },
         onError: (err) => {
-          const axiosErr = err as AxiosError<{ message?: string }>;
-          const msg =
-            axiosErr.response?.data?.message ??
-            "좌석 점유에 실패했습니다. 다시 시도해주세요.";
-          toast.error(msg);
+          toast.error(
+            resolveErrorMessage(err, "좌석 점유에 실패했습니다. 다시 시도해주세요."),
+          );
         },
       },
     );

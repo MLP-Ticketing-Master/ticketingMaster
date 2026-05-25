@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getQueueStatus } from "@/api/queue.api";
+import { getQueueStatus } from "@/api/queue";
 import { queryKeys } from "@/lib/queryKeys";
 import { useBookingFlowStore } from "@/store";
 

@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { useBookingFlowStore } from "@/store";
 import { useEnterQueueMutation, useQueueStatus } from "@/hooks";
-import { ERROR_CODES, QUEUE_TOKEN_ERROR_CODES } from "@/lib/error";
+import { QUEUE_TOKEN_ERROR_CODES, resolveErrorMessage } from "@/lib/error";
 
 export function QueueStep() {
   const matchId = useBookingFlowStore((s) => s.matchId);
@@ -33,8 +33,11 @@ export function QueueStep() {
       },
       onError: (error) => {
         const status = isAxiosError(error) ? error.response?.status : undefined;
-        const code = isAxiosError(error) ? error.response?.data?.code : undefined;
-        toast.error(getEnterErrorMessage(code, status));
+        if (status === 401) {
+          toast.error("로그인이 필요합니다.");
+        } else {
+          toast.error(resolveErrorMessage(error, "대기열 진입에 실패했습니다."));
+        }
         closeFlow();
       },
     });
@@ -57,7 +60,12 @@ export function QueueStep() {
     const code = statusQuery.error.response?.data?.code;
     if (QUEUE_TOKEN_ERROR_CODES.includes(code)) {
       tokenErrorHandledRef.current = true;
-      toast.error("대기열 정보가 만료되었습니다. 다시 시도해 주세요.");
+      toast.error(
+        resolveErrorMessage(
+          statusQuery.error,
+          "대기열 정보가 만료되었습니다. 다시 시도해 주세요.",
+        ),
+      );
       clearQueue();
       closeFlow();
     }
@@ -169,19 +177,3 @@ function Stat({
   );
 }
 
-function getEnterErrorMessage(
-  code: string | undefined,
-  status: number | undefined,
-): string {
-  if (status === 401) return "로그인이 필요합니다.";
-  switch (code) {
-    case ERROR_CODES.MATCH_NOT_FOUND:
-      return "존재하지 않는 회차입니다.";
-    case ERROR_CODES.BOOKING_NOT_OPEN:
-      return "예매 가능 시간이 아닙니다.";
-    case ERROR_CODES.USER_NOT_FOUND:
-      return "사용자 정보를 찾을 수 없습니다.";
-    default:
-      return "대기열 진입에 실패했습니다.";
-  }
-}

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import stadia from "@/image/stadium-bg.png"; // 경기장 배경 이미지 경로 수정
+import stadia from "@/assets/stadium-bg.png"; // 경기장 배경 이미지 경로 수정
 import type { SectionItem } from "@/types";
 
 interface Props {
