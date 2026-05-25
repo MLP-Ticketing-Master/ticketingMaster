@@ -14,3 +14,4 @@ export * from "./mutations/useMeMutations";
 export * from "./mutations/useQueueMutations";
 export * from "./mutations/useSeatMutations";
 export * from "./mutations/usePaymentMutations";
+export * from "./mutations/useTeamMutations";

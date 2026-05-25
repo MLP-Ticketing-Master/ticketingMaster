@@ -44,11 +44,11 @@ export default function LoginPage() {
     login.mutate(
       { email, password },
       {
-        onSuccess: () => {
+        onSuccess: (data) => {
           toast.success("로그인 되었습니다.");
           setEmail("");
           setPassword("");
-          navigate("/");
+          navigate(data.user.role === "ADMIN" ? "/admin" : "/");
         },
         onError: (error) => {
           toast.error(resolveErrorMessage(error, "로그인에 실패했습니다."));
