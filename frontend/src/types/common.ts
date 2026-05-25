@@ -11,11 +11,8 @@ export type GameType = SportType; // 하위 호환 유지
 // 백엔드 EventStatus enum 과 일치
 export type EventStatus = "UPCOMING" | "OPEN" | "FINISHED";
 
-export type BookingStatus =
-  | "CONFIRMED"
-  | "CANCELED"
-  | "PENDING_PAYMENT"
-  | "WATCHED";
+// 백엔드 BookingStatus enum 과 일치
+export type BookingStatus = "PENDING" | "CONFIRMED" | "CANCELED" | "EXPIRED";
 
 export type SeatGradeCode = "VIP" | "R" | "S" | "A";
 

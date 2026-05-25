@@ -88,8 +88,11 @@ export async function getAdminBookings(params: {
   status?: string;
   page?: number;
 }): Promise<PageResponse<BookingItem>> {
+  // status=ALL은 "필터 없음"을 의미하는 프론트 전용 값 — 백엔드 enum에 없으므로 제거
+  const { status, ...rest } = params;
+  const query = status && status !== "ALL" ? { ...rest, status } : rest;
   const res = await api.get<PageResponse<BookingItem>>("/admin/bookings", {
-    params,
+    params: query,
   });
   return res.data;
 }

@@ -14,20 +14,20 @@ interface Props {
 const STATUS_LABEL: Record<BookingItem["status"], string> = {
   CONFIRMED: "예매완료",
   CANCELED: "예매취소",
-  PENDING_PAYMENT: "결제대기",
-  WATCHED: "관람완료",
+  PENDING: "결제대기",
+  EXPIRED: "만료",
 };
 
 const STATUS_BG: Record<BookingItem["status"], string> = {
   CONFIRMED: "bg-blue-100 text-[#054EFD]",
   CANCELED: "bg-red-100 text-red-600",
-  PENDING_PAYMENT: "bg-yellow-100 text-yellow-700",
-  WATCHED: "bg-gray-100 text-gray-700",
+  PENDING: "bg-yellow-100 text-yellow-700",
+  EXPIRED: "bg-gray-100 text-gray-700",
 };
 
 export function BookingItemCard({ booking, onCancel, onDetail }: Props) {
   const cancellable =
-    booking.status === "CONFIRMED" || booking.status === "PENDING_PAYMENT";
+    booking.status === "CONFIRMED" || booking.status === "PENDING";
 
   return (
     <Card className="space-y-4 p-6">
