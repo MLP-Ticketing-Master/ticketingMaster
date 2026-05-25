@@ -3,6 +3,7 @@ import com.ticketmaster.backend.admin.team.dto.request.AdminTeamCreateRequest;
 import com.ticketmaster.backend.admin.team.dto.request.AdminTeamUpdateRequest;
 import com.ticketmaster.backend.admin.team.dto.response.AdminTeamResponse;
 import com.ticketmaster.backend.domain.event.entity.SportType;
+import com.ticketmaster.backend.domain.match.repository.MatchRepository;
 import com.ticketmaster.backend.domain.team.entity.Team;
 import com.ticketmaster.backend.domain.team.repository.TeamRepository;
 import com.ticketmaster.backend.global.exception.BusinessException;
@@ -37,6 +38,9 @@ class AdminTeamServiceTest {
 
     @Mock
     private TeamRepository teamRepository;
+
+    @Mock
+    private MatchRepository matchRepository;
 
     private static final Long TEAM_ID = 1L;
 
@@ -257,14 +261,14 @@ class AdminTeamServiceTest {
     void 팀_삭제_성공() {
         // given
         given(teamRepository.findById(TEAM_ID)).willReturn(Optional.of(t1Team));
+        given(matchRepository.existsByTeamIdAndStatusInProgress(TEAM_ID)).willReturn(false);
 
         // when
         service.deleteTeam(TEAM_ID);
 
-        // then - 진짜 엔티티 상태 : softDelete() 가 deletedAt 채움
+        // then
         assertThat(t1Team.isDeleted()).isTrue();
         assertThat(t1Team.getDeletedAt()).isNotNull();
-        // hard delete는 호출되지 않아야 함
         verify(teamRepository, never()).delete(any());
     }
 
@@ -278,6 +282,20 @@ class AdminTeamServiceTest {
         assertThatThrownBy(() -> service.deleteTeam(TEAM_ID))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.TEAM_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("진행중_회차에_배정된_팀은_TEAM_IN_USE")
+    void 팀_삭제_진행중회차배정() {
+        // given
+        given(teamRepository.findById(TEAM_ID)).willReturn(Optional.of(t1Team));
+        given(matchRepository.existsByTeamIdAndStatusInProgress(TEAM_ID)).willReturn(true);
+
+        // when & then
+        assertThatThrownBy(() -> service.deleteTeam(TEAM_ID))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.TEAM_IN_USE);
+        assertThat(t1Team.isDeleted()).isFalse();
     }
 
     // ─── 헬퍼 (요청 DTO 만 mock) ──────────────────────────

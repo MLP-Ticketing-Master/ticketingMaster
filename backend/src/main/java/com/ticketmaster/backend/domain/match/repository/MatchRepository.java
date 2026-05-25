@@ -24,4 +24,12 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
            """)
     List<Match> findActiveMatchesForQueueAdmission(@Param("now") LocalDateTime now);
 
+    /** 진행 중(SCHEDULED/LIVE) 회차에 배정된 팀 존재 여부 */
+    @Query("""
+           SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END
+           FROM Match m
+           WHERE (m.homeTeam.id = :teamId OR m.awayTeam.id = :teamId)
+             AND m.status IN ('SCHEDULED', 'LIVE')
+           """)
+    boolean existsByTeamIdAndStatusInProgress(@Param("teamId") Long teamId);
 }

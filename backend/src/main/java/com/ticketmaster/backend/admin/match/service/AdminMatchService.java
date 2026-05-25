@@ -3,6 +3,8 @@ package com.ticketmaster.backend.admin.match.service;
 import com.ticketmaster.backend.admin.match.dto.request.AdminMatchCreateRequest;
 import com.ticketmaster.backend.admin.match.dto.request.AdminMatchUpdateRequest;
 import com.ticketmaster.backend.admin.match.dto.response.AdminMatchResponse;
+import com.ticketmaster.backend.domain.booking.entity.BookingStatus;
+import com.ticketmaster.backend.domain.booking.repository.BookingRepository;
 import com.ticketmaster.backend.domain.event.entity.Event;
 import com.ticketmaster.backend.domain.event.repository.EventRepository;
 import com.ticketmaster.backend.domain.match.entity.Match;
@@ -28,6 +30,7 @@ public class AdminMatchService {
     private final MatchRepository matchRepo;
     private final EventRepository eventRepo;
     private final TeamRepository teamRepo;
+    private final BookingRepository bookingRepo;
 
     /**
      * 전체 매치 목록 조회
@@ -160,10 +163,13 @@ public class AdminMatchService {
         Match match = matchRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MATCH_NOT_FOUND));
 
-        // 이미 삭제된 것에 대한 중복 삭제 방지 처리
+        // 중복 삭제 방지
         if (match.getDeletedAt() != null) { throw new BusinessException(ErrorCode.MATCH_ALREADY_DELETED); }
 
-        // 예외-1) 예매 이력이 존재하는 매치인 경우
+        // CANCELED 외 예매 존재 시 삭제 불가
+        if (bookingRepo.existsByMatch_IdAndStatusNot(id, BookingStatus.CANCELED)) {
+            throw new BusinessException(ErrorCode.MATCH_IN_USE);
+        }
 
         match.softDelete();
     }

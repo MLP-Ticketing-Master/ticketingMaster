@@ -4,6 +4,8 @@ import com.ticketmaster.backend.admin.match.dto.request.AdminMatchCreateRequest;
 import com.ticketmaster.backend.admin.match.dto.request.AdminMatchUpdateRequest;
 import com.ticketmaster.backend.admin.match.dto.response.AdminMatchResponse;
 import com.ticketmaster.backend.admin.match.service.AdminMatchService;
+import com.ticketmaster.backend.domain.booking.entity.BookingStatus;
+import com.ticketmaster.backend.domain.booking.repository.BookingRepository;
 import com.ticketmaster.backend.domain.event.entity.Event;
 import com.ticketmaster.backend.domain.event.repository.EventRepository;
 import com.ticketmaster.backend.domain.match.entity.Match;
@@ -44,6 +46,8 @@ public class AdminMatchServiceTest {
     private EventRepository eventRepo;
     @Mock
     private TeamRepository teamRepo;
+    @Mock
+    private BookingRepository bookingRepo;
 
     @InjectMocks
     private AdminMatchService adminMatchService;
@@ -815,13 +819,15 @@ public class AdminMatchServiceTest {
         Match mockMatch = mock(Match.class);
         given(mockMatch.getDeletedAt()).willReturn(null);
         given(matchRepo.findById(matchId)).willReturn(Optional.of(mockMatch));
+        given(bookingRepo.existsByMatch_IdAndStatusNot(matchId, BookingStatus.CANCELED))
+                .willReturn(false);
 
         // when
         adminMatchService.deleteMatch(matchId);
 
         // then
         verify(matchRepo).findById(matchId);
-        verify(mockMatch).softDelete();  // 엔티티의 softDelete 가 호출되어야 함
+        verify(mockMatch).softDelete();
     }
 
     // 매치 삭제 - 존재하지 않는 매치
@@ -864,8 +870,19 @@ public class AdminMatchServiceTest {
     @Test
     @DisplayName("매치 삭제 실패 - 예매 이력이 존재하는 매치")
     void 매치_삭제_예매이력존재() {
-        // TODO: AdminMatchService.deleteMatch 의 "예매 이력 검증" 로직이 아직 미구현
-        //       (서비스 코드에 // 예외-1) 예매 이력이 존재하는 매치인 경우 주석만 있음)
-        //       BookingRepository 같은 의존성이 추가되면 그때 작성
+        // given
+        Long matchId = 1L;
+        Match mockMatch = mock(Match.class);
+        given(mockMatch.getDeletedAt()).willReturn(null);
+        given(matchRepo.findById(matchId)).willReturn(Optional.of(mockMatch));
+        given(bookingRepo.existsByMatch_IdAndStatusNot(matchId, BookingStatus.CANCELED))
+                .willReturn(true);
+
+        // when & then
+        assertThatThrownBy(() -> adminMatchService.deleteMatch(matchId))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.MATCH_IN_USE);
+
+        verify(mockMatch, never()).softDelete();
     }
 }

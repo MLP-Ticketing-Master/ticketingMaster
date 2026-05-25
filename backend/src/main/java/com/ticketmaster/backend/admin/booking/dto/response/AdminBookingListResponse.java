@@ -37,15 +37,7 @@ public class AdminBookingListResponse {
 
     private LocalDateTime createdAt;
 
-    // TODO: 결제수단 응답 필드 추가 예정
-    // private String paymentMethod;
-
-    /**
-     * Booking 엔티티를 목록 응답 DTO로 변환
-     *Repository에서 fetch join으로 user, match, event를 미리 로딩했다고 가정
-     */
     public static AdminBookingListResponse from(Booking entity) {
-        // 좌석 코드 리스트 생성 (예: ["VIP-A5-12", "VIP-A5-13"])
         List<String> seatCodes = entity.getBookingSeats().stream()
                 .map(bs -> bs.getSeat().getSeatCode())
                 .toList();
