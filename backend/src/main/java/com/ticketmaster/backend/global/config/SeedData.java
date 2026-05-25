@@ -15,11 +15,15 @@ import com.ticketmaster.backend.domain.seat.repository.SeatRepository;
 import com.ticketmaster.backend.domain.seat.repository.SectionRepository;
 import com.ticketmaster.backend.domain.team.entity.Team;
 import com.ticketmaster.backend.domain.team.repository.TeamRepository;
+import com.ticketmaster.backend.domain.user.entity.User;
+import com.ticketmaster.backend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -38,8 +42,19 @@ public class SeedData implements CommandLineRunner {
     private final SeatGradeRepository seatGradeRepository;
     private final SectionRepository sectionRepository;
     private final SeatRepository seatRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
     // reset 은 별도 빈에 위임 — REQUIRES_NEW 트랜잭션으로 즉시 commit (스케줄러 데드락 회피)
     private final DataResetService dataResetService;
+
+    @Value("${seed.admin.email}")
+    private String adminEmail;
+
+    @Value("${seed.admin.password}")
+    private String adminRawPassword;
+
+    @Value("${seed.admin.nickname}")
+    private String adminNickname;
 
     /** 모든 이벤트 공통 예매 안내 — 실제 BookingService 환불 정책과 일치 */
     private static final String BOOKING_NOTICE = """
@@ -54,6 +69,9 @@ public class SeedData implements CommandLineRunner {
     public void run(String... args) throws Exception {
         // 실행 전 테이블 초기화 — 별도 트랜잭션(REQUIRES_NEW)으로 즉시 commit
         dataResetService.reset();
+
+        // 관리자 계정 시드 — 가입한 USER 데이터 보존을 위해 reset 대상에서 user 제외, 이메일 중복 체크로 멱등 처리
+        seedAdminUser();
 
         // 날짜 기준점
         LocalDate today = LocalDate.now();
@@ -109,6 +127,19 @@ public class SeedData implements CommandLineRunner {
         }
 
         log.info("[SeedData] ✅ 시드 데이터 삽입 완료!");
+    }
+
+    /**
+     * 관리자 계정 시드 — 이미 존재하면 skip (멱등)
+     */
+    private void seedAdminUser() {
+        if (userRepository.existsByEmail(adminEmail)) {
+            log.info("[SeedData] 관리자 계정 이미 존재 — skip ({})", adminEmail);
+            return;
+        }
+        User admin = User.createAdmin(adminEmail, passwordEncoder.encode(adminRawPassword), adminNickname);
+        userRepository.save(admin);
+        log.info("[SeedData] ✅ 관리자 계정 시드 완료 ({})", adminEmail);
     }
 
     /**
