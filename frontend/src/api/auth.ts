@@ -5,7 +5,6 @@ import type {
   LoginResponseRaw,
   SignupRequest,
   TokenRefreshResponse,
-  User,
 } from "@/types";
 
 // 백엔드 평탄형 응답 → 프론트 정규화 형태(user 객체)로 매핑
@@ -53,14 +52,6 @@ export async function getSignup(body: SignupRequest): Promise<AuthResponse> {
  */
 export async function getLogout(): Promise<void> {
   await api.post("/auth/logout");
-}
-
-/**
- * 내 정보 조회 (Me)
- */
-export async function getMe(): Promise<User> {
-  const res = await api.get<User>("/auth/me");
-  return res.data;
 }
 
 /** refresh — body 에 refreshToken 필수 */

@@ -10,6 +10,7 @@ import {
   useUpdateProfileMutation,
   useWithdrawMutation,
 } from "@/hooks";
+import { resolveErrorMessage } from "@/lib/error";
 import { toast } from "sonner";
 import type { User } from "@/types";
 
@@ -44,11 +45,8 @@ function EditForm({ profile }: { profile: User }) {
     e.preventDefault();
     update.mutate(form, {
       onSuccess: () => toast.success("정보가 수정되었습니다."),
-      onError: (err: unknown) => {
-        const msg =
-          (err as { response?: { data?: { message?: string } } })?.response
-            ?.data?.message ?? "수정에 실패했습니다.";
-        toast.error(msg);
+      onError: (err) => {
+        toast.error(resolveErrorMessage(err, "수정에 실패했습니다."));
       },
     });
   };
@@ -60,11 +58,8 @@ function EditForm({ profile }: { profile: User }) {
         toast.success("탈퇴 처리되었습니다.");
         navigate("/");
       },
-      onError: (err: unknown) => {
-        const msg =
-          (err as { response?: { data?: { message?: string } } })?.response
-            ?.data?.message ?? "탈퇴 처리에 실패했습니다.";
-        toast.error(msg);
+      onError: (err) => {
+        toast.error(resolveErrorMessage(err, "탈퇴 처리에 실패했습니다."));
       },
     });
   };

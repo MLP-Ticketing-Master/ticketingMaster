@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { formatTime } from "@/lib/format";
 import { MOCK_SCHEDULE } from "@/lib/mock";
 import { cn } from "@/lib/utils";
 import type {
@@ -261,9 +262,3 @@ function ScoreCell({
   );
 }
 
-function formatTime(iso: string): string {
-  const d = new Date(iso);
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mm = String(d.getMinutes()).padStart(2, "0");
-  return `${hh}:${mm}`;
-}

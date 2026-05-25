@@ -1,6 +1,6 @@
-import { HeroSection } from "@/components/main/HeroSection";
-import { GameFilter } from "@/components/main/GameFilter";
-import { EventGrid } from "@/components/main/EventGrid";
+import { HeroSection } from "@/components/event/HeroSection";
+import { GameFilter } from "@/components/event/GameFilter";
+import { EventGrid } from "@/components/event/EventGrid";
 import { useEventList } from "@/hooks";
 import { useEventFilterStore } from "@/store";
 

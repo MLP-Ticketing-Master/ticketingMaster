@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { requestPasswordReset } from "@/api/auth.api";
+import { requestPasswordReset } from "@/api/auth";
+import { resolveErrorMessage } from "@/lib/error";
 
 type Step = "EMAIL" | "SENT";
 
@@ -25,11 +26,10 @@ export function ForgotPasswordFlow({ onBack }: Props) {
     try {
       await requestPasswordReset(email);
       setStep("SENT");
-    } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message ?? "이메일 발송에 실패했습니다. 다시 시도해주세요.";
-      toast.error(msg);
+    } catch (err) {
+      toast.error(
+        resolveErrorMessage(err, "이메일 발송에 실패했습니다. 다시 시도해주세요."),
+      );
     } finally {
       setLoading(false);
     }

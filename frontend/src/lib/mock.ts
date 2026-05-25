@@ -2,25 +2,7 @@ import type {
   BookingItem,
   ScheduledMatch,
   Team,
-  TicketPrice,
-  User,
 } from "@/types";
-
-export const MOCK_USER: User = {
-  id: 1,
-  nickname: "홍길동",
-  email: "hong@example.com",
-  phone: "010-1234-5678",
-  joinedAt: "2026-01-15",
-  role: "USER",
-};
-
-export const MOCK_PRICES: TicketPrice[] = [
-  { gradeCode: "VIP", gradeName: "VIP석", price: 150_000, color: "violet" },
-  { gradeCode: "R", gradeName: "R석", price: 120_000, color: "red" },
-  { gradeCode: "S", gradeName: "S석", price: 90_000, color: "blue" },
-  { gradeCode: "A", gradeName: "A석", price: 70_000, color: "green" },
-];
 
 export const MOCK_BOOKINGS: BookingItem[] = [
   {

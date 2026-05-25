@@ -10,10 +10,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuthStore } from "@/store";
-import { useLogoutMutation } from "@/hooks/mutations/auth/useLogoutMutation";
+import { useLogoutMutation } from "@/hooks";
 import { cn } from "@/lib/utils";
-import logo from "@/image/logo1.jpg";
-import logomovie from "@/image/LogoMovie.gif";
+import logo from "@/assets/logo1.jpg";
+import logomovie from "@/assets/LogoMovie.gif";
 import { useState } from "react";
 
 const NAV = [

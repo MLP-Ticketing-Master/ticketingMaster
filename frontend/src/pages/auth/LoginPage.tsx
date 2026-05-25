@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { AxiosError } from "axios";
 import { Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useLoginMutation } from "@/hooks/mutations/auth/useLoginMutation";
+import { useLoginMutation } from "@/hooks";
+import { resolveErrorMessage } from "@/lib/error";
 import { toast } from "sonner";
-import logo from "@/image/logoNuki.png";
-import { ForgotPasswordFlow } from "@/components/main/ForgotPasswordFlow";
+import logo from "@/assets/logoNuki.png";
+import { ForgotPasswordFlow } from "@/components/auth/ForgotPasswordFlow";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -51,10 +51,7 @@ export default function LoginPage() {
           navigate("/");
         },
         onError: (error) => {
-          const axiosErr = error as AxiosError<{ message?: string }>;
-          const errorMsg =
-            axiosErr.response?.data?.message ?? "로그인에 실패했습니다.";
-          toast.error(errorMsg);
+          toast.error(resolveErrorMessage(error, "로그인에 실패했습니다."));
           // 비밀번호 필드 초기화 (보안)
           setPassword("");
         },

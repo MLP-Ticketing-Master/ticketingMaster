@@ -1,5 +1,4 @@
 import { useEffect, useRef } from "react";
-import { AxiosError } from "axios";
 import {
   ArrowLeft,
   CreditCard,
@@ -17,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { useCreateBookingMutation } from "@/hooks";
 import { useAuthStore } from "@/store";
 import { formatPrice } from "@/lib/format";
+import { resolveErrorMessage } from "@/lib/error";
 import type { Seat } from "@/types";
 
 const TOSS_CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY as string;
@@ -87,11 +87,9 @@ export function PaymentStep({
           }
         },
         onError: (err) => {
-          const axiosErr = err as AxiosError<{ message?: string }>;
-          const msg =
-            axiosErr.response?.data?.message ??
-            "예매 생성에 실패했습니다. 다시 시도해주세요.";
-          toast.error(msg);
+          toast.error(
+            resolveErrorMessage(err, "예매 생성에 실패했습니다. 다시 시도해주세요."),
+          );
         },
       },
     );

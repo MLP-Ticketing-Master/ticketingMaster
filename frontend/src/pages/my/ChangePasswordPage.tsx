@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useChangePasswordMutation } from "@/hooks";
+import { resolveErrorMessage } from "@/lib/error";
 import { toast } from "sonner";
 
 // 백엔드 패턴: 8~20자, 영문 + 숫자 + 특수문자(@$!%*#?&) 필수
@@ -36,11 +37,8 @@ export default function ChangePasswordPage() {
         toast.success("비밀번호가 변경되었습니다.");
         setForm({ currentPassword: "", newPassword: "", newPasswordConfirm: "" });
       },
-      onError: (err: unknown) => {
-        const msg =
-          (err as { response?: { data?: { message?: string } } })?.response
-            ?.data?.message ?? "비밀번호 변경에 실패했습니다.";
-        toast.error(msg);
+      onError: (err) => {
+        toast.error(resolveErrorMessage(err, "비밀번호 변경에 실패했습니다."));
       },
     });
   };

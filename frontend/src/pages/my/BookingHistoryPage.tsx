@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { BookingItemCard } from "@/components/my/BookingItemCard";
 import { useMyBookings, useCancelBookingMutation } from "@/hooks";
+import { resolveErrorMessage } from "@/lib/error";
 import { toast } from "sonner";
 
 export default function BookingHistoryPage() {
@@ -11,11 +12,8 @@ export default function BookingHistoryPage() {
     if (!confirm("예매를 취소하시겠습니까?")) return;
     cancel.mutate(id, {
       onSuccess: () => toast.success("예매가 취소되었습니다."),
-      onError: (err: unknown) => {
-        const msg =
-          (err as { response?: { data?: { message?: string } } })?.response
-            ?.data?.message ?? "예매 취소에 실패했습니다.";
-        toast.error(msg);
+      onError: (err) => {
+        toast.error(resolveErrorMessage(err, "예매 취소에 실패했습니다."));
       },
     });
   };

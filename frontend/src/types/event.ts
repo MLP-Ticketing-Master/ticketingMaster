@@ -81,11 +81,4 @@ export interface GradeAvailability {
 
 // ── 하위 호환 alias ──────────────────────────────────────────────
 export type EventSummary = EventListResponse;
-export type EventDetail = EventDetailResponse;
-export interface TicketPrice {
-  gradeCode: string;
-  gradeName: string;
-  price: number;
-  color: string;
-}
 export type Match = MatchResponse;
