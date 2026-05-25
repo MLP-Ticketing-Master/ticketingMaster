@@ -1,5 +1,11 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { ChevronDown, LogOut, Ticket, User as UserIcon } from "lucide-react";
+import {
+  ChevronDown,
+  LogOut,
+  Shield,
+  Ticket,
+  User as UserIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +31,7 @@ const NAV = [
 export function Header() {
   const user = useAuthStore((s) => s.user);
   const isAuth = useAuthStore((s) => s.isAuthenticated)();
+  const isAdmin = useAuthStore((s) => s.isAdmin)();
   const navigate = useNavigate();
   const logout = useLogoutMutation();
   const [isHovering, setIsHovering] = useState(false);
@@ -76,7 +83,19 @@ export function Header() {
 
         <div className="flex items-center gap-1 sm:gap-2">
           {isAuth ? (
-            <DropdownMenu>
+            <>
+              {isAdmin && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => navigate("/admin")}
+                  className="h-7 gap-1.5 border-[#054EFD] px-2 text-xs text-[#054EFD] hover:bg-[#054EFD]/5 sm:h-9 sm:px-3 sm:text-sm"
+                >
+                  <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  관리자 페이지
+                </Button>
+              )}
+              <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
@@ -104,6 +123,7 @@ export function Header() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            </>
           ) : (
             <>
               <Button

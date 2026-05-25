@@ -7,6 +7,7 @@ import {
   PublicLayout,
 } from "@/components/layout";
 import { BookingDialog } from "@/components/seat/BookingDialog";
+import { RequireAdmin } from "@/components/auth/RequireAdmin";
 import HomePage from "@/pages/HomePage";
 import EventDetailPage from "@/pages/event/EventDetailPage";
 import LoginPage from "@/pages/auth/LoginPage";
@@ -56,7 +57,14 @@ export default function App() {
           <Route path="password" element={<ChangePasswordPage />} />
         </Route>
 
-        <Route path="admin" element={<AdminLayout />}>
+        <Route
+          path="admin"
+          element={
+            <RequireAdmin>
+              <AdminLayout />
+            </RequireAdmin>
+          }
+        >
           <Route index element={<DashboardPage />} />
           <Route path="events" element={<EventsAdminPage />} />
           <Route path="matches" element={<MatchesAdminPage />} />

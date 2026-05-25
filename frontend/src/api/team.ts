@@ -1,33 +1,37 @@
 import api from "@/lib/axios";
-import type { GameType, Team } from "@/types";
+import type {
+  CreateTeamRequest,
+  Team,
+  TeamSportType,
+  UpdateTeamRequest,
+} from "@/types";
 
-/** GET /teams */
-export async function getTeamList(game?: GameType): Promise<Team[]> {
-  const res = await api.get<Team[]>("/teams", {
-    params: game && game !== "ALL" ? { game } : {},
+/** GET /admin/teams (sportType 필터 옵셔널) */
+export async function getAdminTeams(
+  sportType?: TeamSportType,
+): Promise<Team[]> {
+  const res = await api.get<Team[]>("/admin/teams", {
+    params: sportType ? { sportType } : {},
   });
   return res.data;
 }
 
 /** POST /admin/teams */
-export async function createTeam(
-  body: Omit<Team, "id" | "registeredAt" | "totalMatches">,
-): Promise<Team> {
+export async function createTeam(body: CreateTeamRequest): Promise<Team> {
   const res = await api.post<Team>("/admin/teams", body);
   return res.data;
 }
 
-/** PUT /admin/teams/{id} */
+/** PATCH /admin/teams/{teamId} */
 export async function updateTeam(
-  id: number,
-  body: Partial<Team>,
+  teamId: number,
+  body: UpdateTeamRequest,
 ): Promise<Team> {
-  const res = await api.put<Team>(`/admin/teams/${id}`, body);
+  const res = await api.patch<Team>(`/admin/teams/${teamId}`, body);
   return res.data;
 }
 
-/** DELETE /admin/teams/{id} */
-export async function deleteTeam(id: number): Promise<unknown> {
-  const res = await api.delete(`/admin/teams/${id}`);
-  return res.data;
+/** DELETE /admin/teams/{teamId} */
+export async function deleteTeam(teamId: number): Promise<void> {
+  await api.delete(`/admin/teams/${teamId}`);
 }

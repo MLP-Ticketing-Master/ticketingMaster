@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import {
   Calendar,
   Clock,
@@ -6,6 +6,7 @@ import {
   Armchair,
   Receipt,
   BarChart3,
+  Home,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -28,7 +29,7 @@ const NAV: NavItem[] = [
 
 export function AdminSidebar() {
   return (
-    <aside className="w-64 shrink-0">
+    <aside className="w-64 shrink-0 space-y-3">
       <nav className="rounded-2xl border bg-white p-4 shadow-sm">
         <ul className="space-y-1">
           {NAV.map(({ to, label, icon: Icon, end }) => (
@@ -52,6 +53,14 @@ export function AdminSidebar() {
           ))}
         </ul>
       </nav>
+
+      <Link
+        to="/"
+        className="flex items-center gap-3 rounded-2xl border bg-white px-5 py-3 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-100"
+      >
+        <Home className="h-4 w-4" />
+        사용자 화면으로
+      </Link>
     </aside>
   );
 }

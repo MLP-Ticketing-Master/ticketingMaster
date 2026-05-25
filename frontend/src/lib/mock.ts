@@ -1,8 +1,4 @@
-import type {
-  BookingItem,
-  ScheduledMatch,
-  Team,
-} from "@/types";
+import type { BookingItem, ScheduledMatch } from "@/types";
 
 export const MOCK_BOOKINGS: BookingItem[] = [
   {
@@ -64,54 +60,6 @@ export const MOCK_BOOKINGS: BookingItem[] = [
     customerName: "박민수",
     customerEmail: "park@example.com",
     paymentMethod: "계좌이체",
-  },
-];
-
-export const MOCK_TEAMS: Team[] = [
-  {
-    id: 1,
-    name: "T1",
-    game: "LOL",
-    logoUrl:
-      "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200",
-    totalMatches: 15,
-    registeredAt: "2025-12-01",
-  },
-  {
-    id: 2,
-    name: "Gen.G",
-    game: "LOL",
-    logoUrl:
-      "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=200",
-    totalMatches: 12,
-    registeredAt: "2025-12-01",
-  },
-  {
-    id: 3,
-    name: "DRX",
-    game: "VALORANT",
-    logoUrl:
-      "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=200",
-    totalMatches: 8,
-    registeredAt: "2025-12-15",
-  },
-  {
-    id: 4,
-    name: "DAMWON",
-    game: "VALORANT",
-    logoUrl:
-      "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=200",
-    totalMatches: 6,
-    registeredAt: "2025-12-15",
-  },
-  {
-    id: 5,
-    name: "서울 다이너스티",
-    game: "OVERWATCH",
-    logoUrl:
-      "https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=200",
-    totalMatches: 10,
-    registeredAt: "2025-11-20",
   },
 ];
 
