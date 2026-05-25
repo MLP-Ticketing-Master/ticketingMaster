@@ -82,3 +82,83 @@ export interface GradeAvailability {
 // ── 하위 호환 alias ──────────────────────────────────────────────
 export type EventSummary = EventListResponse;
 export type Match = MatchResponse;
+
+// ── Admin: 대회 관리 ────────────────────────────────────────────
+
+type EventSportType = Exclude<SportType, "ALL">;
+
+/** POST /admin/events 요청 */
+export interface AdminEventCreateRequest {
+  title: string;
+  sportType: EventSportType;
+  place: string;
+  thumbnailUrl?: string;
+  detailImageUrl?: string;
+  description?: string;
+  startDate: string; // "YYYY-MM-DD"
+  endDate: string;
+  matchDurationText?: string;
+  ageRating?: string;
+  bookingNotice?: string;
+  maxTicketsPerUser: number; // 1~2
+  cancelFee: number;
+}
+
+/** PATCH /admin/events/{id} 요청 (부분 수정) */
+export interface AdminEventUpdateRequest {
+  title?: string;
+  sportType?: EventSportType;
+  place?: string;
+  thumbnailUrl?: string;
+  detailImageUrl?: string;
+  description?: string;
+  startDate?: string;
+  endDate?: string;
+  matchDurationText?: string;
+  ageRating?: string;
+  bookingNotice?: string;
+  maxTicketsPerUser?: number;
+  cancelFee?: number;
+  status?: EventStatus;
+}
+
+/** POST/PATCH 응답 (간략 정보) */
+export interface AdminEventResponse {
+  eventId: number;
+  title: string;
+  sportType: EventSportType;
+  place: string;
+  startDate: string;
+  endDate: string;
+  status: EventStatus;
+}
+
+/** GET /admin/events 목록 응답 (간략 정보) */
+export interface AdminEventListResponse {
+  eventId: number;
+  title: string;
+  sportType: EventSportType;
+  place: string;
+  startDate: string;
+  endDate: string;
+  status: EventStatus;
+}
+
+/** GET /admin/events/{id} 상세 응답 (풀세트) */
+export interface AdminEventDetailResponse {
+  eventId: number;
+  title: string;
+  sportType: EventSportType;
+  place: string;
+  thumbnailUrl: string | null;
+  detailImageUrl: string | null;
+  description: string | null;
+  startDate: string;
+  endDate: string;
+  matchDurationText: string | null;
+  ageRating: string | null;
+  bookingNotice: string | null;
+  maxTicketsPerUser: number;
+  cancelFee: number;
+  status: EventStatus;
+}

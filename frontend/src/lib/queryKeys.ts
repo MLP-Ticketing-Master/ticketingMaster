@@ -29,6 +29,7 @@ export const queryKeys = {
   admin: {
     dashboard: ["admin", "dashboard"] as const,
     events: ["admin", "events"] as const,
+    eventDetail: (id: number) => ["admin", "events", "detail", id] as const,
     seatGrades: (eventId: number) =>
       ["admin", "seatGrades", eventId] as const,
     sections: (eventId: number) => ["admin", "sections", eventId] as const,
