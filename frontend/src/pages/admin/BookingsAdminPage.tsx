@@ -49,9 +49,9 @@ export default function BookingsAdminPage() {
           <SelectContent>
             <SelectItem value="ALL">전체 상태</SelectItem>
             <SelectItem value="CONFIRMED">예매확정</SelectItem>
-            <SelectItem value="PENDING_PAYMENT">결제대기</SelectItem>
+            <SelectItem value="PENDING">결제대기</SelectItem>
             <SelectItem value="CANCELED">취소완료</SelectItem>
-            <SelectItem value="WATCHED">관람완료</SelectItem>
+            <SelectItem value="EXPIRED">만료</SelectItem>
           </SelectContent>
         </Select>
       </div>
