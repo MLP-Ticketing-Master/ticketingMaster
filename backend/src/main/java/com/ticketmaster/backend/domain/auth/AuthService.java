@@ -33,27 +33,32 @@ public class AuthService {
 	public LoginResponse login(LoginRequest request) {
 		// 1. 이메일로 사용자 조회
 		User user = userRepository.findByEmail(request.getEmail())
-			.orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
+				.orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
 
-		// 2. 비밀번호 일치 여부 확인
+		// 2. 탈퇴한 회원 여부 확인 (deletedAt이 null이 아니면 소프트 딜리트된 유저)
+		if (user.isDeleted()) {
+			throw new BusinessException(ErrorCode.DELETED_USER);
+		}
+
+		// 3. 비밀번호 일치 여부 확인
 		if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
 			throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
 		}
 
-		// 3. Access/Refresh 토큰 생성
+		// 4. Access/Refresh 토큰 생성
 		String accessToken = jwtTokenProvider.generateAccessToken(user.getEmail(), user.getRole().name());
 		String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
 
-		// 4. Redis에 Refresh Token 저장 (Key: "RT:" + 이메일, Value: 토큰값)
+		// 5. Redis에 Refresh Token 저장 (Key: "RT:" + 이메일, Value: 토큰값)
 		// 로그인 시마다 기존 토큰을 덮어씌워 1인 1세션을 유지하거나 보안강화 가능
 		redisTemplate.opsForValue().set(
-			"RT:" + user.getEmail(),
-			refreshToken,
-			14,	// 14일간 유효(JwtTokenProvider 설정과 맞춤)
-			TimeUnit.DAYS
+				"RT:" + user.getEmail(),
+				refreshToken,
+				14,	// 14일간 유효(JwtTokenProvider 설정과 맞춤)
+				TimeUnit.DAYS
 		);
 
-		// 5. 토큰 + 사용자 정보 묶어 응답 (프론트 표시·라우팅용)
+		// 6. 토큰 + 사용자 정보 묶어 응답 (프론트 표시·라우팅용)
 		return LoginResponse.of(user, accessToken, refreshToken);
 	}
 
@@ -80,10 +85,10 @@ public class AuthService {
 		String encodedPassword = passwordEncoder.encode(request.getPassword());
 
 		User user = User.create(
-			request.getEmail(),
-			encodedPassword,
-			request.getNickname(),
-			request.getPhone()
+				request.getEmail(),
+				encodedPassword,
+				request.getNickname(),
+				request.getPhone()
 		);
 
 		// DB 저장
@@ -112,7 +117,12 @@ public class AuthService {
 		// 5. 새로운 Access Token 생성 (Refresh Token은 그대로 유지하거나 같이 갱신 가능)
 		// 보안 유지를 위해 유저 정보를 다시 조회하여 최신 Role 반영
 		User user = userRepository.findByEmail(email)
-			.orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+				.orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+		// 탈퇴한 회원의 경우 토큰 갱신 차단
+		if (user.isDeleted()) {
+			throw new BusinessException(ErrorCode.DELETED_USER);
+		}
 
 		String newAccessToken= jwtTokenProvider.generateAccessToken(user.getEmail(), user.getRole().name());
 
@@ -124,15 +134,15 @@ public class AuthService {
 	@Transactional
 	public void requestPasswordReset(String email) {
 		userRepository.findByEmail(email)
-			.orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+				.orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
 		String resetToken = UUID.randomUUID().toString();
 
 		// Redis에 저장 (Key: "RESET:토큰값", Value: 이메일)
 		redisTemplate.opsForValue().set(
-			"RESET:" + resetToken,
-			email,
-			30, TimeUnit.MINUTES
+				"RESET:" + resetToken,
+				email,
+				30, TimeUnit.MINUTES
 		);
 
 		mailService.sendResetLink(email, resetToken);
@@ -148,7 +158,7 @@ public class AuthService {
 		}
 
 		User user = userRepository.findByEmail(email)
-			.orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+				.orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
 		// 비밀번호 암호화 후 업데이트
 		user.changePassword(passwordEncoder.encode(request.newPassword()));
