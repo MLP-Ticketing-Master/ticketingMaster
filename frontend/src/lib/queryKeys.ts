@@ -36,6 +36,7 @@ export const queryKeys = {
     seatGrades: (eventId: number) =>
       ["admin", "seatGrades", eventId] as const,
     sections: (eventId: number) => ["admin", "sections", eventId] as const,
+    seats: (matchId: number) => ["admin", "seats", matchId] as const,
   },
   queue: {
     // queueToken 을 key 에 포함 — 토큰 만료 후 새 토큰으로 진입 시
