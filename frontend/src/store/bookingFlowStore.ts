@@ -79,11 +79,25 @@ export const useBookingFlowStore = create<BookingFlowState>()(
                 queueNumber: prev.queueNumber,
                 remainingAhead: prev.remainingAhead,
                 estimatedWaitSeconds: prev.estimatedWaitSeconds,
+                allowedAt: prev.allowedAt,
+                entryDeadline: prev.entryDeadline,
               }
             : {}),
         });
       },
-      closeFlow: () => set({ ...initial }),
+      closeFlow: () =>
+        set({
+          // 큐 세션 상태(queueToken / queueNumber / remainingAhead /
+          // estimatedWaitSeconds / allowedAt / entryDeadline)는 보존 —
+          // 백엔드 토큰 TTL 이 살아있는 동안 재진입 시 그대로 재개. 토큰이
+          // 서버상 만료된 경우엔 다음 statusQuery 에서 token error 가 떨어지고
+          // QueueStep 이 clearQueue() 로 정리함
+          open: false,
+          step: "ZONE",
+          sectionId: null,
+          selectedSeats: [],
+          reservedUntil: null,
+        }),
       goToSeat: (sectionId) => set({ step: "SEAT", sectionId }),
       goBackToZone: () => set({ step: "ZONE", sectionId: null }),
       // 결제 단계에서 좌석 다시 선택 — 선택 좌석 비우고 SEAT 단계로 복귀
