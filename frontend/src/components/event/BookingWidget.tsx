@@ -20,13 +20,25 @@ export function BookingWidget({ event, onProceed }: Props) {
   }, [event.matches]);
 
   const [selectedDate, setSelectedDate] = useState<string>(dates[0] ?? "");
+
+  // 초기 선택은 첫 "예매 가능" 매치 — 없으면 첫 매치로 fallback
+  const initialMatchId =
+    event.matches.find((m) => m.bookable ?? m.isBookable)?.matchId ??
+    event.matches[0]?.matchId ??
+    null;
   const [selectedMatchId, setSelectedMatchId] = useState<number | null>(
-    event.matches[0]?.matchId ?? null,
+    initialMatchId,
   );
 
   const matchesOfDate = event.matches.filter(
     (m) => m.matchDate === selectedDate,
   );
+
+  const selectedMatch = event.matches.find(
+    (m) => m.matchId === selectedMatchId,
+  );
+  const canBookSelected =
+    (selectedMatch?.bookable ?? selectedMatch?.isBookable) === true;
 
   // 가격 내림차순 정렬 (VIP → R → S → A 순)
   const sortedGrades = useMemo(
@@ -126,14 +138,14 @@ export function BookingWidget({ event, onProceed }: Props) {
           </div>
         )}
 
-        {/* 예매하기 버튼 */}
+        {/* 예매하기 버튼 — 선택된 회차가 예매 불가면 비활성 */}
         <Button
           size="lg"
-          disabled={!selectedMatchId}
+          disabled={!selectedMatchId || !canBookSelected}
           onClick={() => selectedMatchId && onProceed(selectedMatchId)}
           className="w-full bg-[#054EFD] hover:bg-[#3C76FE] disabled:bg-gray-200 disabled:text-gray-400"
         >
-          예매하기
+          {canBookSelected ? "예매하기" : "예매 불가"}
           <ChevronRight className="ml-1 h-4 w-4" />
         </Button>
       </Card>
