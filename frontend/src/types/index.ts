@@ -1,6 +1,7 @@
 export * from "./common";
 export * from "./auth";
 export * from "./event";
+export * from "./match";
 export * from "./seat";
 export * from "./booking";
 export * from "./team";

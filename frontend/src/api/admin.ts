@@ -1,5 +1,5 @@
 import api from "@/lib/axios";
-import type { Match, SeatGradeCode } from "@/types";
+import type { SeatGradeCode } from "@/types";
 
 export interface AdminDashboardStats {
   totalEvents: number;
@@ -26,12 +26,6 @@ export interface AdminSection {
 /** GET /admin/dashboard */
 export async function getAdminDashboard(): Promise<AdminDashboardStats> {
   const res = await api.get<AdminDashboardStats>("/admin/dashboard");
-  return res.data;
-}
-
-/** GET /admin/matches */
-export async function getAdminMatches(): Promise<Match[]> {
-  const res = await api.get<Match[]>("/admin/matches");
   return res.data;
 }
 
