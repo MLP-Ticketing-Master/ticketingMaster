@@ -31,19 +31,20 @@ export default function BookingsAdminPage() {
   const list = data?.content ?? [];
 
   return (
-    <AdminCard title="예매 관리">
-      <div className="mb-5 flex gap-3">
+    <AdminCard title="예매 관리" headerClassName="mb-4">
+      {/* 검색 + 상태 필터 — 동일한 높이/스타일 */}
+      <div className="mb-6 flex items-stretch gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="예매번호, 고객명, 대회명으로 검색"
-            className="pl-10"
+            className="h-11 rounded-xl border-input pl-11 text-sm"
           />
         </div>
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="!h-11 w-40 rounded-xl border-input text-sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -59,52 +60,70 @@ export default function BookingsAdminPage() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>예매번호</TableHead>
-            <TableHead>고객정보</TableHead>
-            <TableHead>대회</TableHead>
-            <TableHead>회차정보</TableHead>
-            <TableHead>좌석</TableHead>
-            <TableHead>결제</TableHead>
-            <TableHead>상태</TableHead>
-            <TableHead>예매일시</TableHead>
+            <TableHead className="py-3 text-sm font-bold text-gray-700">
+              예매번호
+            </TableHead>
+            <TableHead className="py-3 text-sm font-bold text-gray-700">
+              고객정보
+            </TableHead>
+            <TableHead className="py-3 text-sm font-bold text-gray-700">
+              대회
+            </TableHead>
+            <TableHead className="w-32 py-3 text-sm font-bold text-gray-700">
+              회차정보
+            </TableHead>
+            <TableHead className="w-24 py-3 text-sm font-bold text-gray-700">
+              좌석
+            </TableHead>
+            <TableHead className="w-28 py-3 text-sm font-bold text-gray-700">
+              결제
+            </TableHead>
+            <TableHead className="w-16 py-3 text-sm font-bold text-gray-700">
+              상태
+            </TableHead>
+            <TableHead className="w-28 py-3 text-sm font-bold text-gray-700">
+              예매일시
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {list.map((b) => (
-            <TableRow key={b.id}>
-              <TableCell className="font-medium">{b.bookingNo}</TableCell>
-              <TableCell>
-                <p className="font-semibold">{b.customerName}</p>
-                <p className="text-xs text-muted-foreground">
+            <TableRow key={b.id} className="border-b">
+              <TableCell className="py-5 text-sm font-medium tabular-nums">
+                {b.bookingNo}
+              </TableCell>
+              <TableCell className="py-5">
+                <p className="font-bold">{b.customerName}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
                   {b.customerEmail}
                 </p>
               </TableCell>
-              <TableCell className="text-sm">{b.eventTitle}</TableCell>
-              <TableCell className="text-sm">
+              <TableCell className="py-5 text-sm">{b.eventTitle}</TableCell>
+              <TableCell className="py-5 text-xs leading-relaxed text-muted-foreground">
                 {formatDate(b.startAt)} {formatTime(b.startAt)}
                 <br />- {b.roundLabel}
               </TableCell>
-              <TableCell className="text-xs">
+              <TableCell className="py-5 text-xs leading-relaxed">
                 {b.seatLabels.join(", ")}
               </TableCell>
-              <TableCell>
-                <p className="font-bold">{formatPrice(b.amount)}</p>
-                <p className="text-xs text-muted-foreground">
-                  {b.paymentMethod}
-                </p>
+              <TableCell className="py-5">
+                <p className="font-bold tabular-nums">{formatPrice(b.amount)}</p>
               </TableCell>
-              <TableCell>
+              <TableCell className="py-5">
                 <BookingStatusBadge status={b.status} />
               </TableCell>
-              <TableCell className="text-sm">
-                {formatDate(b.bookedAt, true)}
+              <TableCell className="py-5 text-xs leading-relaxed text-muted-foreground">
+                {formatDate(b.bookedAt)}
+                <br />
+                {formatTime(b.bookedAt)}
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
 
-      <div className="mt-5 flex items-center justify-between">
+      {/* 페이지네이션 */}
+      <div className="mt-6 flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           총 {data?.totalElements ?? 0}건의 예매 내역
         </p>
@@ -121,7 +140,11 @@ export default function BookingsAdminPage() {
               key={i}
               variant={page === i ? "default" : "outline"}
               onClick={() => setPage(i)}
-              className={page === i ? "bg-[#054EFD] hover:bg-[#3C76FE]" : ""}
+              className={
+                page === i
+                  ? "bg-[#054EFD] hover:bg-[#3C76FE]"
+                  : ""
+              }
             >
               {i + 1}
             </Button>

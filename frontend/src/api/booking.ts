@@ -1,5 +1,6 @@
 import api from "@/lib/axios";
 import type {
+  AdminBookingListResponse,
   BookingItem,
   BookingResponse,
   CreateBookingRequest,
@@ -82,17 +83,42 @@ export async function getBookingDetail(id: number): Promise<BookingResponse> {
   return res.data;
 }
 
-/** GET /admin/bookings — 어드민 예매 목록 */
+// 백엔드 AdminBookingListResponse → 프론트 BookingItem 변환
+function toAdminBookingItem(raw: AdminBookingListResponse): BookingItem {
+  return {
+    id: raw.bookingId,
+    bookingNo: raw.bookingNumber,
+    eventTitle: raw.eventTitle,
+    roundLabel: raw.roundLabel ?? "",
+    startAt: raw.matchStartAt,
+    venue: "",
+    seatLabels: raw.seatCodes,
+    amount: raw.totalPrice,
+    status: raw.status,
+    bookedAt: raw.createdAt,
+    customerName: raw.userNickname,
+    customerEmail: raw.userEmail,
+  };
+}
+
+/**
+ * GET /admin/bookings — 어드민 예매 목록
+ * - status=ALL 은 백엔드 enum 에 없으므로 제거 (필터 없음 의미)
+ * - 백엔드는 q(검색) 미지원 — 프론트 input 은 표시만 하고 전송 안 함
+ */
 export async function getAdminBookings(params: {
-  q?: string;
   status?: string;
   page?: number;
+  size?: number;
 }): Promise<PageResponse<BookingItem>> {
-  // status=ALL은 "필터 없음"을 의미하는 프론트 전용 값 — 백엔드 enum에 없으므로 제거
   const { status, ...rest } = params;
   const query = status && status !== "ALL" ? { ...rest, status } : rest;
-  const res = await api.get<PageResponse<BookingItem>>("/admin/bookings", {
-    params: query,
-  });
-  return res.data;
+  const res = await api.get<PageResponse<AdminBookingListResponse>>(
+    "/admin/bookings",
+    { params: query },
+  );
+  return {
+    ...res.data,
+    content: res.data.content.map(toAdminBookingItem),
+  };
 }

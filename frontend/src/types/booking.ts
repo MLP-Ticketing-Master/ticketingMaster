@@ -16,6 +16,23 @@ export interface BookingItem {
   paymentMethod?: string;
 }
 
+/** GET /admin/bookings 응답 요소 (백엔드 AdminBookingListResponse) */
+export interface AdminBookingListResponse {
+  bookingId: number;
+  bookingNumber: string;
+  userId: number;
+  userNickname: string;
+  userEmail: string;
+  eventTitle: string;
+  matchStartAt: string;
+  roundLabel: string | null;
+  seatCodes: string[];
+  seatCount: number;
+  totalPrice: number;
+  status: BookingStatus;
+  createdAt: string;
+}
+
 export interface CreateBookingRequest {
   matchId: number;
   seatIds: number[];
