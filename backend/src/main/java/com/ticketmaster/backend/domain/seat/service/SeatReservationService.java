@@ -1,5 +1,7 @@
 package com.ticketmaster.backend.domain.seat.service;
 
+import com.ticketmaster.backend.domain.booking.entity.Booking;
+import com.ticketmaster.backend.domain.booking.repository.BookingRepository;
 import com.ticketmaster.backend.domain.match.entity.Match;
 import com.ticketmaster.backend.domain.match.repository.MatchRepository;
 import com.ticketmaster.backend.domain.seat.dto.response.SeatReleaseResponse;
@@ -20,7 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -55,6 +59,7 @@ public class SeatReservationService {
 
     private final MatchRepository matchRepository;
     private final SeatRepository seatRepository;
+    private final BookingRepository bookingRepository;
 
     /**
      * @Transactional은 this.메서드()로 부르면 안 먹힘 (Spring 한계)
@@ -159,7 +164,10 @@ public class SeatReservationService {
      *  - 본인 점유 아닌 좌석은 응답에 미포함
      *  - 이미 해제 / 존재하지 않는 좌석도 응답에 미포함
      *  - 빈 리스트여도 200 OK
-     *
+     * <p>
+     * 풀어준 좌석을 참조하는 PENDING booking 도 같은 트랜잭션에서 EXPIRED 로 정리 —
+     * 마이페이지 노출 / uk_booking_seat_match_seat 멱등성 충돌 방지
+     * <p>
      * 해제는 충돌이 거의 발생하지 않으므로 재시도 로직 없이 단일 @Transactional 로 처리
      */
     @Transactional
@@ -174,7 +182,29 @@ public class SeatReservationService {
                 released.add(seat.getId());
             }
         }
+
+        if (!released.isEmpty()) {
+            expirePendingBookingsForReleasedSeats(matchId, userId, released);
+        }
+
         return SeatReleaseResponse.of(released);
+    }
+
+    /**
+     * 풀어준 좌석과 겹치는 PENDING booking 을 EXPIRED 로 전환
+     * - 같은 user/match 의 다른 좌석 조합 PENDING 은 건드리지 않음
+     * - Booking.expire() 가 status 전환 + bookingSeats.clear() (orphanRemoval) 일괄 처리
+     */
+    private void expirePendingBookingsForReleasedSeats(Long matchId, Long userId, List<Long> releasedSeatIds) {
+        Set<Long> releasedSet = new HashSet<>(releasedSeatIds);
+        List<Booking> pendings = bookingRepository.findPendingForIdempotency(userId, matchId);
+        for (Booking booking : pendings) {
+            boolean hasOverlap = booking.getBookingSeats().stream()
+                    .anyMatch(bs -> releasedSet.contains(bs.getSeat().getId()));
+            if (hasOverlap) {
+                booking.expire();
+            }
+        }
     }
 
     // -------- 만료 처리 -----------------------------------------

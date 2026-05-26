@@ -71,8 +71,9 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     Optional<Booking> findDetailByIdForUser(@Param("id") Long id);
 
     /**
-     * 내 예매 목록 — status 필터 + 최신순
-     * status가 null이면 전체 조회
+     * 내 예매 목록 — 사용자 노출용 (CONFIRMED / CANCELED 만)
+     * PENDING / EXPIRED 는 내부 상태로 사용자에게 미노출 (운영자용은 findAllForAdmin 참조)
+     * status 가 null 이면 CONFIRMED + CANCELED 둘 다 반환, 지정 시 해당 상태로 추가 필터
      */
     @Query("""
             SELECT DISTINCT b FROM Booking b
@@ -84,6 +85,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             JOIN FETCH bs.seat s
             JOIN FETCH s.seatGrade
             WHERE b.user.id = :userId
+              AND b.status IN ('CONFIRMED', 'CANCELED')
               AND (:status IS NULL OR b.status = :status)
             ORDER BY b.id DESC
             """)
