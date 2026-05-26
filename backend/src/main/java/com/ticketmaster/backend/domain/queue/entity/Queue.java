@@ -88,4 +88,12 @@ public class Queue extends BaseEntity {
         this.status = QueueStatus.ALLOWED;
         this.allowedAt = allowedAt;
     }
+
+    /**
+     * 대기열 상태를 EXPIRED 로 전환
+     * 결제 완료 후 admission 회수 시 호출 — "결제 완료 = 1회 예매 종료" 원칙 (다음 예매는 다시 대기열)
+     */
+    public void markExpired() {
+        this.status = QueueStatus.EXPIRED;
+    }
 }
