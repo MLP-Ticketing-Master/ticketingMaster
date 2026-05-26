@@ -15,6 +15,7 @@ import SignupPage from "@/pages/auth/SignupPage";
 import SchedulePage from "@/pages/event/SchedulePage";
 import ProfilePage from "@/pages/my/ProfilePage";
 import BookingHistoryPage from "@/pages/my/BookingHistoryPage";
+import BookingDetailPage from "@/pages/my/BookingDetailPage";
 import EditProfilePage from "@/pages/my/EditProfilePage";
 import ChangePasswordPage from "@/pages/my/ChangePasswordPage";
 import DashboardPage from "@/pages/admin/DashboardPage";
@@ -53,6 +54,7 @@ export default function App() {
         <Route path="my" element={<MyPageLayout />}>
           <Route index element={<ProfilePage />} />
           <Route path="bookings" element={<BookingHistoryPage />} />
+          <Route path="bookings/:bookingId" element={<BookingDetailPage />} />
           <Route path="profile" element={<EditProfilePage />} />
           <Route path="password" element={<ChangePasswordPage />} />
         </Route>

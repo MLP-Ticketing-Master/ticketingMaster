@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { BookingItemCard } from "@/components/my/BookingItemCard";
 import { useMyBookings, useCancelBookingMutation } from "@/hooks";
@@ -5,6 +6,7 @@ import { resolveErrorMessage } from "@/lib/error";
 import { toast } from "sonner";
 
 export default function BookingHistoryPage() {
+  const navigate = useNavigate();
   const { data: bookings = [], isLoading, isError } = useMyBookings();
   const cancel = useCancelBookingMutation();
 
@@ -46,7 +48,12 @@ export default function BookingHistoryPage() {
           </p>
         ) : (
           bookings.map((b) => (
-            <BookingItemCard key={b.id} booking={b} onCancel={handleCancel} />
+            <BookingItemCard
+              key={b.id}
+              booking={b}
+              onCancel={handleCancel}
+              onDetail={(id) => navigate(`/my/bookings/${id}`)}
+            />
           ))
         )}
       </div>
