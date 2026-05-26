@@ -1,5 +1,14 @@
 import api from "@/lib/axios";
 import type {
+  AdminSeatBulkCreateRequest,
+  AdminSeatGradeCreateRequest,
+  AdminSeatGradeResponse,
+  AdminSeatGradeUpdateRequest,
+  AdminSeatResponse,
+  AdminSeatUpdateRequest,
+  AdminSectionCreateRequest,
+  AdminSectionResponse,
+  AdminSectionUpdateRequest,
   SeatSectionListResponse,
   SectionSeatList,
   SeatReleaseResult,
@@ -61,4 +70,129 @@ export async function releaseSeats(
     { data: { seatIds } },
   );
   return res.data;
+}
+
+// ── Admin: 좌석 등급 ────────────────────────────────────────────
+
+/** GET /admin/events/{eventId}/seat-grades */
+export async function getAdminSeatGrades(
+  eventId: number,
+): Promise<AdminSeatGradeResponse[]> {
+  const res = await api.get<AdminSeatGradeResponse[]>(
+    `/admin/events/${eventId}/seat-grades`,
+  );
+  return res.data;
+}
+
+/** POST /admin/events/{eventId}/seat-grades */
+export async function createAdminSeatGrade(
+  eventId: number,
+  body: AdminSeatGradeCreateRequest,
+): Promise<AdminSeatGradeResponse> {
+  const res = await api.post<AdminSeatGradeResponse>(
+    `/admin/events/${eventId}/seat-grades`,
+    body,
+  );
+  return res.data;
+}
+
+/** PATCH /admin/seat-grades/{seatGradeId} */
+export async function updateAdminSeatGrade(
+  seatGradeId: number,
+  body: AdminSeatGradeUpdateRequest,
+): Promise<AdminSeatGradeResponse> {
+  const res = await api.patch<AdminSeatGradeResponse>(
+    `/admin/seat-grades/${seatGradeId}`,
+    body,
+  );
+  return res.data;
+}
+
+/** DELETE /admin/seat-grades/{seatGradeId} */
+export async function deleteAdminSeatGrade(
+  seatGradeId: number,
+): Promise<void> {
+  await api.delete(`/admin/seat-grades/${seatGradeId}`);
+}
+
+// ── Admin: 구역 ─────────────────────────────────────────────────
+
+/** GET /admin/events/{eventId}/sections */
+export async function getAdminSections(
+  eventId: number,
+): Promise<AdminSectionResponse[]> {
+  const res = await api.get<AdminSectionResponse[]>(
+    `/admin/events/${eventId}/sections`,
+  );
+  return res.data;
+}
+
+/** POST /admin/events/{eventId}/sections */
+export async function createAdminSection(
+  eventId: number,
+  body: AdminSectionCreateRequest,
+): Promise<AdminSectionResponse> {
+  const res = await api.post<AdminSectionResponse>(
+    `/admin/events/${eventId}/sections`,
+    body,
+  );
+  return res.data;
+}
+
+/** PATCH /admin/sections/{sectionId} */
+export async function updateAdminSection(
+  sectionId: number,
+  body: AdminSectionUpdateRequest,
+): Promise<AdminSectionResponse> {
+  const res = await api.patch<AdminSectionResponse>(
+    `/admin/sections/${sectionId}`,
+    body,
+  );
+  return res.data;
+}
+
+/** DELETE /admin/sections/{sectionId} */
+export async function deleteAdminSection(sectionId: number): Promise<void> {
+  await api.delete(`/admin/sections/${sectionId}`);
+}
+
+// ── Admin: 좌석 ─────────────────────────────────────────────────
+
+/** GET /admin/matches/{matchId}/seats */
+export async function getAdminSeats(
+  matchId: number,
+): Promise<AdminSeatResponse[]> {
+  const res = await api.get<AdminSeatResponse[]>(
+    `/admin/matches/${matchId}/seats`,
+  );
+  return res.data;
+}
+
+/** POST /admin/matches/{matchId}/seats/bulk */
+export async function bulkCreateAdminSeats(
+  matchId: number,
+  body: AdminSeatBulkCreateRequest,
+): Promise<AdminSeatResponse[]> {
+  const res = await api.post<AdminSeatResponse[]>(
+    `/admin/matches/${matchId}/seats/bulk`,
+    body,
+  );
+  return res.data;
+}
+
+/** PATCH /admin/seats/{seatId} */
+export async function updateAdminSeat(
+  seatId: number,
+  body: AdminSeatUpdateRequest,
+): Promise<AdminSeatResponse> {
+  const res = await api.patch<AdminSeatResponse>(
+    `/admin/seats/${seatId}`,
+    body,
+  );
+  return res.data;
+}
+
+/** DELETE /admin/seats/{seatId} */
+export async function deleteAdminSeat(seatId: number): Promise<void> {
+  await api.delete(`/admin/seats/${seatId}`);
 }
