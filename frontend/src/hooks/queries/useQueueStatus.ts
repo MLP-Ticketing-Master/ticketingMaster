@@ -11,7 +11,7 @@ export const useQueueStatus = (
   const setQueueStatus = useBookingFlowStore((s) => s.setQueueStatus);
 
   const query = useQuery({
-    queryKey: queryKeys.queue.status(matchId ?? 0),
+    queryKey: queryKeys.queue.status(matchId ?? 0, queueToken),
     queryFn: () => getQueueStatus(matchId!, queueToken!),
     enabled: !!matchId && !!queueToken,
     refetchInterval: (q) =>
