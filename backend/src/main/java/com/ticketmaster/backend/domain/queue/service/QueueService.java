@@ -5,6 +5,7 @@ import com.ticketmaster.backend.domain.match.repository.MatchRepository;
 import com.ticketmaster.backend.domain.queue.dto.response.QueueEnterResponse;
 import com.ticketmaster.backend.domain.queue.dto.response.QueueStatusResponse;
 import com.ticketmaster.backend.domain.queue.entity.Queue;
+import com.ticketmaster.backend.domain.queue.entity.QueueStatus;
 import com.ticketmaster.backend.domain.queue.repository.QueueRedisRepository;
 import com.ticketmaster.backend.domain.queue.repository.QueueRepository;
 import com.ticketmaster.backend.domain.user.entity.User;
@@ -20,16 +21,17 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 /**
- * 대기열 진입 서비스
+ * 대기열 진입 / 권한 회수 서비스
  * <p>
  * 역할 분담
  * - Redis 동작 : QueueRedisRepository 에 위임
  * - DB  동작 : QueueRepository 에 위임
- * - 이 서비스 : 흐름 (검증 → 토큰 발급 → Redis 등록 → DB 이력 저장)
+ * - 이 서비스 : 진입 흐름 (검증 → 토큰 발급 → Redis 등록 → DB 이력 저장) + 결제 완료 시 admission 회수
  */
 @Slf4j
 @Service
@@ -212,5 +214,30 @@ public class QueueService {
         // 5-3) Sorted Set 에서 빠졌고 allowed 키도 만료 → 권한 만료
         //      (Hash 는 30분 TTL 이라 아직 살아있어서 여기까지 도달)
         return QueueStatusResponse.expired(enteredAt);
+    }
+
+    /**
+     * 결제 완료 시 사용자의 admission 회수
+     * <p>
+     * 원칙: 결제 완료 = 1회 예매 종료. 다음 예매는 다시 대기열부터 → maxTickets 모순 제거 + 공정성 강화
+     * <p>
+     * 동작
+     * - Redis: admission 권한 키 + 토큰 메타 + 사용자 마커 삭제 (즉시 권한 회수)
+     * - DB: 해당 user × match 의 활성 Queue 이력을 EXPIRED 로 일괄 전환 (감사용)
+     * <p>
+     * 호출자: PaymentService.confirm() DB 트랜잭션 성공 직후
+     * 호출자가 try/catch 로 감싸 Redis/DB 실패가 결제 자체에 영향 주지 않도록 처리
+     */
+    @Transactional
+    public void expireUserAdmission(Long matchId, Long userId) {
+        queueRedis.clearUserAdmission(matchId, userId);
+
+        List<Queue> active = queueRepository.findByUser_IdAndMatch_IdAndStatusNot(
+                userId, matchId, QueueStatus.EXPIRED);
+        for (Queue q : active) {
+            q.markExpired();
+        }
+        log.info("[Queue] admission 회수 matchId={} userId={} expired={}",
+                matchId, userId, active.size());
     }
 }

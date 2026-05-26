@@ -14,6 +14,8 @@ import com.ticketmaster.backend.domain.payment.repository.PaymentRepository;
 import com.ticketmaster.backend.domain.payment.toss.TossApiException;
 import com.ticketmaster.backend.domain.payment.toss.TossPaymentResponse;
 import com.ticketmaster.backend.domain.payment.toss.TossPaymentsClient;
+import com.ticketmaster.backend.domain.match.entity.Match;
+import com.ticketmaster.backend.domain.queue.service.QueueService;
 import com.ticketmaster.backend.domain.seat.entity.Seat;
 import com.ticketmaster.backend.domain.seat.entity.SeatStatus;
 import com.ticketmaster.backend.domain.user.entity.User;
@@ -58,6 +60,8 @@ class PaymentServiceTest {
     TossPaymentsClient tossClient;
     @Mock
     PaymentFailureRecorder paymentFailureRecorder;
+    @Mock
+    QueueService queueService;
 
     @InjectMocks
     PaymentService paymentService;
@@ -81,9 +85,13 @@ class PaymentServiceTest {
         BookingSeat bs = BeanUtils.instantiateClass(BookingSeat.class);
         ReflectionTestUtils.setField(bs, "seat", seat);
 
+        Match match = BeanUtils.instantiateClass(Match.class);
+        ReflectionTestUtils.setField(match, "id", 100L);
+
         booking = BeanUtils.instantiateClass(Booking.class);
         ReflectionTestUtils.setField(booking, "id", 10L);
         ReflectionTestUtils.setField(booking, "user", user);
+        ReflectionTestUtils.setField(booking, "match", match);
         ReflectionTestUtils.setField(booking, "status", BookingStatus.PENDING);
         ReflectionTestUtils.setField(booking, "totalPrice", 50000);
         ReflectionTestUtils.setField(booking, "bookingSeats", List.of(bs));

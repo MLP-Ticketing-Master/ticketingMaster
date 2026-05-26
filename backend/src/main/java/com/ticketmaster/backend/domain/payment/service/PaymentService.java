@@ -13,6 +13,7 @@ import com.ticketmaster.backend.domain.payment.repository.PaymentRepository;
 import com.ticketmaster.backend.domain.payment.toss.TossApiException;
 import com.ticketmaster.backend.domain.payment.toss.TossPaymentResponse;
 import com.ticketmaster.backend.domain.payment.toss.TossPaymentsClient;
+import com.ticketmaster.backend.domain.queue.service.QueueService;
 import com.ticketmaster.backend.domain.seat.entity.Seat;
 import com.ticketmaster.backend.domain.seat.entity.SeatStatus;
 import com.ticketmaster.backend.global.exception.BusinessException;
@@ -42,6 +43,7 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final TossPaymentsClient tossClient;
     private final PaymentFailureRecorder paymentFailureRecorder;
+    private final QueueService queueService;
 
     /**
      * 결제 승인 처리
@@ -51,6 +53,7 @@ public class PaymentService {
      * 4) 성공 → DB 트랜잭션 (Booking CONFIRMED + Seat SOLD + Payment SUCCESS)
      * 실패 → Payment FAILED 만 기록
      * 5) DB 트랜잭션 실패 시 토스 cancel API 호출하여 자동 환불 보상
+     * 6) 결제 완료 → admission 회수 (다음 예매는 다시 대기열부터, 회수 실패는 결제 자체엔 영향 없음)
      */
     @Transactional
     public PaymentResponse confirm(PaymentConfirmRequest req, Long userId) {
@@ -102,6 +105,15 @@ public class PaymentService {
             log.error("[Payment] DB 저장 실패 — 토스 환불 보상 시작 paymentKey={}", req.getPaymentKey(), e);
             compensateRefund(req.getPaymentKey());
             throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
+
+        // 결제 완료 = 1회 예매 종료 → admission 회수 (다음 예매는 다시 대기열부터)
+        // 회수 실패는 결제 자체엔 영향 X — TTL 로 자연 만료되므로 로그만 남기고 통과
+        try {
+            queueService.expireUserAdmission(booking.getMatch().getId(), userId);
+        } catch (RuntimeException e) {
+            log.warn("[Payment] admission 회수 실패 — TTL 로 자연 만료 예상 userId={} matchId={}",
+                    userId, booking.getMatch().getId(), e);
         }
 
         log.info("[Payment] 결제 완료 paymentId={} bookingId={}", payment.getId(), booking.getId());

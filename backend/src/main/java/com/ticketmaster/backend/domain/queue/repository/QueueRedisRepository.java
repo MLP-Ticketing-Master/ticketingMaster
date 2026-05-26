@@ -42,6 +42,10 @@ import java.util.*;
  * - ALLOWED 단계 키 (4): session-seconds (10분)
  * 좌석 페이지 머무름 + 점유 클릭까지의 데드라인
  * 키별 개별 TTL 이라 토큰마다 정확히 만료
+ * <p>
+ * 조기 회수
+ * - 결제 완료 시 clearUserAdmission() 으로 사용자별 키 일괄 삭제
+ *   PaymentService.confirm() 성공 직후 호출 — 다음 예매는 다시 대기열부터 진입
  */
 @Repository
 @RequiredArgsConstructor
@@ -258,6 +262,27 @@ public class QueueRedisRepository {
         }
 
         return tokens;
+    }
+
+    /**
+     * 사용자의 admission 토큰 회수 — 결제 완료 후 호출
+     * <p>
+     * 동작
+     * 1) 사용자 인덱스 마커로 토큰 역추적
+     * 2) 토큰 관련 키 전부 삭제 (allowed / Hash / WAITING 잔재)
+     * 3) 마지막에 마커 자체 삭제 → 같은 매치 재진입 시 새 줄서기 가능
+     * <p>
+     * 멱등 — 마커가 없거나 키 일부가 이미 만료돼도 안전하게 통과
+     */
+    public void clearUserAdmission(Long matchId, Long userId) {
+        String userKey = userIndexKey(userId, matchId);
+        String token = redis.opsForValue().get(userKey);
+        if (token != null) {
+            redis.delete(allowedKey(matchId, token));
+            redis.delete(tokenKey(token));
+            redis.opsForZSet().remove(matchKey(matchId), token);
+        }
+        redis.delete(userKey);
     }
 
     // ─── 키 생성 헬퍼 (같은 키 형식을 한 곳에서 만들어서 실수 방지) ───
