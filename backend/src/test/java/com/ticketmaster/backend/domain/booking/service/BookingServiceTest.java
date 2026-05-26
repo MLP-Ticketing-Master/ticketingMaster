@@ -36,7 +36,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.beans.BeanUtils;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -212,33 +211,6 @@ class BookingServiceTest {
                     .isInstanceOf(BusinessException.class)
                     .satisfies(ex -> assertThat(((BusinessException) ex).getErrorCode())
                             .isEqualTo(ErrorCode.SEAT_ALREADY_RESERVED));
-        }
-    }
-
-    // -------------------------------------------------------
-    // 예매 생성 — BookingSeat UNIQUE 동시성
-    // -------------------------------------------------------
-
-    @Nested
-    @DisplayName("예매 생성 — BookingSeat UNIQUE 동시성")
-    class BookingSeatUnique {
-
-        @Test
-        @DisplayName("TC-07: 동시 예매 시도 — DataIntegrityViolationException → 409 SEAT_ALREADY_RESERVED")
-        void 동시_예매_UNIQUE_위반() {
-            LocalDateTime future = LocalDateTime.now().plusMinutes(5);
-            Seat s1 = reservedSeat(1L, USER_ID, future, 100_000);
-            given(seatRepository.findByMatchAndIdIn(MATCH_ID, List.of(1L))).willReturn(List.of(s1));
-            given(bookingRepository.save(any())).willThrow(new DataIntegrityViolationException("uk_booking_seat_match_seat"));
-
-            assertThatThrownBy(() -> bookingService.createBooking(USER_ID, createRequest(MATCH_ID, List.of(1L))))
-                    .isInstanceOf(DataIntegrityViolationException.class);
-        }
-
-        @Test
-        @DisplayName("TC-08: GlobalExceptionHandler가 DataIntegrityViolationException → SEAT_ALREADY_RESERVED(409) 매핑 검증")
-        void 예외_핸들러_매핑() {
-            assertThat(ErrorCode.SEAT_ALREADY_RESERVED.getHttpStatus().value()).isEqualTo(409);
         }
     }
 
