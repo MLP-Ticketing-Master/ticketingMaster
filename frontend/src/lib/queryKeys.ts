@@ -38,6 +38,9 @@ export const queryKeys = {
     sections: (eventId: number) => ["admin", "sections", eventId] as const,
   },
   queue: {
-    status: (matchId: number) => ["queue", "status", matchId] as const,
+    // queueToken 을 key 에 포함 — 토큰 만료 후 새 토큰으로 진입 시
+    // 이전 토큰의 stale error 가 끼어들지 않도록 캐시 슬롯을 분리
+    status: (matchId: number, queueToken: string | null) =>
+      ["queue", "status", matchId, queueToken ?? ""] as const,
   },
 };
