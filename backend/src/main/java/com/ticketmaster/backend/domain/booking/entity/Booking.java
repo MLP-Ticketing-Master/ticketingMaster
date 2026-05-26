@@ -126,8 +126,7 @@ public class Booking extends BaseEntity {
 
     /**
      * 결제 시간 초과 자동 만료 — PENDING → EXPIRED
-     * BookingSeat 도 같이 비워야 같은 좌석으로 다른 user 가 새 booking 시도할 때
-     * uk_booking_seat_match_seat UK 위반이 발생하지 않음
+     * BookingSeat 도 같이 비워 좌석 점유와 예매 기록의 정합성 유지
      * (orphanRemoval = true 이므로 컬렉션 clear 만으로 자식 row 자동 DELETE)
      */
     public void expire() {

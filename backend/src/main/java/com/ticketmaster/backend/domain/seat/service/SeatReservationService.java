@@ -166,7 +166,7 @@ public class SeatReservationService {
      *  - 빈 리스트여도 200 OK
      * <p>
      * 풀어준 좌석을 참조하는 PENDING booking 도 같은 트랜잭션에서 EXPIRED 로 정리 —
-     * 마이페이지 노출 / uk_booking_seat_match_seat 멱등성 충돌 방지
+     * 마이페이지 노출 및 좌석 상태와 예매 기록의 정합성 유지
      * <p>
      * 해제는 충돌이 거의 발생하지 않으므로 재시도 로직 없이 단일 @Transactional 로 처리
      */

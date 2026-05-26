@@ -1,5 +1,6 @@
 package com.ticketmaster.backend.domain.seat.service;
 
+import com.ticketmaster.backend.domain.booking.repository.BookingRepository;
 import com.ticketmaster.backend.domain.event.entity.Event;
 import com.ticketmaster.backend.domain.match.entity.Match;
 import com.ticketmaster.backend.domain.match.repository.MatchRepository;
@@ -41,6 +42,8 @@ class SeatReservationServiceTest {
     private MatchRepository matchRepository;
     @Mock
     private SeatRepository seatRepository;
+    @Mock
+    private BookingRepository bookingRepository;
 
     @InjectMocks
     private SeatReservationService seatReservationService;

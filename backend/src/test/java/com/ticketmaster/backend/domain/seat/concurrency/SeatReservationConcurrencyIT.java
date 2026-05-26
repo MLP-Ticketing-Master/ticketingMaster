@@ -58,11 +58,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  *   - TC-02: 다른 좌석 10명 동시 점유 → 모두 성공
  *   - TC-03: 동일 좌석 20명 동시 점유 → 정확히 1명만 성공 (좌석 중복 0건)
  *   - TC-04: 묶음 점유 부분 충돌 — A=[s1,s2], B=[s2,s3] → 한 명만 성공
- *
- * 미포함
- *   - BookingSeat UNIQUE 위반 → SEAT_ALREADY_RESERVED 변환
- *     : RESERVED→SOLD 처리하는 BookingService 가 아직 없음
- *       BookingService 구현 티켓에서 별도 통합 테스트로 검증 예정
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Testcontainers

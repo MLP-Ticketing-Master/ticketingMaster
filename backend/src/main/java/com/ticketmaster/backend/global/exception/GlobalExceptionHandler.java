@@ -2,7 +2,6 @@ package com.ticketmaster.backend.global.exception;
 
 import com.ticketmaster.backend.domain.payment.toss.TossApiException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
@@ -88,19 +87,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 6) DB UNIQUE 위반 — BookingSeat (match_id, seat_id) 중복 예매 차단
-     * BookingService 에서 BookingSeat 저장 시 발생 → SEAT_ALREADY_RESERVED (409)
-     */
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException e) {
-        log.warn("[DataIntegrityViolationException] {}", e.getMessage());
-        return ResponseEntity
-                .status(ErrorCode.SEAT_ALREADY_RESERVED.getHttpStatus())
-                .body(ErrorResponse.of(ErrorCode.SEAT_ALREADY_RESERVED));
-    }
-
-    /**
-     * 7) 토스 API 호출 자체 실패 (네트워크 / 인증 / 토스 서버 오류)
+     * 6) 토스 API 호출 자체 실패 (네트워크 / 인증 / 토스 서버 오류)
      */
     @ExceptionHandler(TossApiException.class)
     public ResponseEntity<ErrorResponse> handleTossApi(TossApiException e) {
@@ -111,7 +98,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 8) 예상하지 못한 서버 예외
+     * 7) 예상하지 못한 서버 예외
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnknown(Exception e) {
