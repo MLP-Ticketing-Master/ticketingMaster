@@ -63,7 +63,7 @@ export function PaymentStep({
           localStorage.setItem("lastBookingId", String(booking.bookingId));
 
           const payment = tossPaymentsRef.current!.payment({
-            customerKey: String(user.id),
+            customerKey: `user-${user.id}`,
           });
 
           try {
