@@ -228,27 +228,35 @@ export function MatchFormDialog({ open, onOpenChange, matchId }: Props) {
             {/* ── 대회 / 회차 ── */}
             <Section title="기본 정보">
               <Field label="대회 *" htmlFor="m-event">
-                <Select
-                  value={form.eventId}
-                  onValueChange={(v) => {
-                    update("eventId", v);
-                    // 대회 바뀌면 팀 sportType 매칭이 깨질 수 있어 팀 초기화
-                    update("homeTeamId", NONE);
-                    update("awayTeamId", NONE);
-                  }}
-                  disabled={isEdit}
-                >
-                  <SelectTrigger id="m-event">
-                    <SelectValue placeholder="대회 선택" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {events.map((e) => (
-                      <SelectItem key={e.eventId} value={String(e.eventId)}>
-                        {e.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {isEdit ? (
+                  <Input
+                    id="m-event"
+                    value={selectedEvent?.title ?? ""}
+                    disabled
+                    readOnly
+                  />
+                ) : (
+                  <Select
+                    value={form.eventId}
+                    onValueChange={(v) => {
+                      update("eventId", v);
+                      // 대회 바뀌면 팀 sportType 매칭이 깨질 수 있어 팀 초기화
+                      update("homeTeamId", NONE);
+                      update("awayTeamId", NONE);
+                    }}
+                  >
+                    <SelectTrigger id="m-event">
+                      <SelectValue placeholder="대회 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {events.map((e) => (
+                        <SelectItem key={e.eventId} value={String(e.eventId)}>
+                          {e.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </Field>
               <Field label="회차 라벨 *" htmlFor="m-round">
                 <Input
