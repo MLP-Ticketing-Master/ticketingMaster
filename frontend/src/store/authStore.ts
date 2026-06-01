@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { User } from "@/types";
+import { useBookingFlowStore } from "./bookingFlowStore";
 
 interface AuthState {
   user: User | null;
@@ -37,6 +38,8 @@ export const useAuthStore = create<AuthState>()(
        * refreshToken 옵셔널 (호출자가 응답에 포함된 경우만 전달)
        */
       setAuth: (user, accessToken, refreshToken) => {
+        // 계정 전환 시 이전 사용자의 예매/대기열 흐름 잔재 제거
+        useBookingFlowStore.getState().reset();
         localStorage.setItem("accessToken", accessToken);
         set((prev) => ({
           user,
@@ -61,6 +64,8 @@ export const useAuthStore = create<AuthState>()(
        * 인증 정보 삭제 — 로그아웃 / 갱신 실패 시 호출
        */
       clear: () => {
+        // 로그아웃 시 예매/대기열 흐름도 초기화 — 다음 사용자에게 이어지지 않도록
+        useBookingFlowStore.getState().reset();
         localStorage.removeItem("accessToken");
         set({
           user: null,

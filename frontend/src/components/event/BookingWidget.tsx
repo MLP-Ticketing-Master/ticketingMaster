@@ -19,15 +19,19 @@ export function BookingWidget({ event, onProceed }: Props) {
     return Array.from(set).sort();
   }, [event.matches]);
 
-  const [selectedDate, setSelectedDate] = useState<string>(dates[0] ?? "");
-
   // 초기 선택은 첫 "예매 가능" 매치 — 없으면 첫 매치로 fallback
-  const initialMatchId =
-    event.matches.find((m) => m.bookable ?? m.isBookable)?.matchId ??
-    event.matches[0]?.matchId ??
+  // 날짜도 그 매치 기준으로 맞춤 — 날짜/회차가 어긋나 예매불가 회차인데
+  // 버튼이 활성화되는 버그 방지
+  const initialMatch =
+    event.matches.find((m) => m.bookable ?? m.isBookable) ??
+    event.matches[0] ??
     null;
+
+  const [selectedDate, setSelectedDate] = useState<string>(
+    initialMatch?.matchDate ?? dates[0] ?? "",
+  );
   const [selectedMatchId, setSelectedMatchId] = useState<number | null>(
-    initialMatchId,
+    initialMatch?.matchId ?? null,
   );
 
   const matchesOfDate = event.matches.filter(
@@ -77,8 +81,13 @@ export function BookingWidget({ event, onProceed }: Props) {
                   type="button"
                   onClick={() => {
                     setSelectedDate(d);
-                    const first = event.matches.find((m) => m.matchDate === d);
-                    setSelectedMatchId(first?.matchId ?? null);
+                    // 해당 날짜의 예매 가능한 회차 우선 — 없으면 첫 회차
+                    const firstOfDate =
+                      event.matches.find(
+                        (m) =>
+                          m.matchDate === d && (m.bookable ?? m.isBookable),
+                      ) ?? event.matches.find((m) => m.matchDate === d);
+                    setSelectedMatchId(firstOfDate?.matchId ?? null);
                   }}
                   className={cn(
                     "rounded-lg border px-4 py-2 text-sm font-medium transition-colors",
