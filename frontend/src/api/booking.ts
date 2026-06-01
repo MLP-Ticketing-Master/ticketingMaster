@@ -83,6 +83,22 @@ export async function getBookingDetail(id: number): Promise<BookingResponse> {
   return res.data;
 }
 
+/**
+ * GET /bookings/me/pending?matchId — 본인 매치별 미완료(PENDING) 예매 조회
+ * 결제 안 하고 이탈한 뒤 재진입 시 결제 단계로 복귀시키기 위함
+ * PENDING 있으면 200 + BookingResponse, 없으면 204 → null
+ */
+export async function getMyPendingBooking(
+  matchId: number,
+): Promise<BookingResponse | null> {
+  const res = await api.get<BookingResponse>("/bookings/me/pending", {
+    params: { matchId },
+  });
+  // 204 No Content (axios 는 빈 body 를 "" 로 반환) → PENDING 없음
+  if (res.status === 204 || !res.data) return null;
+  return res.data;
+}
+
 // 백엔드 AdminBookingListResponse → 프론트 BookingItem 변환
 function toAdminBookingItem(raw: AdminBookingListResponse): BookingItem {
   return {
