@@ -29,8 +29,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -140,6 +142,20 @@ public class BookingService {
     public Page<BookingSummaryResponse> getMyBookings(Long userId, BookingStatus status, Pageable pageable) {
         return bookingRepository.findMyBookings(userId, status, pageable)
                 .map(BookingSummaryResponse::from);
+    }
+
+    // -------------------------------------------------------
+    // 본인 미완료 예매 조회 — "이어서 결제" 흐름용
+    // -------------------------------------------------------
+
+    /**
+     * 본인의 매치별 PENDING booking 1건 — 결제 페이지로 자동 복귀할 때 사용
+     * 여러 PENDING 가능 시 createdAt 최신 1건 반환. 없으면 Optional.empty
+     */
+    public Optional<BookingResponse> getMyPending(Long userId, Long matchId) {
+        return bookingRepository.findPendingForIdempotency(userId, matchId).stream()
+                .max(Comparator.comparing(Booking::getCreatedAt))
+                .map(BookingResponse::from);
     }
 
     // -------------------------------------------------------
