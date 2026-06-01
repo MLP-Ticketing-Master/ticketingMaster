@@ -59,4 +59,6 @@ export interface BookingResponse {
   totalPrice: number;
   status: BookingStatus;
   createdAt: string;
+  /** 좌석 점유 만료 시각 — PENDING 일 때만 값 존재. 결제 단계 복귀 시 타이머 복원용 */
+  reservedUntil: string | null;
 }

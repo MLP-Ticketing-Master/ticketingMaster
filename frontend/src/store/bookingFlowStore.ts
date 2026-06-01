@@ -23,6 +23,10 @@ interface BookingFlowState {
   // 좌석 점유 만료 시각 — reserve 응답의 reservedUntil 저장
   reservedUntil: string | null;
 
+  // 생성된 PENDING booking — 결제 단계에서 createBooking 재호출 방지 + 이어서 결제용
+  bookingId: number | null;
+  bookingNumber: string | null;
+
   openFlow: (params: { eventId: number; matchId: number }) => void;
   closeFlow: () => void;
   goToSeat: (sectionId: number) => void;
@@ -41,6 +45,19 @@ interface BookingFlowState {
 
   // 좌석 점유 만료 시각 setter
   setReservedUntil: (until: string | null) => void;
+
+  // 생성된 booking 식별자 저장 (createBooking 응답)
+  setBooking: (bookingId: number, bookingNumber: string) => void;
+
+  // 미완료 예매 복원 — 곧장 결제 단계로 진입시키기 위함
+  restorePending: (params: {
+    eventId: number;
+    matchId: number;
+    bookingId: number;
+    bookingNumber: string;
+    reservedUntil: string | null;
+    selectedSeats: Seat[];
+  }) => void;
 }
 
 const initial = {
@@ -57,6 +74,8 @@ const initial = {
   allowedAt: null,
   entryDeadline: null,
   reservedUntil: null,
+  bookingId: null,
+  bookingNumber: null,
 };
 
 export const useBookingFlowStore = create<BookingFlowState>()(
@@ -97,11 +116,20 @@ export const useBookingFlowStore = create<BookingFlowState>()(
           sectionId: null,
           selectedSeats: [],
           reservedUntil: null,
+          bookingId: null,
+          bookingNumber: null,
         }),
       goToSeat: (sectionId) => set({ step: "SEAT", sectionId }),
       goBackToZone: () => set({ step: "ZONE", sectionId: null }),
       // 결제 단계에서 좌석 다시 선택 — 선택 좌석 비우고 SEAT 단계로 복귀
-      goBackToSeatStep: () => set({ step: "SEAT", selectedSeats: [] }),
+      // 기존 PENDING booking 은 해제(release)로 EXPIRED 처리되므로 식별자도 비움
+      goBackToSeatStep: () =>
+        set({
+          step: "SEAT",
+          selectedSeats: [],
+          bookingId: null,
+          bookingNumber: null,
+        }),
       // 대기열 통과 → 좌석 선택 단계 진입
       goToZone: () => set({ step: "ZONE", sectionId: null }),
       goToQueue: () => set({ step: "QUEUE" }),
@@ -152,6 +180,30 @@ export const useBookingFlowStore = create<BookingFlowState>()(
         }),
 
       setReservedUntil: (until) => set({ reservedUntil: until }),
+
+      setBooking: (bookingId, bookingNumber) =>
+        set({ bookingId, bookingNumber }),
+
+      // 미완료 예매 복원 — 큐 상태는 비우고 곧장 PAYMENT 단계로 진입
+      restorePending: ({
+        eventId,
+        matchId,
+        bookingId,
+        bookingNumber,
+        reservedUntil,
+        selectedSeats,
+      }) =>
+        set({
+          ...initial,
+          open: true,
+          step: "PAYMENT",
+          eventId,
+          matchId,
+          bookingId,
+          bookingNumber,
+          reservedUntil,
+          selectedSeats,
+        }),
     }),
     {
       name: "booking-flow",
@@ -169,6 +221,8 @@ export const useBookingFlowStore = create<BookingFlowState>()(
         allowedAt: state.allowedAt,
         entryDeadline: state.entryDeadline,
         reservedUntil: state.reservedUntil,
+        bookingId: state.bookingId,
+        bookingNumber: state.bookingNumber,
       }),
     },
   ),

@@ -1,9 +1,10 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useRef } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { BookingWidget } from "@/components/event/BookingWidget";
 import { EventInfo } from "@/components/event/EventInfo";
-import { useEventDetail } from "@/hooks";
-import { useAuthStore, useBookingFlowStore } from "@/store";
+import { useEventDetail, useResumeOrStartBooking } from "@/hooks";
+import { useAuthStore } from "@/store";
 import { SPORT_LABEL } from "@/lib/constants";
 import { resolveEventImage } from "@/lib/eventImages";
 import { Badge } from "@/components/ui/badge";
@@ -13,8 +14,22 @@ export default function EventDetailPage() {
   const navigate = useNavigate();
   const eventId = Number(id);
   const { data: event, isLoading, isError } = useEventDetail(eventId);
-  const openFlow = useBookingFlowStore((s) => s.openFlow);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated());
+  const resumeOrStart = useResumeOrStartBooking();
+
+  // 결제 실패 페이지 [다시 시도] 진입 — ?resumeBooking=1&matchId=X 로 들어오면 자동 복귀
+  const [searchParams, setSearchParams] = useSearchParams();
+  const resumeHandledRef = useRef(false);
+  useEffect(() => {
+    if (resumeHandledRef.current) return;
+    if (searchParams.get("resumeBooking") !== "1") return;
+    const mid = Number(searchParams.get("matchId"));
+    if (!isAuthenticated || !mid) return;
+    resumeHandledRef.current = true;
+    void resumeOrStart(eventId, mid);
+    // 쿼리 정리 — 뒤로가기/리렌더 시 재실행 방지
+    setSearchParams({}, { replace: true });
+  }, [searchParams, isAuthenticated, eventId, resumeOrStart, setSearchParams]);
 
   if (isLoading) {
     return (
@@ -90,7 +105,8 @@ export default function EventDetailPage() {
                 toast.error("현재 예매 불가능한 회차입니다.");
                 return;
               }
-              openFlow({ eventId, matchId });
+              // 미완료 예매 있으면 결제 단계 복귀, 없으면 신규(대기열부터)
+              void resumeOrStart(eventId, matchId);
             }}
           />
         </div>

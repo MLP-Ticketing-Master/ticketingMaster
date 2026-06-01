@@ -1,8 +1,18 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { AlertCircle, Timer, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useBookingFlowStore } from "@/store";
 import {
   useEventDetail,
@@ -84,21 +94,28 @@ export function BookingDialog() {
   // 결제 단계에서 점유 해제가 필요한지 — 이미 reserve 된 상태
   const shouldReleaseOnExit = step === "PAYMENT" && selectedSeats.length > 0;
 
-  // 결제 단계에서 닫기 — 점유 좌석을 해제하고 종료
-  const handleClose = () => {
+  // 결제 단계에서 닫으려 하면 확인 다이얼로그 노출 — 그 외 단계는 바로 닫기
+  const [confirmAbortOpen, setConfirmAbortOpen] = useState(false);
+  const requestClose = () => {
     if (shouldReleaseOnExit) {
-      releaseSeats.mutate(
-        selectedSeats.map((s) => s.seatId),
-        {
-          onSettled: () => {
-            setReservedUntil(null);
-            closeFlow();
-          },
-        },
-      );
+      setConfirmAbortOpen(true);
     } else {
       closeFlow();
     }
+  };
+
+  // 확인 후 실제 중단 — 점유 좌석 해제(백엔드가 PENDING 도 EXPIRED 처리) 후 종료
+  const confirmAbort = () => {
+    setConfirmAbortOpen(false);
+    releaseSeats.mutate(
+      selectedSeats.map((s) => s.seatId),
+      {
+        onSettled: () => {
+          setReservedUntil(null);
+          closeFlow();
+        },
+      },
+    );
   };
 
   // 결제 단계에서 좌석 다시 선택 — 점유 해제 후 SEAT 단계로 복귀
@@ -121,7 +138,8 @@ export function BookingDialog() {
   if (!event || !match) return null;
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
+    <>
+    <Dialog open={open} onOpenChange={(v) => !v && requestClose()}>
       <DialogContent
         showCloseButton={false}
         className="!max-w-6xl gap-0 overflow-hidden p-0"
@@ -155,7 +173,7 @@ export function BookingDialog() {
 
             <button
               type="button"
-              onClick={handleClose}
+              onClick={requestClose}
               className="text-muted-foreground hover:text-foreground"
               aria-label="닫기"
             >
@@ -173,7 +191,7 @@ export function BookingDialog() {
         >
           <div className="max-h-[85vh] min-h-[60vh] overflow-y-auto">
             {isExpired ? (
-              <ExpiredView onClose={handleClose} />
+              <ExpiredView onClose={closeFlow} />
             ) : (
               <>
                 {step === "QUEUE" && <QueueStep />}
@@ -184,6 +202,8 @@ export function BookingDialog() {
                     selectedSeats={selectedSeats}
                     total={total}
                     matchId={matchId}
+                    eventTitle={event.title}
+                    grades={grades}
                     onBack={handleBackToSeat}
                     isReleasing={releaseSeats.isPending}
                   />
@@ -208,6 +228,34 @@ export function BookingDialog() {
         </div>
       </DialogContent>
     </Dialog>
+
+    <AlertDialog open={confirmAbortOpen} onOpenChange={setConfirmAbortOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>예매를 중단하시겠어요?</AlertDialogTitle>
+          <AlertDialogDescription className="space-y-2">
+            <span className="block">선택하신 좌석이 즉시 해제됩니다.</span>
+            <span className="block">
+              취소 후에는 대기열에 다시 입장해야 하며, 동일한 좌석을 다시
+              선택하지 못할 수 있습니다.
+            </span>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={releaseSeats.isPending}>
+            계속 결제하기
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={confirmAbort}
+            disabled={releaseSeats.isPending}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            예매 중단
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
 
