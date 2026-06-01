@@ -131,20 +131,19 @@ class QueueAccessFilterTest {
     }
 
     @Test
-    @DisplayName("TC-06: 차단 응답 JSON 형식 — code/message 필드 (ErrorResponse 와 동일)")
-    void 응답_형식() throws Exception {
-        // given — DELETE 메서드여도 동일 포맷 응답
-        ErrorCode expected = ErrorCode.QUEUE_NOT_PASSED;
-        MockHttpServletRequest request = new MockHttpServletRequest("DELETE", "/matches/2/seats/reserve");
-        willThrow(new BusinessException(expected))
-                .given(queueTokenValidator).validateAllowed(anyLong(), any());
+    @DisplayName("TC-06: DELETE /seats/reserve → 큐 검증 스킵 + 통과 (토큰 없어도 release 가능)")
+    void 좌석_해제는_큐_검증_스킵() throws Exception {
+        // given — Queue-Token 헤더 없는 release 요청
+        MockHttpServletRequest request = new MockHttpServletRequest("DELETE", "/matches/1/seats/reserve");
         MockFilterChain chain = new MockFilterChain();
 
         // when
         filter.doFilter(request, response, chain);
 
         // then
-        assertErrorResponse(expected);
+        verify(queueTokenValidator, never()).validateAllowed(any(), any());
+        assertThat(chain.getRequest()).isSameAs(request);
+        assertThat(response.getStatus()).isEqualTo(200);
     }
 
     /**

@@ -46,9 +46,11 @@ public class QueueAccessFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
 
-        // 대상 URL 이 아니면 검증 없이 다음 필터로
+        // 대상 URL 이 아니거나, 좌석 해제(DELETE) 요청이면 큐 검증 스킵
+        // release 는 본인 점유 좌석을 돌려주는 행위라 시스템 보호 관점에서 큐 통과 요구 불필요
+        // 본인 점유 검증은 SeatReservationService.release() 내부에서 처리
         Matcher matcher = MATCH_ID_PATTERN.matcher(request.getRequestURI());
-        if (!matcher.matches()) {
+        if (!matcher.matches() || "DELETE".equalsIgnoreCase(request.getMethod())) {
             chain.doFilter(request, response);
             return;
         }
