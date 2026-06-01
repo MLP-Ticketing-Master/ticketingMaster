@@ -459,6 +459,70 @@ class BookingServiceTest {
     }
 
     // -------------------------------------------------------
+    // 본인 미완료 예매 조회 — getMyPending
+    // -------------------------------------------------------
+
+    @Nested
+    @DisplayName("본인 미완료 예매 조회 — getMyPending")
+    class GetMyPending {
+
+        @Test
+        @DisplayName("TC-11: PENDING 1건 있으면 BookingResponse 반환 (reservedUntil 포함)")
+        void PENDING_있으면_반환() {
+            // given
+            LocalDateTime reservedUntil = LocalDateTime.now().plusMinutes(5);
+            Seat s1 = reservedSeat(1L, USER_ID, reservedUntil, 100_000);
+            Booking pending = pendingBookingWithSeat(50L, user, match, s1, 100_000);
+            given(bookingRepository.findPendingForIdempotency(USER_ID, MATCH_ID))
+                    .willReturn(List.of(pending));
+
+            // when
+            Optional<BookingResponse> response = bookingService.getMyPending(USER_ID, MATCH_ID);
+
+            // then
+            assertThat(response).isPresent();
+            assertThat(response.get().getBookingId()).isEqualTo(50L);
+            assertThat(response.get().getReservedUntil()).isEqualTo(reservedUntil);
+        }
+
+        @Test
+        @DisplayName("TC-12: PENDING 여러 개 → createdAt 최신 1건 반환")
+        void 여러_PENDING_중_최신() {
+            // given
+            LocalDateTime now = LocalDateTime.now();
+            Seat s1 = reservedSeat(1L, USER_ID, now.plusMinutes(3), 100_000);
+            Seat s2 = reservedSeat(2L, USER_ID, now.plusMinutes(5), 100_000);
+            Booking older = pendingBookingWithSeat(50L, user, match, s1, 100_000);
+            Booking newer = pendingBookingWithSeat(51L, user, match, s2, 100_000);
+            ReflectionTestUtils.setField(older, "createdAt", now.minusMinutes(5));
+            ReflectionTestUtils.setField(newer, "createdAt", now.minusMinutes(1));
+            given(bookingRepository.findPendingForIdempotency(USER_ID, MATCH_ID))
+                    .willReturn(List.of(older, newer));
+
+            // when
+            Optional<BookingResponse> response = bookingService.getMyPending(USER_ID, MATCH_ID);
+
+            // then
+            assertThat(response).isPresent();
+            assertThat(response.get().getBookingId()).isEqualTo(51L);
+        }
+
+        @Test
+        @DisplayName("TC-13: PENDING 없으면 Optional.empty")
+        void PENDING_없음() {
+            // given
+            given(bookingRepository.findPendingForIdempotency(USER_ID, MATCH_ID))
+                    .willReturn(List.of());
+
+            // when
+            Optional<BookingResponse> response = bookingService.getMyPending(USER_ID, MATCH_ID);
+
+            // then
+            assertThat(response).isEmpty();
+        }
+    }
+
+    // -------------------------------------------------------
     // 헬퍼
     // -------------------------------------------------------
 

@@ -78,6 +78,22 @@ public class BookingController {
     }
 
     /**
+     * 본인 매치별 미완료 예매 조회 (GET /bookings/me/pending?matchId=X)
+     * 매치 페이지 진입 시 호출 — PENDING 있으면 결제 단계로 자동 복귀시키는 용도
+     * 있으면 200 + BookingResponse, 없으면 204 No Content
+     */
+    @GetMapping("/me/pending")
+    public ResponseEntity<BookingResponse> getMyPending(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam Long matchId
+    ) {
+        Long userId = userDetails.getUser().getId();
+        return bookingService.getMyPending(userId, matchId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
+    }
+
+    /**
      * 예매 취소 (POST /bookings/{bookingId}/cancel)
      * JWT 인증 필수 (ROLE_USER)
      */

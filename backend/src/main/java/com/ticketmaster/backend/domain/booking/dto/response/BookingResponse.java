@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -29,10 +30,19 @@ public class BookingResponse {
 
     private LocalDateTime createdAt;
 
+    /** 좌석 점유 만료 시각 — booking 의 좌석들 중 가장 빠른 reservedUntil. PENDING 외 상태에선 null */
+    private LocalDateTime reservedUntil;
+
     public static BookingResponse from(Booking booking) {
         List<SeatInfo> seatInfos = booking.getBookingSeats().stream()
                 .map(SeatInfo::from)
                 .toList();
+
+        LocalDateTime reservedUntil = booking.getBookingSeats().stream()
+                .map(bs -> bs.getSeat().getReservedUntil())
+                .filter(Objects::nonNull)
+                .min(LocalDateTime::compareTo)
+                .orElse(null);
 
         return new BookingResponse(
                 booking.getId(),
@@ -41,7 +51,8 @@ public class BookingResponse {
                 seatInfos,
                 booking.getTotalPrice(),
                 booking.getStatus(),
-                booking.getCreatedAt()
+                booking.getCreatedAt(),
+                reservedUntil
         );
     }
 
