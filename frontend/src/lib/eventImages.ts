@@ -7,25 +7,31 @@ import valorantImg from "@/assets/발로란트.png";
 import overwatchImg from "@/assets/오버워치.png";
 import tftImg from "@/assets/롤토체스.png";
 import pubgImg from "@/assets/배그.png";
+import lckThumbImg from "@/assets/LCKthumb.png";
+import lolThumbImg from "@/assets/LOLthumb.png";
+import valorantThumbImg from "@/assets/VALthumb.png";
+import overwatchThumbImg from "@/assets/WATCHthumb.png";
+import tftThumbImg from "@/assets/TFTthumb.png";
+import pubgThumbImg from "@/assets/PUBGthumb.png";
 
 const IMAGE_MAP: Record<string, string> = {
   // LCK 결승전
-  "lck_thumb.png": lckImg,
+  "lck_thumb.png": lckThumbImg,
   "lck_detail.png": lckImg,
   // LOL 챔피언스
-  "lol_champions_thumb.png": lolImg,
+  "lol_champions_thumb.png": lolThumbImg,
   "lol_champions_detail.png": lolImg,
   // 발로란트
-  "valorant_thumb.png": valorantImg,
+  "valorant_thumb.png": valorantThumbImg,
   "valorant_detail.png": valorantImg,
   // 오버워치
-  "overwatch_thumb.png": overwatchImg,
+  "overwatch_thumb.png": overwatchThumbImg,
   "overwatch_detail.png": overwatchImg,
   // TFT / 롤토체스
-  "tft_thumb.png": tftImg,
+  "tft_thumb.png": tftThumbImg,
   "tft_detail.png": tftImg,
   // 배그
-  "pubg_thumb.png": pubgImg,
+  "pubg_thumb.png": pubgThumbImg,
   "pubg_detail.png": pubgImg,
 };
 
