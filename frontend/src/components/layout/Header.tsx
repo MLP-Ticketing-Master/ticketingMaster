@@ -24,7 +24,7 @@ import { useState } from "react";
 
 const NAV = [
   { to: "/", label: "홈", end: true },
-  { to: "/events", label: "대회 일정" },
+  { to: "/events", label: "대회 일정", end: true },
   { to: "/promotions", label: "이벤트" },
 ];
 
@@ -71,7 +71,7 @@ export function Header() {
                 className={({ isActive }) =>
                   cn(
                     "whitespace-nowrap transition-colors hover:text-[#1C5EFD]",
-                    isActive ? "text-muted-foreground" : "text-muted-foreground",
+                    isActive ? "text-foreground" : "text-muted-foreground",
                   )
                 }
               >
