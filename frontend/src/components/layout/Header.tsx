@@ -71,7 +71,7 @@ export function Header() {
                 className={({ isActive }) =>
                   cn(
                     "whitespace-nowrap transition-colors hover:text-[#1C5EFD]",
-                    isActive ? "text-foreground" : "text-muted-foreground",
+                    isActive ? "text-muted-foreground" : "text-muted-foreground",
                   )
                 }
               >
