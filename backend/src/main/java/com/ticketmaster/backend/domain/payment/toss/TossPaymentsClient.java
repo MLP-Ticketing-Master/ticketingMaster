@@ -32,11 +32,19 @@ public class TossPaymentsClient {
     @Value("${toss.secret-key}")
     private String secretKey;
 
+    // 부하테스트 mock 모드 - true 면 실제 api 호출 없이 가짜 응답 반환
+    @Value("${toss.mock-mode:false}")
+    private boolean mockMode;
+
     /**
      * 결제 승인 요청 — 토스 위젯에서 받은 paymentKey 로 실제 결제 확정
      * 실패 시 TossApiException throw
      */
     public TossPaymentResponse confirm(String paymentKey, String orderId, int amount) {
+        // mock 모드 - 실제 토스 호출 없이 가짜 성공 응답
+        if (mockMode) {
+            return TossPaymentResponse.mock(paymentKey, orderId, amount, "DONE", "카드");
+        }
         String url = baseUrl + CONFIRM_PATH;
         Map<String, Object> body = Map.of(
                 "paymentKey", paymentKey,
@@ -69,6 +77,10 @@ public class TossPaymentsClient {
      * 실패 시 TossApiException throw
      */
     public TossPaymentResponse cancel(String paymentKey, String cancelReason) {
+        // mock 모드 - 즉시 가짜 취소 응답
+        if (mockMode) {
+            return TossPaymentResponse.mock(paymentKey, "order-mock", 0, "CANCELED", "카드");
+        }
         String url = baseUrl + String.format(CANCEL_PATH, paymentKey);
         Map<String, Object> body = Map.of("cancelReason", cancelReason);
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, buildHeaders());
