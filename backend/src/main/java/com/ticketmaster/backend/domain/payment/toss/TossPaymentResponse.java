@@ -23,4 +23,18 @@ public class TossPaymentResponse {
     private int totalAmount;
     // 토스 응답은 ISO-8601 with offset (예: 2026-05-22T20:28:03+09:00) — OffsetDateTime 으로 받아야 파싱 가능
     private OffsetDateTime approvedAt;
+
+    // 부하테스트 mock 응답용 정적 팩토리
+    public static TossPaymentResponse mock(String paymentKey, String orderId,
+                                           int amount, String status, String method) {
+        TossPaymentResponse res = new TossPaymentResponse();
+        res.paymentKey = paymentKey;
+        res.orderId = orderId;
+        res.orderName = "loadtest-order";
+        res.status = status;
+        res.method = method;
+        res.totalAmount = amount;
+        res.approvedAt = OffsetDateTime.now();
+        return res;
+    }
 }
