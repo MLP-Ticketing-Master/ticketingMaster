@@ -24,7 +24,7 @@ import { useState } from "react";
 
 const NAV = [
   { to: "/", label: "홈", end: true },
-  { to: "/events", label: "대회 일정" },
+  { to: "/events", label: "대회 일정", end: true },
   { to: "/promotions", label: "이벤트" },
 ];
 
