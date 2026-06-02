@@ -1,92 +1,86 @@
-import { Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useEventFilterStore } from "@/store";
-import backgroundImage from "@/assets/background.png"
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+
+import banner1 from "@/assets/LCKbanner.png";
+import banner2 from "@/assets/VALbanner.png";
+import banner3 from "@/assets/PUBGbanner.png";
+import banner4 from "@/assets/WATCHbanner.png";
+
+const banners = [
+  {image:banner1,
+    link: "/events/3952",
+   },
+  {image:banner2,
+    link: "/events/3954",
+   },
+  {image:banner3,
+    link: "/events/3957",
+   },
+  {image:banner4,
+    link: "/events/3955",
+   },
+  ];
 
 export function HeroSection() {
-  const keyword = useEventFilterStore((s) => s.keyword);
-  const setKeyword = useEventFilterStore((s) => s.setKeyword);
-  
+  const [current, setCurrent] = useState(0);
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % banners.length);
+    }, 10000); // 10초
+
+    return () => clearInterval(timer);
+  }, []);
 
   return (
-    <section className="relative px-6 py-28 overflow-hidden group">
-      <div
-      className="absolute inset-0 bg-cover bg-center transition-transform duration-[3s] ease-out group-hover:scale-105"
-      style={{
-        backgroundImage: `url(${backgroundImage})`,
-      }}
-    /> 
-    
-    <div className="absolute inset-0 bg-gradient-to-br from-gray-900/90 via-black/50 to-gray-800/90 " />
-    
-     <div className="absolute -top-32 -right-32 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
-      <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
-
-      <div className="mx-auto max-w-7xl relative z-10">
-        <h2 className="text-5xl md:text-6xl font-bold leading-tight text-white animate-fade-in-up animation-delay-100">
-          광클 없이,
-
-          <br />
-           <span className="bg-gradient-to-r from-blue-400 via-blue-500 to-cyan-400 bg-clip-text text-transparent">
-          원하는 자리를 빠르게!
-          </span>
-        </h2>
-        <p className="mt-4 text-muted-foreground text-white animate-fade-in-up animation-delay-100">
-          LOL, 발로란트, 오버워치 등 모든 E스포츠 경기 티켓을 간편하게 예매할
-          수 있습니다
-        </p>
-
-        <div className="mt-8 flex flex-wrap max-w-2xl gap-2 text-white animate-fade-in-up animation-delay-100">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground text-white" />
-            <Input
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              placeholder="게임명, 팀명, 선수명으로 검색하세요"
-              className="h-12 pl-10 placeholder:text-gray-400 hover:placeholder:text-[#FFFFFF]"
-            />
-          </div>
-          
-          <Button
-            size="lg"
-            className="h-12 bg-[#054EFD] px-8 text-base hover:bg-[#316DFD]"
+    <section className="flex justify-center px-6 py-6">
+      <div className="relative mx-auto h-[400px] max-w-7x1 w-[1240px] overflow-hidden rounded-3xl shadow-xl ">
+        <div
+            className="flex h-full transition-transform duration-700 ease-in-out" 
+            style={{
+              transform: `translateX(-${current * 100}%)`,
+              display: 'flex'
+            }}
           >
-            검색
-          </Button>
-        </div>
-        
+          {banners.map((banner, index) => (
+            <Link
+              key={index}
+              to={banner.link}
+              className="relative h-full min-w-full block"
+            >
+          <div
+            key={index}
+            className="relative h-full min-w-full"
+          >
+            <img
+              src={banner.image}
+              alt={`banner-${index}`}
+              className="h-full w-full object-cover scale-100"
+            />
+
+            <div className="absolute inset-0 bg-black/20 hover:bg-black/10 transition" />
+            
+          </div>
+          </Link>
+        ))}
       </div>
-       <style>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
 
-        .animate-fade-in-up {
-          animation: fadeInUp 0.8s ease-out forwards;
-          opacity: 0;
-        }
 
-        .animation-delay-100 {
-          animation-delay: 0.1s;
-        }
-
-        .animation-delay-200 {
-          animation-delay: 0.2s;
-        }
-
-        .animation-delay-300 {
-          animation-delay: 0.3s;
-        }
-      `}</style>
+      {/* 하단 인디케이터 */}
+      <div className="absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 gap-2">
+        {banners.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrent(index)}
+            className={`h-2 transition-all rounded-full ${
+              current === index
+                ? "w-8 bg-white"
+                : "w-2 bg-white/50"
+            }`}
+          />
+        ))}
+      </div>
+    </div>
     </section>
   );
 }
