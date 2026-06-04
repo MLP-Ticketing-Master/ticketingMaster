@@ -4,12 +4,14 @@ package com.ticketmaster.backend.domain.queue.util;
 import com.ticketmaster.backend.domain.queue.repository.QueueRedisRepository;
 import com.ticketmaster.backend.global.exception.BusinessException;
 import com.ticketmaster.backend.global.exception.ErrorCode;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -31,8 +33,14 @@ class QueueTokenValidatorTest {
     @InjectMocks
     private QueueTokenValidator queueTokenValidator;
 
+    @BeforeEach
+    void setUp() {
+        // @Value 는 단위 테스트에서 주입 안 됨 → 큐 검증이 동작하도록 queueEnabled=true 세팅
+        ReflectionTestUtils.setField(queueTokenValidator, "queueEnabled", true);
+    }
+
     @Test
-    @DisplayName("TC-11: 토큰 null/blank → QUEUE_TOKEN_NOT_FOUND")
+    @DisplayName("토큰 null/blank → QUEUE_TOKEN_NOT_FOUND")
     void 토큰_누락() {
         // when & then — null
         assertThatThrownBy(() -> queueTokenValidator.validateAllowed(1L, null))
@@ -46,7 +54,7 @@ class QueueTokenValidatorTest {
     }
 
     @Test
-    @DisplayName("TC-12: ALLOWED 아님 → QUEUE_NOT_PASSED")
+    @DisplayName("ALLOWED 아님 → QUEUE_NOT_PASSED")
     void 권한_없음() {
         // given — Redis 에 allowed 키 없음 (만료됐거나 위조 토큰)
         given(queueRedis.isAllowed(1L, "tk")).willReturn(false);
@@ -58,7 +66,7 @@ class QueueTokenValidatorTest {
     }
 
     @Test
-    @DisplayName("TC-13: 정상 → 예외 X")
+    @DisplayName("정상 → 예외 X")
     void 정상() {
         // given — Redis 에 allowed 키 있음
         given(queueRedis.isAllowed(1L, "tk")).willReturn(true);
