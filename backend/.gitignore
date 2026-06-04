@@ -39,3 +39,8 @@ out/
 # env
 .env
 .env.*
+
+# 부하테스트 백엔드 로그 (로컬 측정 산출물)
+backend-*.log
+backend-*.log.*
+*.tmp
