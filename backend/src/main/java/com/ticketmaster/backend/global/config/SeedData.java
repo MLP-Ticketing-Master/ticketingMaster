@@ -267,7 +267,7 @@ public class SeedData implements CommandLineRunner {
                 .bookingNotice(BOOKING_NOTICE)
                 .maxTicketsPerUser(2)
                 .cancelFee(1000)
-                .status(EventStatus.OPEN)
+                .status(resolveEventStatus(spec.startDate(), spec.endDate()))
                 .build();
     }
 
@@ -413,6 +413,25 @@ public class SeedData implements CommandLineRunner {
      */
     private String createSeatCode(String seatGrade, String rowLabel, Integer seatNo) {
         return seatGrade + "-" + rowLabel + "-" + seatNo;
+    }
+
+
+    /**
+     * 오늘 날짜 기준으로 EventStatus 자동 결정
+     * - today < startDate              → UPCOMING (진행 예정)
+     * - startDate <= today <= endDate  → OPEN     (진행 중)
+     * - today > endDate                → FINISHED (진행 종료)
+     */
+    private EventStatus resolveEventStatus(LocalDate startDate, LocalDate endDate) {
+        LocalDate today = LocalDate.now();
+
+        if (today.isBefore(startDate)) {
+            return EventStatus.UPCOMING;
+        } else if (today.isAfter(endDate)) {
+            return EventStatus.FINISHED;
+        } else {
+            return EventStatus.OPEN;
+        }
     }
 
     /**

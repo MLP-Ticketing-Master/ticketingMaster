@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { HeroSection } from "@/components/event/HeroSection";
 import { FilterButton } from "@/components/event/FilterButton";
 import { EventGrid } from "@/components/event/EventGrid";
@@ -17,18 +17,36 @@ export default function HomePage() {
   const setDateRange = useEventFilterStore((s) => s.setDateRange);
   const reset = useEventFilterStore((s) => s.reset);
 
-  // sportType만 API로 필터링 (백엔드 지원), 나머지는 프론트에서 필터
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // 필터 변경 시 첫 페이지로 리셋하는 래퍼
+  const handleSportChange: typeof setSportType = (value) => {
+    setSportType(value);
+    setCurrentPage(1);
+  };
+  const handleStatusToggle: typeof toggleStatus = (status) => {
+    toggleStatus(status);
+    setCurrentPage(1);
+  };
+  const handleDateChange: typeof setDateRange = (from, to) => {
+    setDateRange(from, to);
+    setCurrentPage(1);
+  };
+  const handleReset = () => {
+    reset();
+    setCurrentPage(1);
+  };
+
   const { data: rawEvents = [], isLoading, isError } = useEventList(sportType);
 
   const events = useMemo(() => {
     let filtered = rawEvents;
 
-    // 진행 상태 필터 (다중 선택 — 하나라도 선택 시 해당 상태만)
-    if (statuses.length > 0) {
-      filtered = filtered.filter((e) => statuses.includes(e.status));
-    }
+    // 상태 필터: 선택된 게 없으면 디폴트로 OPEN(진행 중)만 표시
+    const activeStatuses = statuses.length > 0 ? statuses : ["OPEN" as const];
+    filtered = filtered.filter((e) => activeStatuses.includes(e.status));
 
-    // 날짜 범위 필터 (이벤트 기간이 선택 범위와 겹치는 것)
+    // 날짜 범위 필터
     if (dateFrom) {
       filtered = filtered.filter((e) => e.endDate >= dateFrom);
     }
@@ -54,10 +72,10 @@ export default function HomePage() {
             dateFrom={dateFrom}
             dateTo={dateTo}
             hasActiveFilters={hasActiveFilters}
-            onSportChange={setSportType}
-            onStatusToggle={toggleStatus}
-            onDateChange={setDateRange}
-            onReset={reset}
+            onSportChange={handleSportChange}
+            onStatusToggle={handleStatusToggle}
+            onDateChange={handleDateChange}
+            onReset={handleReset}
             resultCount={isLoading ? undefined : events.length}
           />
         </div>
@@ -71,7 +89,11 @@ export default function HomePage() {
             이벤트를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
           </div>
         ) : (
-          <EventGrid events={events} />
+          <EventGrid
+            events={events}
+            currentPage={currentPage}
+            onPageChange={setCurrentPage}
+          />
         )}
       </section>
     </>
