@@ -15,3 +15,7 @@ CLAUDE.md
 .claude.json
 .claude.json.backup
 .mcp.json
+
+# loadtest
+loadtest/tokens.csv
+loadtest/results/

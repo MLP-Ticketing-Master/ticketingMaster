@@ -11,8 +11,19 @@ interface Props {
   event: EventListResponse;
 }
 
+const STATUS_OVERLAY: Record<
+  string,
+  { label: string; bg: string; text: string } | null
+> = {
+  UPCOMING: { label: "진행 예정", bg: "bg-gray-400/60", text: "text-white" },
+  FINISHED: { label: "진행 종료", bg: "bg-gray-700/65", text: "text-white" },
+  OPEN: null,
+};
+
 export function EventCard({ event }: Props) {
   const navigate = useNavigate();
+
+  const overlay = STATUS_OVERLAY[event.status] ?? null;
 
   const sportLabel =
     event.sportType in SPORT_LABEL
@@ -24,6 +35,7 @@ export function EventCard({ event }: Props) {
       className="group cursor-pointer overflow-hidden border-0 p-0 shadow-sm transition-shadow hover:shadow-md"
       onClick={() => navigate(`/events/${event.eventId}`)}
     >
+      {/* 썸네일 영역 */}
       <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
         {(() => {
           const src = resolveEventImage(event.thumbnailUrl);
@@ -32,7 +44,9 @@ export function EventCard({ event }: Props) {
               src={src}
               alt={event.title}
               loading="lazy"
-              className="h-full w-full object-cover transition-transform group-hover:scale-105"
+              className={`h-full w-full object-cover transition-transform group-hover:scale-105 ${
+                overlay ? "grayscale" : ""
+              }`}
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200">
@@ -42,8 +56,23 @@ export function EventCard({ event }: Props) {
             </div>
           );
         })()}
+
+        {/* 진행 예정 / 진행 종료 오버레이 */}
+        {overlay && (
+          <div
+            className={`absolute inset-0 flex items-center justify-center ${overlay.bg}`}
+          >
+            <span
+              className={`rounded-full bg-black/40 px-4 py-1.5 text-sm font-bold tracking-wide ${overlay.text}`}
+            >
+              {overlay.label}
+            </span>
+          </div>
+        )}
       </div>
-      <div className="space-y-3 p-5">
+
+      {/* 카드 본문 */}
+      <div className={`space-y-3 p-5 ${overlay ? "opacity-60" : ""}`}>
         <Badge
           variant="secondary"
           className="bg-blue-100 font-medium text-[#FF6B47]"

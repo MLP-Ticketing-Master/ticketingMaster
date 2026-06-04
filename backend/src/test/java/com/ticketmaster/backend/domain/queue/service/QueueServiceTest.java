@@ -308,6 +308,31 @@ class QueueServiceTest {
             assertThat(response.getQueueNumber()).isNull();
             assertThat(response.getAllowedAt()).isNull();
         }
+
+        @Test
+        @DisplayName("WAITING + 매진 → soldOut=true, 순번은 유지")
+        void waiting_매진() {
+            // given — WAITING 상태인데 매진 플래그가 켜진 상황
+            Long matchId = 1L;
+            String token = "token-soldout";
+            given(matchRepository.existsById(matchId)).willReturn(true);
+            Map<String, String> meta = new HashMap<>();
+            meta.put("matchId", String.valueOf(matchId));
+            meta.put("enteredAt", "1700000000000");
+            given(queueRedis.getTokenMeta(token)).willReturn(meta);
+            given(queueRedis.isAllowed(matchId, token)).willReturn(false);
+            given(queueRedis.isWaiting(matchId, token)).willReturn(true);
+            given(queueRedis.getRank(matchId, token)).willReturn(50L);
+            given(queueRedis.isSoldOut(matchId)).willReturn(true);
+
+            // when
+            QueueStatusResponse response = queueService.getStatus(matchId, token);
+
+            // then — 매진이라 soldOut true, 순번(50)은 그대로 노출
+            assertThat(response.getStatus()).isEqualTo("WAITING");
+            assertThat(response.isSoldOut()).isTrue();
+            assertThat(response.getQueueNumber()).isEqualTo(50L);
+        }
     }
 
     @Nested

@@ -3,6 +3,7 @@ package com.ticketmaster.backend.domain.queue.service;
 import com.ticketmaster.backend.domain.queue.entity.Queue;
 import com.ticketmaster.backend.domain.queue.repository.QueueRedisRepository;
 import com.ticketmaster.backend.domain.queue.repository.QueueRepository;
+import com.ticketmaster.backend.domain.seat.repository.SeatRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,8 +30,15 @@ public class QueueAdmissionService {
     @Value("${queue.session-seconds}")
     private int sessionSeconds;
 
+    /**
+     * 남은 좌석보다 더 입장시킬 버퍼 - 미구매자 대비, 클수록 빨리 팔리지만 헛입장이 늘어남
+     */
+    @Value("${queue.admission-buffer:10}")
+    private int admissionBuffer;
+
     private final QueueRepository queueRepository;
     private final QueueRedisRepository queueRedis;
+    private final SeatRepository seatRepository;
 
     /**
      * Redis 의 promoteTopN 자체는 트랜잭션 보장 X
@@ -39,19 +47,34 @@ public class QueueAdmissionService {
      */
     @Transactional
     public void promoteForMatch(Long matchId, LocalDateTime now) {
-        // 1) Redis 에서 상위 N명 승격 처리 → 승격된 토큰 목록 받음
-        List<String> promoted = queueRedis.promoteTopN(matchId, admissionBatchSize, sessionSeconds);
+        // 좌석 기반 동적 입장 — 예매 가능 좌석 수만큼(+버퍼)만 승격
+        long available = seatRepository.countAvailableByMatchId(matchId);
+
+        // 매진(예매 가능 좌석 0) — 승격 중단 + 매진 플래그 ON
+        // 취소/미결제 만료로 좌석이 다시 풀리면 다음 주기에 자동으로 재개됨
+        if (available <= 0) {
+            queueRedis.markSoldOut(matchId);
+            return;
+        }
+        queueRedis.clearSoldOut(matchId); // 좌석 있음 → 매진 아님
+
+        // 남은 좌석 + 버퍼만큼만 입장 (배치 상한 admissionBatchSize 로 캡)
+        // 버퍼는 미구매자 대비분 - 좌석 못 잡은 사람은 reserve 에서 깔끔한 409
+        int toPromote = (int) Math.min(admissionBatchSize, available + admissionBuffer);
+
+        List<String> promoted = queueRedis.promoteTopN(matchId, toPromote, sessionSeconds);
         if (promoted.isEmpty()) {
             return;
         }
 
         try {
-            // 2) DB 의 해당 Queue 행들도 ALLOWED 로 갱신 (이력용)
+            // DB Queue 행도 ALLOWED 로 갱신 (이력용)
             List<Queue> queues = queueRepository.findByQueueTokenIn(promoted);
             for (Queue q : queues) {
                 q.markAllowed(now);
             }
-            log.info("[QueueAdmission] matchId={} promoted={}", matchId, promoted.size());
+            log.info("[QueueAdmission] matchId={} promoted={} (available={})",
+                    matchId, promoted.size(), available);
         } catch (Exception e) {
             // DB 갱신 실패 — Redis 는 ALLOWED, DB 는 WAITING 으로 어긋남
             // 사용자 권한엔 영향 없으나 수동 보정용으로 토큰 목록 남김
