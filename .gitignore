@@ -19,3 +19,4 @@ CLAUDE.md
 # loadtest
 loadtest/tokens.csv
 loadtest/results/
+loadtest_lsh/
