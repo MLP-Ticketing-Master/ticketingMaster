@@ -14,6 +14,12 @@ import com.ticketmaster.backend.domain.queue.repository.QueueRepository;
 import com.ticketmaster.backend.domain.queue.service.QueueAdmissionService;
 import com.ticketmaster.backend.domain.queue.service.QueueService;
 import com.ticketmaster.backend.domain.queue.util.QueueTokenValidator;
+import com.ticketmaster.backend.domain.seat.entity.Seat;
+import com.ticketmaster.backend.domain.seat.entity.SeatGrade;
+import com.ticketmaster.backend.domain.seat.entity.Section;
+import com.ticketmaster.backend.domain.seat.repository.SeatGradeRepository;
+import com.ticketmaster.backend.domain.seat.repository.SeatRepository;
+import com.ticketmaster.backend.domain.seat.repository.SectionRepository;
 import com.ticketmaster.backend.domain.user.entity.User;
 import com.ticketmaster.backend.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -59,7 +65,8 @@ import static org.assertj.core.api.Assertions.assertThatCode;
         "queue.admission-batch-size=200",
         "queue.admission-interval-seconds=30",
         "queue.session-seconds=600",
-        "queue.burst-enabled=false"   // 승격 스케줄러 동작 검증이라 burst 차단 (첫 200 명이 자동 통과되면 TC-17 의 전제 깨짐)
+        "queue.admission-buffer=10",
+        "queue.burst-enabled=false"   // 승격 스케줄러 동작 검증이라 burst 차단 (첫 200 명이 자동 통과되면 부분승격 전제 깨짐)
 })
 @DisplayName("대기열 승격 통합 테스트")
 public class QueueAdmissionIT {
@@ -89,6 +96,9 @@ public class QueueAdmissionIT {
     @Autowired private EventRepository eventRepository;
     @Autowired private MatchRepository matchRepository;
     @Autowired private UserRepository userRepository;
+    @Autowired private SeatRepository seatRepository;
+    @Autowired private SectionRepository sectionRepository;
+    @Autowired private SeatGradeRepository seatGradeRepository;
     @Autowired private StringRedisTemplate redis;
 
     private Long matchId;
@@ -101,6 +111,9 @@ public class QueueAdmissionIT {
         Match match = matchRepository.save(buildMatch(event));
         matchId = match.getId();
 
+        // AVAILABLE 좌석 200개 시드 — 좌석 기반 동적 입장이 작동하도록 (좌석 없으면 매진 처리로 승격 0)
+        seedSeats(event, match, 200);
+
         // 500명 시드
         userIds = new ArrayList<>(500);
         for (int i = 0; i < 500; i++) {
@@ -111,7 +124,11 @@ public class QueueAdmissionIT {
 
     @AfterEach
     void tearDown() {
+        // FK 순서 — queue/seat 먼저, 그다음 section/grade, 마지막에 match/event
         queueRepository.deleteAllInBatch();
+        seatRepository.deleteAllInBatch();
+        sectionRepository.deleteAllInBatch();
+        seatGradeRepository.deleteAllInBatch();
         userRepository.deleteAllInBatch();
         matchRepository.deleteAllInBatch();
         eventRepository.deleteAllInBatch();
@@ -120,7 +137,7 @@ public class QueueAdmissionIT {
     }
 
     @Test
-    @DisplayName("TC-17: 대기열 500명 → 스케줄러 1회 → 상위 200명 ALLOWED + 나머지 300명 WAITING")
+    @DisplayName("대기열 500명 → 스케줄러 1회 → 상위 200명 ALLOWED + 나머지 300명 WAITING")
     void 부분승격_500명() {
         // given — 500명 순차 진입
         for (int i = 0; i < 500; i++) {
@@ -142,12 +159,13 @@ public class QueueAdmissionIT {
     }
 
     @Test
-    @DisplayName("TC-18: 활성 매치 2개 → 매치별로 각각 처리")
+    @DisplayName("활성 매치 2개 → 매치별로 각각 처리")
     void 여러_매치() {
-        // given — 두 번째 매치 추가, 각각 100명씩 진입
+        // given — 두 번째 매치 추가 (좌석도 각각 시드), 각각 100명씩 진입
         Event event2 = eventRepository.save(buildEvent());
         Match match2 = matchRepository.save(buildMatch(event2));
         Long matchId2 = match2.getId();
+        seedSeats(event2, match2, 200);
 
         for (int i = 0; i < 100; i++) {
             queueService.enter(matchId, userIds.get(i));
@@ -173,7 +191,7 @@ public class QueueAdmissionIT {
     }
 
     @Test
-    @DisplayName("TC-19: enter → 폴링 → 승격 → 좌석 점유 권한 검증")
+    @DisplayName("enter → 폴링 → 승격 → 좌석 점유 권한 검증")
     void 대기열_진입부터_좌석_점유_권한_획득까지() {
         // given — 한 사용자
         Long userId = userIds.get(0);
@@ -237,5 +255,18 @@ public class QueueAdmissionIT {
                 "admit-user-" + idx,
                 null
         );
+    }
+
+    /** 매치에 AVAILABLE 좌석 시드 — 좌석 기반 동적 입장이 작동하도록 (Section/SeatGrade 동반 생성) */
+    private void seedSeats(Event event, Match match, int count) {
+        Section section = sectionRepository.save(Section.create(event, "A구역", 1, "A구역"));
+        SeatGrade grade = seatGradeRepository.save(SeatGrade.create(event, "VIP", 100000, "#FF0000"));
+        List<Seat> seats = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            String rowLabel = String.valueOf((char) ('A' + i / 10));
+            int seatNo = i % 10 + 1;
+            seats.add(Seat.create(match, section, grade, rowLabel, seatNo, "S-" + i));
+        }
+        seatRepository.saveAll(seats);
     }
 }

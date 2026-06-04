@@ -87,7 +87,9 @@ queue:
   # false → 모두 WAITING으로 시작 (시연/로컬 테스트)
   burst-enabled: true
   # 입장 승격 스케줄러 주기(초) WAITING → ALLOWED
-  admission-interval-seconds: 30
+  admission-interval-seconds: 10
+  # 남은 좌석보다 더 입장시킬 여유분(미구매 대비)
+  admission-buffer: 10
   # ALLOWED 토큰 만료(초) — 좌석 페이지 진입 후 좌석 점유까지의 데드라인
   # (좌석 점유 성공 시 권한이 좌석 TTL 7분으로 인계되어 결제까지 보호)
   session-seconds: 600          # 10분

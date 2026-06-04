@@ -265,6 +265,27 @@ public class QueueRedisRepository {
     }
 
     /**
+     * 매진 플래그 ON - 예매 가능 좌석 0 일 때 스케줄러가 세팅 (TTL은 안전망)
+     */
+    public void markSoldOut(Long matchId) {
+        redis.opsForValue().set(soldOutKey(matchId), "1", Duration.ofSeconds(tokenTtlSeconds));
+    }
+
+    /**
+     * 매진 플래그 OFF - 좌석이 다시 풀리면 (취소/미결제 만료 등) 해제
+     */
+    public void clearSoldOut(Long matchId) {
+        redis.delete(soldOutKey(matchId));
+    }
+
+    /**
+     * 매진 여부 - 폴링 빈도 높은 getStatus 에서 DB 대신 Redis로 빠르게 확인하기 위함
+     */
+    public boolean isSoldOut(Long matchId) {
+        return Boolean.TRUE.equals(redis.hasKey(soldOutKey(matchId)));
+    }
+
+    /**
      * 사용자의 admission 토큰 회수 — 결제 완료 후 호출
      * <p>
      * 동작
@@ -305,5 +326,10 @@ public class QueueRedisRepository {
 
     private String burstKey(Long matchId) {
         return "queue:burst:" + matchId;
+    }
+
+    // queue:soldout:{matchId} — 매진 표시 플래그 (스케줄러가 좌석 잔여 기반으로 갱신)
+    private String soldOutKey(Long matchId) {
+        return "queue:soldout:" + matchId;
     }
 }

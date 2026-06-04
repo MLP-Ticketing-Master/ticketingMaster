@@ -208,7 +208,9 @@ public class QueueService {
             long remainingAhead = Math.max(0L, queueNumber - 1L);
             long estimatedWaitSeconds =
                     (remainingAhead / admissionBatchSize) * admissionIntervalSeconds;
-            return QueueStatusResponse.waiting(queueNumber, remainingAhead, estimatedWaitSeconds, enteredAt);
+            // 매진 여부는 Redis 플래그로 확인 (DB COUNT 안 침 — 폴링 병목 회피)
+            boolean soldOut = queueRedis.isSoldOut(matchId);
+            return QueueStatusResponse.waiting(queueNumber, remainingAhead, estimatedWaitSeconds, enteredAt, soldOut);
         }
 
         // 5-3) Sorted Set 에서 빠졌고 allowed 키도 만료 → 권한 만료

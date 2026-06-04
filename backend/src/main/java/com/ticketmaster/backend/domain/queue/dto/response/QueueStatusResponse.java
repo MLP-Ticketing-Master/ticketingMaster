@@ -20,6 +20,7 @@ public class QueueStatusResponse {
     private final LocalDateTime enteredAt;          // 대기열 진입 시각 (모든 상태 공통)
     private final LocalDateTime allowedAt;          // ALLOWED 로 승격된 시각 (WAITING 시 null)
     private final LocalDateTime entryDeadline;      // 좌석 점유 데드라인 (= allowedAt + sessionSeconds, WAITING 시 null)
+    private final boolean soldOut;                  // 매진 여부 - true 면 프론트가 매진 안내
 
     /**
      * WAITING 응답 — 순번 정보 채우고 ALLOWED 관련은 null
@@ -28,12 +29,13 @@ public class QueueStatusResponse {
             long queueNumber,
             long remainingAhead,
             long estimatedWaitSeconds,
-            LocalDateTime enteredAt
+            LocalDateTime enteredAt,
+            boolean soldOut
     ) {
         return new QueueStatusResponse(
                 "WAITING",
                 queueNumber, remainingAhead, estimatedWaitSeconds,
-                enteredAt, null, null
+                enteredAt, null, null, soldOut
         );
     }
 
@@ -46,7 +48,7 @@ public class QueueStatusResponse {
         return new QueueStatusResponse(
                 "ALLOWED",
                 null, null, null,
-                enteredAt, allowedAt, entryDeadline
+                enteredAt, allowedAt, entryDeadline, false
         );
     }
 
@@ -55,7 +57,7 @@ public class QueueStatusResponse {
         return new QueueStatusResponse(
                 "EXPIRED",
                 null, null, null,
-                enteredAt, null, null
+                enteredAt, null, null, false
         );
     }
 }
