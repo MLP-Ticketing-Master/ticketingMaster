@@ -81,8 +81,44 @@ public class SeedData implements CommandLineRunner {
         Team homeTeam = teamRepository.save(createTeam("T1"));
         Team awayTeam = teamRepository.save(createTeam("Gen.G"));
 
-        // 2. 이벤트 6개 정의 (이벤트 기간은 모두 매치 4가지 상태가 들어갈 만큼 넉넉하게)
+        // 2. 이벤트 18개 정의 (이벤트 기간은 모두 매치 4가지 상태가 들어갈 만큼 넉넉하게)
         List<EventSpec> specs = List.of(
+                new EventSpec(
+                        "2025 LCK Spring 결승전", SportType.LOL, "LoL Park",
+                        "2025 LoL 챔피언스 코리아 스프링 시즌의 대미를 장식할 결승전!",
+                        "lck_thumb.png", "lck_detail.png",
+                        today.minusDays(395), today.minusDays(360)
+                ),
+                new EventSpec(
+                        "LOL 챔피언스 코리아 2025 스프링 결승", SportType.LOL, "LoL Park",
+                        "2025 LCK 정규 시즌 결승 무대!",
+                        "lol_champions_thumb.png", "lol_champions_detail.png",
+                        today.minusDays(365), today.minusDays(330)
+                ),
+                new EventSpec(
+                        "발로란트 챔피언스 투어 코리아", SportType.VALORANT, "코엑스 컨벤션홀",
+                        "전국 최강 발로란트 팀이 모인 챔피언스 투어!",
+                        "valorant_thumb.png", "valorant_detail.png",
+                        today.minusDays(325), today.minusDays(290)
+                ),
+                new EventSpec(
+                        "오버워치 리그 서울 다이너스티", SportType.OVERWATCH, "e스타디움",
+                        "서울 다이너스티 홈경기 직관 기회!",
+                        "overwatch_thumb.png", "overwatch_detail.png",
+                        today.minusDays(295), today.minusDays(260)
+                ),
+                new EventSpec(
+                        "롤토체스 챔피언스 코리아", SportType.TFT, "서울 e스포츠 경기장",
+                        "전략적 팀 전투 챔피언스 코리아 본선!",
+                        "tft_thumb.png", "tft_detail.png",
+                        today.minusDays(180), today.minusDays(150)
+                ),
+                new EventSpec(
+                        "배틀그라운드 프로리그 시즌2", SportType.PUBG, "부산 벡스코",
+                        "배틀그라운드 프로리그 시즌2 결승전!",
+                        "pubg_thumb.png", "pubg_detail.png",
+                        today.minusDays(100), today.minusDays(60)
+                ),
                 new EventSpec(
                         "2026 LCK Spring 결승전", SportType.LOL, "LoL Park",
                         "2026 LoL 챔피언스 코리아 스프링 시즌의 대미를 장식할 결승전!",
@@ -118,6 +154,42 @@ public class SeedData implements CommandLineRunner {
                         "배틀그라운드 프로리그 시즌3 결승전!",
                         "pubg_thumb.png", "pubg_detail.png",
                         today.minusDays(18), today.plusDays(48)
+                ),
+                new EventSpec(
+                        "2027 LCK Spring 결승전", SportType.LOL, "LoL Park",
+                        "2027 LoL 챔피언스 코리아 스프링 시즌의 대미를 장식할 결승전!",
+                        "lck_thumb.png", "lck_detail.png",
+                        today.plusDays(330), today.plusDays(360)
+                ),
+                new EventSpec(
+                        "LOL 챔피언스 코리아 2027 스프링 결승", SportType.LOL, "LoL Park",
+                        "2026 LCK 정규 시즌 결승 무대!",
+                        "lol_champions_thumb.png", "lol_champions_detail.png",
+                        today.plusDays(328), today.plusDays(358)
+                ),
+                new EventSpec(
+                        "발로란트 챔피언스 투어 코리아", SportType.VALORANT, "코엑스 컨벤션홀",
+                        "전국 최강 발로란트 팀이 모인 챔피언스 투어!",
+                        "valorant_thumb.png", "valorant_detail.png",
+                        today.minusDays(3), today.plusDays(55)
+                ),
+                new EventSpec(
+                        "오버워치 리그 서울 다이너스티", SportType.OVERWATCH, "e스타디움",
+                        "서울 다이너스티 홈경기 직관 기회!",
+                        "overwatch_thumb.png", "overwatch_detail.png",
+                        today.minusDays(1), today.plusDays(52)
+                ),
+                new EventSpec(
+                        "롤토체스 챔피언스 코리아", SportType.TFT, "서울 e스포츠 경기장",
+                        "전략적 팀 전투 챔피언스 코리아 본선!",
+                        "tft_thumb.png", "tft_detail.png",
+                        today.minusDays(50), today.minusDays(2)
+                ),
+                new EventSpec(
+                        "배틀그라운드 프로리그 시즌5", SportType.PUBG, "부산 벡스코",
+                        "배틀그라운드 프로리그 시즌5 결승전!",
+                        "pubg_thumb.png", "pubg_detail.png",
+                        today.plusDays(0), today.plusDays(48)
                 )
         );
 
