@@ -14,6 +14,7 @@ import com.ticketmaster.backend.domain.seat.repository.SectionRepository;
 import com.ticketmaster.backend.global.exception.BusinessException;
 import com.ticketmaster.backend.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,12 +41,11 @@ public class SeatService {
     private final SeatGradeRepository seatGradeRepository;
     private final MatchRepository matchRepository;
 
-    // ─── 1단계: 구역 목록 + 등급별 잔여 ────────────────────────
-
     /**
-     * 매치의 구역 목록과 구역별·등급별 잔여 좌석 수를 조회
-     * 좌석 선택 화면 첫 진입 시 호출됨
+     * 좌석 선택 1단계 - 구역 목록 + 등급별 잔여
+     * 캐시: 키=matchId, TTL 2초 - 폭주 새로고침을 주기당 DB 1회로 수렴
      */
+    @Cacheable(cacheNames = "seat_sections", key = "#matchId")
     public SeatSectionListResponse findSectionsByMatch(Long matchId) {
         // 1. 매치 → 이벤트 정보 확인 (없으면 404)
         Match match = matchRepository.findById(matchId)
@@ -93,12 +93,11 @@ public class SeatService {
         return SeatSectionListResponse.of(matchId, sectionItems, gradeItems);
     }
 
-    // ─── 2단계: 구역 내 좌석 목록 ────────────────────────
-
     /**
-     * 특정 구역의 좌석 목록과 각 좌석의 현재 상태를 조회
-     * 사용자가 구역을 선택한 뒤 호출됨
+     * 좌석 선택 2단계 — 구역 내 좌석
+     * 캐시: 키=matchId + ':' + sectionId (두 파라미터 조합), TTL 2초
      */
+    @Cacheable(cacheNames = "seat_section_details", key = "#matchId + ':' + #sectionId")
     public SectionSeatListResponse findSeatsBySection(Long matchId, Long sectionId) {
         // 1. 매치/구역 존재 검증
         if (!matchRepository.existsById(matchId)) {
