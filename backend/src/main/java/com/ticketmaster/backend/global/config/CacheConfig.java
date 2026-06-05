@@ -1,7 +1,6 @@
 package com.ticketmaster.backend.global.config;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
-import org.checkerframework.checker.units.qual.C;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.caffeine.CaffeineCacheManager;
@@ -34,7 +33,17 @@ public class CacheConfig {
                         .maximumSize(1000)
                         .build());
 
-        // 좌석 튜닝 때 캐시 추가 예정
+        // 좌석 캐시 - 잔여가 빠르게 변하므로 TTL 짧게 (2초)
+        manager.registerCustomCache("seat_sections",
+                Caffeine.newBuilder()
+                        .expireAfterWrite(Duration.ofSeconds(2))    // 구역/잔여 — 2초
+                        .maximumSize(1000)
+                        .build());
+        manager.registerCustomCache("seat_section_details",
+                Caffeine.newBuilder()
+                        .expireAfterWrite(Duration.ofSeconds(2))    // 구역 내 좌석 — 2초
+                        .maximumSize(5000)
+                        .build());
 
         return manager;
     }
