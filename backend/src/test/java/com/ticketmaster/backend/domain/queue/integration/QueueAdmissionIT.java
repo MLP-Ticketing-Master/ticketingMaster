@@ -43,9 +43,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.awaitility.Awaitility.await;
 
 /**
  * TK-88 대기열 승격 통합 테스트
@@ -143,6 +145,8 @@ public class QueueAdmissionIT {
         for (int i = 0; i < 500; i++) {
             queueService.enter(matchId, userIds.get(i));
         }
+        // 이력 INSERT 가 비동기라, 승격이 DB row 를 찾으려면 500건이 모두 반영된 뒤여야 함
+        await().atMost(15, TimeUnit.SECONDS).until(() -> queueRepository.count() == 500L);
 
         // when — 스케줄러 직접 호출
         queueAdmissionService.promoteForMatch(matchId, LocalDateTime.now());
@@ -171,6 +175,8 @@ public class QueueAdmissionIT {
             queueService.enter(matchId, userIds.get(i));
             queueService.enter(matchId2, userIds.get(i + 100));
         }
+        // 이력 INSERT 가 비동기라, 두 매치 합산 200건이 모두 반영된 뒤 승격
+        await().atMost(15, TimeUnit.SECONDS).until(() -> queueRepository.count() == 200L);
 
         // when — 두 매치 모두 승격
         LocalDateTime now = LocalDateTime.now();
@@ -205,6 +211,9 @@ public class QueueAdmissionIT {
         // 2) 폴링 — 처음엔 WAITING
         QueueStatusResponse status1 = queueService.getStatus(matchId, token);
         assertThat(status1.getStatus()).isEqualTo("WAITING");
+
+        // 이력 INSERT 가 비동기라, 승격이 DB row 를 ALLOWED 로 갱신하려면 반영 후여야 함
+        await().atMost(5, TimeUnit.SECONDS).until(() -> queueRepository.count() == 1L);
 
         // 3) 스케줄러 승격
         queueAdmissionService.promoteForMatch(matchId, LocalDateTime.now());
