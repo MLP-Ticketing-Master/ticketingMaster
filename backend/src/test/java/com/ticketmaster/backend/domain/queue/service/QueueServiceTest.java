@@ -1,16 +1,15 @@
 package com.ticketmaster.backend.domain.queue.service;
 
 
-import com.ticketmaster.backend.domain.match.entity.Match;
+import com.ticketmaster.backend.domain.event.entity.EventStatus;
+import com.ticketmaster.backend.domain.match.dto.MatchBookingGate;
+import com.ticketmaster.backend.domain.match.entity.MatchStatus;
 import com.ticketmaster.backend.domain.match.repository.MatchRepository;
+import com.ticketmaster.backend.domain.match.service.MatchQueryService;
 import com.ticketmaster.backend.domain.queue.dto.response.QueueEnterResponse;
 import com.ticketmaster.backend.domain.queue.dto.response.QueueStatusResponse;
-import com.ticketmaster.backend.domain.queue.entity.Queue;
-import com.ticketmaster.backend.domain.queue.entity.QueueStatus;
 import com.ticketmaster.backend.domain.queue.repository.QueueRedisRepository;
 import com.ticketmaster.backend.domain.queue.repository.QueueRepository;
-import com.ticketmaster.backend.domain.user.entity.User;
-import com.ticketmaster.backend.domain.user.repository.UserRepository;
 import com.ticketmaster.backend.global.exception.BusinessException;
 import com.ticketmaster.backend.global.exception.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,7 +17,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -27,7 +25,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -36,10 +33,14 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 /**
- * TK-82 대기열 진입 서비스 단위 테스트
+ * 대기열 진입 서비스 단위 테스트
  *
- * Mockito 로 Repository / Redis 를 가짜 객체로 대체해서 분기만 빠르게 검증
+ * Mockito 로 Repository / Redis / 협력 서비스를 가짜 객체로 대체해서 분기만 빠르게 검증
  * 실제 동시성 / Redis 통합 검증은 QueueEntryIT 에서
+ *
+ * 튜닝 후 enter() 흐름 변경 반영
+ *  - 매치 검증: matchRepository.findById → matchQueryService.getBookingGate (캐시 게이트)
+ *  - 이력 저장: 동기 queueRepository.save → queueHistoryService.saveWaitingHistoryAsync (비동기 디스패치)
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("대기열 진입 서비스 단위 테스트")
@@ -49,13 +50,16 @@ class QueueServiceTest {
     private MatchRepository matchRepository;
 
     @Mock
-    private UserRepository userRepository;
-
-    @Mock
     private QueueRepository queueRepository;
 
     @Mock
     private QueueRedisRepository queueRedis;
+
+    @Mock
+    private MatchQueryService matchQueryService;
+
+    @Mock
+    private QueueHistoryService queueHistoryService;
 
     @InjectMocks
     private QueueService queueService;
@@ -70,15 +74,21 @@ class QueueServiceTest {
         ReflectionTestUtils.setField(queueService, "burstEnabled", false);   // 기본은 OFF, burst 검증 케이스에서 true 로 전환
     }
 
+    /**
+     * 예매 가능한 게이트 — eventStatus=OPEN, matchStatus=SCHEDULED, 오픈 윈도우 안
+     */
+    private MatchBookingGate openGate() {
+        return new MatchBookingGate(
+                EventStatus.OPEN, MatchStatus.SCHEDULED,
+                LocalDateTime.now().minusDays(1),
+                LocalDateTime.now().plusDays(1));
+    }
+
     @Test
-    @DisplayName("TC-01: 정상 진입 → 토큰 + 순번 1 + DB 이력 저장 호출")
+    @DisplayName("TC-01: 정상 진입 → 토큰 + 순번 1 + 이력 비동기 저장 호출")
     void 정상_진입() {
         // given
-        Match match = mock(Match.class);
-        given(match.isBookableAt(any(LocalDateTime.class))).willReturn(true);
-        given(matchRepository.findById(1L)).willReturn(Optional.of(match));
-        User user = mock(User.class);
-        given(userRepository.findById(1000L)).willReturn(Optional.of(user));
+        given(matchQueryService.getBookingGate(1L)).willReturn(openGate());
 
         // 신규 진입 시그널 — Redis 가 서비스가 발급한 토큰을 그대로 + 순번 1 로 반환 (allowed=false 일반 WAITING)
         given(queueRedis.enter(eq(1L), eq(1000L), anyString(), anyLong(),
@@ -95,19 +105,16 @@ class QueueServiceTest {
         assertThat(response.getRemainingAhead()).isZero();
         assertThat(response.getEstimatedWaitSeconds()).isZero();
 
-        // DB save 호출 여부 확인
-        verify(queueRepository).save(any(Queue.class));
+        // then — 이력은 비동기 서비스로 디스패치 (직접 save 가 아님)
+        verify(queueHistoryService).saveWaitingHistoryAsync(
+                eq(1000L), eq(1L), anyString(), eq(1L), any(), any(), eq(false));
     }
 
     @Test
-    @DisplayName("TC-02: 동일 사용자 재진입 → 기존 토큰 그대로 반환 + DB 저장 스킵")
+    @DisplayName("TC-02: 동일 사용자 재진입 → 기존 토큰 그대로 반환 + 이력 저장 스킵")
     void 재진입_idempotent() {
         // given
-        Match match = mock(Match.class);
-        given(match.isBookableAt(any(LocalDateTime.class))).willReturn(true);
-        given(matchRepository.findById(1L)).willReturn(Optional.of(match));
-        User user = mock(User.class);
-        given(userRepository.findById(1000L)).willReturn(Optional.of(user));
+        given(matchQueryService.getBookingGate(1L)).willReturn(openGate());
 
         // 재진입 시그널 — Redis 가 서비스의 신규 토큰을 무시하고 기존 토큰 / 순번을 그대로 반환 (allowed=false)
         String existingToken = "existing-token";
@@ -122,15 +129,17 @@ class QueueServiceTest {
         assertThat(response.getQueueToken()).isEqualTo(existingToken);
         assertThat(response.getQueueNumber()).isEqualTo(42L);
 
-        // then — 재진입이라 DB 추가 저장은 발생하지 않아야 함 (queueToken UNIQUE 위반 방지)
-        verify(queueRepository, never()).save(any());
+        // then — 재진입이라 이력 저장 디스패치가 발생하지 않아야 함 (이력 중복 방지)
+        verify(queueHistoryService, never()).saveWaitingHistoryAsync(
+                anyLong(), anyLong(), anyString(), anyLong(), any(), any(), anyBoolean());
     }
 
     @Test
     @DisplayName("TC-03: 존재하지 않는 matchId 진입 → MATCH_NOT_FOUND")
     void 존재하지_않는_회차() {
-        // given - matchRepository 가 빈 Optional 을 돌려주도록 설정
-        given(matchRepository.findById(99L)).willReturn(Optional.empty());
+        // given — 게이트 조회 단계에서 MATCH_NOT_FOUND 전파 (실제 발생은 MatchQueryService)
+        given(matchQueryService.getBookingGate(99L))
+                .willThrow(new BusinessException(ErrorCode.MATCH_NOT_FOUND));
 
         // when & then
         assertThatThrownBy(() -> queueService.enter(99L, 1000L))
@@ -141,10 +150,11 @@ class QueueServiceTest {
     @Test
     @DisplayName("TC-04: 예매 오픈 시간 이전 진입 → BOOKING_NOT_OPEN")
     void 예매_오픈_전_진입() {
-        // given — isBookableAt 이 false 반환 (아직 오픈 안 됨 / 마감 / event/match 상태 부적합)
-        Match match = mock(Match.class);
-        given(match.isBookableAt(any(LocalDateTime.class))).willReturn(false);
-        given(matchRepository.findById(1L)).willReturn(Optional.of(match));
+        // given — 아직 오픈 전 게이트 (bookingOpenAt 이 미래라 isBookableAt=false)
+        MatchBookingGate notOpen = new MatchBookingGate(
+                EventStatus.OPEN, MatchStatus.SCHEDULED,
+                LocalDateTime.now().plusDays(1), LocalDateTime.now().plusDays(2));
+        given(matchQueryService.getBookingGate(1L)).willReturn(notOpen);
 
         // when & then
         assertThatThrownBy(() -> queueService.enter(1L, 1000L))
@@ -340,16 +350,11 @@ class QueueServiceTest {
     class BurstAdmission {
 
         @Test
-        @DisplayName("TC-14: burst 통과 → ALLOWED 응답 + DB Queue 도 ALLOWED 로 저장")
+        @DisplayName("TC-14: burst 통과 → ALLOWED 응답 + 이력은 allowed=true 로 디스패치")
         void burst_통과() {
             // given — burst 게이트 ON 으로 전환
             ReflectionTestUtils.setField(queueService, "burstEnabled", true);
-
-            Match match = mock(Match.class);
-            given(match.isBookableAt(any(LocalDateTime.class))).willReturn(true);
-            given(matchRepository.findById(1L)).willReturn(Optional.of(match));
-            User user = mock(User.class);
-            given(userRepository.findById(1000L)).willReturn(Optional.of(user));
+            given(matchQueryService.getBookingGate(1L)).willReturn(openGate());
 
             // Redis 가 burst 통과 시그널 — allowed=true 반환
             given(queueRedis.enter(eq(1L), eq(1000L), anyString(), anyLong(),
@@ -365,23 +370,17 @@ class QueueServiceTest {
             assertThat(response.getAllowedAt()).isNotNull();
             assertThat(response.getEntryDeadline()).isAfter(response.getAllowedAt());
 
-            // then — DB 저장 시 markAllowed 가 호출되어 ALLOWED 상태로 들어감
-            ArgumentCaptor<Queue> captor = ArgumentCaptor.forClass(Queue.class);
-            verify(queueRepository).save(captor.capture());
-            assertThat(captor.getValue().getStatus()).isEqualTo(QueueStatus.ALLOWED);
+            // then — 이력 디스패치에 allowed=true 전달 (실제 ALLOWED 상태 기록은 QueueHistoryServiceTest 에서 검증)
+            verify(queueHistoryService).saveWaitingHistoryAsync(
+                    eq(1000L), eq(1L), anyString(), eq(1L), any(), any(), eq(true));
         }
 
         @Test
-        @DisplayName("TC-15: burst 초과 → WAITING 응답 + DB Queue 도 WAITING")
+        @DisplayName("TC-15: burst 초과 → WAITING 응답 + 이력은 allowed=false 로 디스패치")
         void burst_초과() {
             // given — burst 게이트는 ON 이지만 이미 200 명이 차서 201 번째는 통과 못 함
             ReflectionTestUtils.setField(queueService, "burstEnabled", true);
-
-            Match match = mock(Match.class);
-            given(match.isBookableAt(any(LocalDateTime.class))).willReturn(true);
-            given(matchRepository.findById(1L)).willReturn(Optional.of(match));
-            User user = mock(User.class);
-            given(userRepository.findById(1000L)).willReturn(Optional.of(user));
+            given(matchQueryService.getBookingGate(1L)).willReturn(openGate());
 
             // Redis 가 burst 초과 시그널 — allowed=false, rank=201
             given(queueRedis.enter(eq(1L), eq(1000L), anyString(), anyLong(),
@@ -398,23 +397,17 @@ class QueueServiceTest {
             assertThat(response.getAllowedAt()).isNull();
             assertThat(response.getEntryDeadline()).isNull();
 
-            // then — DB Queue 는 WAITING 상태로 저장
-            ArgumentCaptor<Queue> captor = ArgumentCaptor.forClass(Queue.class);
-            verify(queueRepository).save(captor.capture());
-            assertThat(captor.getValue().getStatus()).isEqualTo(QueueStatus.WAITING);
+            // then — 이력 디스패치에 allowed=false 전달
+            verify(queueHistoryService).saveWaitingHistoryAsync(
+                    eq(1000L), eq(1L), anyString(), eq(201L), any(), any(), eq(false));
         }
 
         @Test
-        @DisplayName("TC-16: 재진입 → allowed=false 로 들어와도 DB 저장 스킵")
+        @DisplayName("TC-16: 재진입 → allowed=false 로 들어와도 이력 저장 스킵")
         void 재진입_burst_무관() {
             // given — burst 게이트 ON, 그러나 재진입 시그널 (Redis 가 기존 토큰 + allowed=false 반환)
             ReflectionTestUtils.setField(queueService, "burstEnabled", true);
-
-            Match match = mock(Match.class);
-            given(match.isBookableAt(any(LocalDateTime.class))).willReturn(true);
-            given(matchRepository.findById(1L)).willReturn(Optional.of(match));
-            User user = mock(User.class);
-            given(userRepository.findById(1000L)).willReturn(Optional.of(user));
+            given(matchQueryService.getBookingGate(1L)).willReturn(openGate());
 
             // 재진입 시그널 — 기존 토큰 그대로 반환 + allowed=false (Repository 가 카운터 안 건드림)
             String existingToken = "existing-token";
@@ -429,8 +422,9 @@ class QueueServiceTest {
             assertThat(response.getQueueToken()).isEqualTo(existingToken);
             assertThat(response.getStatus()).isEqualTo("WAITING");
 
-            // then — 재진입이라 DB 저장 스킵 (이력 중복 방지)
-            verify(queueRepository, never()).save(any());
+            // then — 재진입이라 이력 저장 스킵 (이력 중복 방지)
+            verify(queueHistoryService, never()).saveWaitingHistoryAsync(
+                    anyLong(), anyLong(), anyString(), anyLong(), any(), any(), anyBoolean());
         }
 
         @Test
@@ -438,12 +432,7 @@ class QueueServiceTest {
         void 피처플래그_OFF() {
             // given — burst 게이트 OFF (시연 / 로컬 환경 가정)
             ReflectionTestUtils.setField(queueService, "burstEnabled", false);
-
-            Match match = mock(Match.class);
-            given(match.isBookableAt(any(LocalDateTime.class))).willReturn(true);
-            given(matchRepository.findById(1L)).willReturn(Optional.of(match));
-            User user = mock(User.class);
-            given(userRepository.findById(1000L)).willReturn(Optional.of(user));
+            given(matchQueryService.getBookingGate(1L)).willReturn(openGate());
 
             // burstEnabled=false 가 그대로 Repository 로 전달됨 — 결과는 allowed=false
             given(queueRedis.enter(eq(1L), eq(1000L), anyString(), anyLong(),

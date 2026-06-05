@@ -40,6 +40,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 /**
  * TK-82 대기열 진입 통합 테스트
@@ -148,10 +149,12 @@ class QueueEntryIT {
         assertThat(response.getQueueNumber()).isEqualTo(1L);
         assertThat(response.getStatus()).isEqualTo("WAITING");
 
-        // then — DB 이력 저장 확인
-        Queue saved = queueRepository.findByQueueToken(response.getQueueToken()).orElseThrow();
-        assertThat(saved.getStatus()).isEqualTo(QueueStatus.WAITING);
-        assertThat(saved.getQueueNumber()).isEqualTo(1L);
+        // then — DB 이력 저장 확인 (비동기 INSERT 라 반영될 때까지 대기)
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            Queue saved = queueRepository.findByQueueToken(response.getQueueToken()).orElseThrow();
+            assertThat(saved.getStatus()).isEqualTo(QueueStatus.WAITING);
+            assertThat(saved.getQueueNumber()).isEqualTo(1L);
+        });
     }
 
     @Test
@@ -170,6 +173,9 @@ class QueueEntryIT {
         for (int i = 0; i < n; i++) {
             assertThat(nums[i]).isEqualTo(i + 1);
         }
+
+        // 비동기 이력 INSERT 가 tearDown 청소 전에 모두 반영되도록 대기 (다음 테스트 누수 방지)
+        await().atMost(5, TimeUnit.SECONDS).until(() -> queueRepository.count() == n);
     }
 
     @Test
@@ -209,6 +215,9 @@ class QueueEntryIT {
         assertThat(failCount.get()).isZero();
         assertThat(nums).hasSize(n);
         assertThat(nums).allMatch(num -> num >= 1L && num <= 100L);
+
+        // 비동기 이력 INSERT 100건이 tearDown 청소 전에 모두 반영되도록 대기 (다음 테스트 누수 방지)
+        await().atMost(10, TimeUnit.SECONDS).until(() -> queueRepository.count() == n);
     }
 
     @Test
@@ -248,8 +257,8 @@ class QueueEntryIT {
         assertThat(unexpected).isEmpty();
         assertThat(tokens).hasSize(1);
 
-        // then — DB 이력은 신규 진입 1건만 (재진입은 저장 스킵)
-        assertThat(queueRepository.findAll()).hasSize(1);
+        // then — DB 이력은 신규 진입 1건만 (재진입은 저장 스킵), 비동기 INSERT 반영 대기
+        await().atMost(5, TimeUnit.SECONDS).until(() -> queueRepository.count() == 1L);
     }
 
     @Test
@@ -268,8 +277,8 @@ class QueueEntryIT {
         // then — ALLOWED 권한 살아있어서 기존 토큰 그대로 반환
         assertThat(second.getQueueToken()).isEqualTo(firstToken);
 
-        // then — DB 이력은 1건만 (재진입은 저장 스킵)
-        assertThat(queueRepository.findAll()).hasSize(1);
+        // then — DB 이력은 1건만 (재진입은 저장 스킵), 비동기 INSERT 반영 대기
+        await().atMost(5, TimeUnit.SECONDS).until(() -> queueRepository.count() == 1L);
     }
 
     @Test
@@ -290,8 +299,8 @@ class QueueEntryIT {
         assertThat(second.getQueueToken()).isNotEqualTo(firstToken);
         assertThat(second.getQueueNumber()).isEqualTo(1L);
 
-        // then — 신규 진입이라 DB 이력 추가 저장 → 총 2건 (재시도별 누적)
-        assertThat(queueRepository.findAll()).hasSize(2);
+        // then — 신규 진입이라 DB 이력 추가 저장 → 총 2건 (재시도별 누적), 비동기 INSERT 반영 대기
+        await().atMost(5, TimeUnit.SECONDS).until(() -> queueRepository.count() == 2L);
     }
 
     // ─── 시드 빌더 ─────────────────────────────────────────

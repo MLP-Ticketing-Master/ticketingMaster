@@ -33,8 +33,10 @@ import org.testcontainers.utility.DockerImageName;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 /**
  * burst 게이트 OFF 환경 통합 테스트
@@ -134,9 +136,11 @@ class QueueBurstDisabledIT {
         assertThat(response.getAllowedAt()).isNull();
         assertThat(response.getEntryDeadline()).isNull();
 
-        // then — DB Queue 도 WAITING 상태로 저장
-        Queue saved = queueRepository.findByQueueToken(response.getQueueToken()).orElseThrow();
-        assertThat(saved.getStatus()).isEqualTo(QueueStatus.WAITING);
+        // then — DB Queue 도 WAITING 상태로 저장 (비동기 INSERT 반영 대기)
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            Queue saved = queueRepository.findByQueueToken(response.getQueueToken()).orElseThrow();
+            assertThat(saved.getStatus()).isEqualTo(QueueStatus.WAITING);
+        });
 
         // then — Redis ZSet 의 WAITING 명단에 토큰이 들어있음
         assertThat(queueRedis.isWaiting(matchId, response.getQueueToken())).isTrue();

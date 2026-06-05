@@ -1,7 +1,9 @@
 package com.ticketmaster.backend.domain.queue.service;
 
+import com.ticketmaster.backend.domain.match.dto.MatchBookingGate;
 import com.ticketmaster.backend.domain.match.entity.Match;
 import com.ticketmaster.backend.domain.match.repository.MatchRepository;
+import com.ticketmaster.backend.domain.match.service.MatchQueryService;
 import com.ticketmaster.backend.domain.queue.dto.response.QueueEnterResponse;
 import com.ticketmaster.backend.domain.queue.dto.response.QueueStatusResponse;
 import com.ticketmaster.backend.domain.queue.entity.Queue;
@@ -15,6 +17,7 @@ import com.ticketmaster.backend.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,64 +73,53 @@ public class QueueService {
     private boolean burstEnabled;
 
     private final MatchRepository matchRepository;
-    private final UserRepository userRepository;
     private final QueueRepository queueRepository;
     private final QueueRedisRepository queueRedis;
+    private final MatchQueryService matchQueryService;
+    private final QueueHistoryService queueHistoryService;
 
     /**
      * 대기열 진입
      *
      * <p>
+     * 응답 경로에서 동기 DB 호출을 0으로 둔 hot-path - 검증은 캐시, 등록은 Redis,
+     * 이력은 비동기로 분리해 DB 커넥션 점유 없이 응답함
+     *
+     * <p>
      * 흐름
-     * 1) 회차 존재 확인 — 없으면 404
-     * 2) 예매 가능 시간인지 검증 — 오픈 전이면 400
-     * 3) 사용자 엔티티 조회 — Queue 의 user 필드에 넣을 참조
-     * 4) UUID 토큰 발급
-     * 5) Redis 등록 — 재진입(같은 userId)이면 기존 토큰을 그대로 받아옴 (idempotent)
-     * 6) 신규 진입일 때만 DB 이력 저장 (queueToken UNIQUE 제약 + 이력 중복 방지)
-     * 7) 응답 조립 (순번 / 남은 인원 / 예상 대기 시간)
+     * 1) 예매 가능 검증 — 캐시된 게이트만 확인 (적중 시 DB 0, 미스만 DB 1회)
+     * 2) 토큰 발급 + Redis 등록 — 재진입(같은 userId)이면 기존 토큰을 그대로 받아옴 (멱등)
+     * 3) 신규 진입일 때만 DB 이력 비동기 저장 (응답/커넥션 풀 점유와 분리)
+     * 4) 응답 조립 — Redis 결과만으로 (순번 / 남은 인원 / 예상 대기 시간)
      */
-    @Transactional
     public QueueEnterResponse enter(Long matchId, Long userId) {
-        // 1) 회차 존재 확인
-        Match match = matchRepository.findById(matchId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.MATCH_NOT_FOUND));
-
-        // 2) 예매 가능 시간 검증 — event.status OPEN + match.status SCHEDULED + bookingOpenAt ≤ now ≤ bookingCloseAt
         LocalDateTime now = LocalDateTime.now();
-        if (!match.isBookableAt(now)) {
+
+        // 1) 예매 가능 검증 - 캐시된 게이트만 확인 (적중 시 DB 0, 미스만 DB 1회)
+        MatchBookingGate gate = matchQueryService.getBookingGate(matchId);
+        if (!gate.isBookableAt(now)) {
             throw new BusinessException(ErrorCode.BOOKING_NOT_OPEN);
         }
 
-        // 3) 사용자 엔티티 조회
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-        // 4) UUID 토큰 발급 — 거의 충돌 확률 0 인 무작위 문자열
+        // 2) 토큰 발급 + Redis 등록 — hot-path 의 유일한 I/O
+        //    재진입이면 newToken 무시되고 기존 토큰이 그대로 돌아옴 (멱등성)
         String newToken = UUID.randomUUID().toString();
         long enteredAtMs = System.currentTimeMillis();
 
-        // 5) Redis 등록 — 재진입이면 newToken 이 무시되고 기존 토큰이 그대로 돌아옴
         QueueRedisRepository.EnterResult result =
                 queueRedis.enter(matchId, userId, newToken, enteredAtMs,
                         admissionBatchSize, sessionSeconds, burstEnabled);
         String token = result.token();
         long queueNumber = result.rank();
 
-        // 6) DB 이력 저장 — 신규 진입(서비스가 발급한 토큰이 그대로 사용됨)일 때만
-        //    재진입이면 같은 queueToken 의 레코드가 이미 있어서 UNIQUE 위반 방지
+        // 3) DB 이력 저장 — 신규 진입일 때만 비동기 디스패치 (응답/풀 점유와 분리)
         if (token.equals(newToken)) {
             LocalDateTime expiresAt = now.plusSeconds(tokenTtlSeconds); // 토큰 만료 시각 계산
-            Queue queue = Queue.createWaiting(user, match, token, queueNumber, now, expiresAt);
-            if (result.allowed()) {
-                queue.markAllowed(now); // 즉시 ALLOWED 인 경우 상태 바로 갱신
-            }
-            queueRepository.save(queue);
+            queueHistoryService.saveWaitingHistoryAsync(
+                    userId, matchId, token, queueNumber, now, expiresAt, result.allowed());
         }
 
-        // 7) 응답 조립
-
-        // burst 통과 시 즉시 ALLOWED 응답 — entryDeadline = now + sessionSeconds
+        // 4) 응답 조립 — Redis 결과만으로 (DB 무관)
         if (result.allowed()) {
             LocalDateTime entryDeadline = now.plusSeconds(sessionSeconds);
             log.info("[Queue] burst 즉시승격 matchId={} userId={} token={}", matchId, userId, token);

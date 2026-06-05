@@ -44,6 +44,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 /**
  * burst 게이트 ON 환경 통합 테스트
@@ -161,9 +162,11 @@ class QueueBurstAdmissionIT {
         assertThat(meta.get("status")).isEqualTo("ALLOWED");
         assertThat(meta.get("allowedAt")).isNotNull();
 
-        // then — DB Queue 도 ALLOWED 상태로 저장
-        Queue saved = queueRepository.findByQueueToken(token).orElseThrow();
-        assertThat(saved.getStatus()).isEqualTo(QueueStatus.ALLOWED);
+        // then — DB Queue 도 ALLOWED 상태로 저장 (비동기 INSERT 반영 대기)
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            Queue saved = queueRepository.findByQueueToken(token).orElseThrow();
+            assertThat(saved.getStatus()).isEqualTo(QueueStatus.ALLOWED);
+        });
     }
 
     @Test
@@ -179,6 +182,9 @@ class QueueBurstAdmissionIT {
         Long ttl = redis.getExpire(burstKey, TimeUnit.SECONDS);
         assertThat(ttl).isNotNull();
         assertThat(ttl).isBetween(1700L, 1800L);   // 호출 사이 약간의 시차 허용
+
+        // 비동기 이력 INSERT 가 tearDown 청소 전에 반영되도록 대기 (다음 테스트 누수 방지)
+        await().atMost(5, TimeUnit.SECONDS).until(() -> queueRepository.count() == 1L);
     }
 
     @Test
@@ -232,6 +238,9 @@ class QueueBurstAdmissionIT {
         // then — Redis 카운터도 정확히 200 (INCR/DECR 보정 검증)
         String burstKey = "queue:burst:" + matchId;
         assertThat(Integer.parseInt(redis.opsForValue().get(burstKey))).isEqualTo(limit);
+
+        // 비동기 이력 INSERT 250건이 tearDown 청소 전에 모두 반영되도록 대기 (다음 테스트 누수 방지)
+        await().atMost(10, TimeUnit.SECONDS).until(() -> queueRepository.count() == n);
     }
 
     // ─── 시드 빌더 ─────────────────────────────────────────
