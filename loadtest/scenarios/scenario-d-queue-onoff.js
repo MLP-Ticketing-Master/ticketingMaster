@@ -20,6 +20,7 @@ const tokens = new SharedArray('tokens', () =>
     papaparse.parse(open('../tokens.csv'), { header: false }).data
 )
 
+const BASE = __ENV.BASE_URL || 'http://localhost:8080'   // 원격 부하생성 시 서버 LAN IP 를 env 로 주입 (코드엔 안 박음)
 const MATCH_ID = __ENV.MATCH_ID || 1
 const FIRST_SEAT_ID = Number(__ENV.FIRST_SEAT_ID || 1)
 const SEAT_ID_STEP = Number(__ENV.SEAT_ID_STEP || 50)
@@ -60,7 +61,7 @@ export default function () {
     // 큐 ON 모드 — 입장 후 ALLOWED 까지 폴링
     if (QUEUE_MODE === 'on') {
         const enterRes = http.post(
-            `http://localhost:8080/queue/${MATCH_ID}/enter`,
+            `${BASE}/queue/${MATCH_ID}/enter`,
             null,
             { headers: auth, tags: { name: 'queue_enter' } }
         )
@@ -74,7 +75,7 @@ export default function () {
             sleep(POLL_INTERVAL_SECONDS)
             polls++
             const st = http.get(
-                `http://localhost:8080/queue/${MATCH_ID}/status`,
+                `${BASE}/queue/${MATCH_ID}/status`,
                 { headers: { ...auth, 'Queue-Token': queueToken }, tags: { name: 'queue_status' } }
             )
             if (st.status !== 200) break
@@ -87,7 +88,7 @@ export default function () {
     // 좌석 점유 — ON 이면 Queue-Token 동봉
     const headers = queueToken ? { ...auth, 'Queue-Token': queueToken } : auth
     const res = http.post(
-        `http://localhost:8080/matches/${MATCH_ID}/seats/reserve`,
+        `${BASE}/matches/${MATCH_ID}/seats/reserve`,
         JSON.stringify({ seatIds: [seatId] }),
         { headers, tags: { name: 'reserve' } }
     )
@@ -96,7 +97,7 @@ export default function () {
     // 점유 성공 시 즉시 release 로 좌석 순환 (DELETE 는 큐 검증 스킵)
     if (res.status === 200) {
         http.del(
-            `http://localhost:8080/matches/${MATCH_ID}/seats/reserve`,
+            `${BASE}/matches/${MATCH_ID}/seats/reserve`,
             JSON.stringify({ seatIds: [seatId] }),
             { headers: auth }
         )

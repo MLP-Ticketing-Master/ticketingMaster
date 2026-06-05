@@ -18,6 +18,7 @@ const tokens = new SharedArray('tokens', () =>
     papaparse.parse(open('../tokens.csv'), { header: false }).data
 )
 
+const BASE = __ENV.BASE_URL || 'http://localhost:8080'   // 원격 부하생성 시 서버 LAN IP 를 env 로 주입 (코드엔 안 박음)
 const MATCH_ID = __ENV.MATCH_ID || 1
 
 export const options = {
@@ -46,7 +47,7 @@ export default function () {
     const token = row[1]
 
     const enterRes = http.post(
-        `http://localhost:8080/queue/${MATCH_ID}/enter`,
+        `${BASE}/queue/${MATCH_ID}/enter`,
         null,
         { headers: { 'Authorization': `Bearer ${token}` } }
     )
