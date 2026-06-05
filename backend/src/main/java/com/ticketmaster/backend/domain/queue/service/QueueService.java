@@ -1,7 +1,6 @@
 package com.ticketmaster.backend.domain.queue.service;
 
 import com.ticketmaster.backend.domain.match.dto.MatchBookingGate;
-import com.ticketmaster.backend.domain.match.entity.Match;
 import com.ticketmaster.backend.domain.match.repository.MatchRepository;
 import com.ticketmaster.backend.domain.match.service.MatchQueryService;
 import com.ticketmaster.backend.domain.queue.dto.response.QueueEnterResponse;
@@ -10,14 +9,11 @@ import com.ticketmaster.backend.domain.queue.entity.Queue;
 import com.ticketmaster.backend.domain.queue.entity.QueueStatus;
 import com.ticketmaster.backend.domain.queue.repository.QueueRedisRepository;
 import com.ticketmaster.backend.domain.queue.repository.QueueRepository;
-import com.ticketmaster.backend.domain.user.entity.User;
-import com.ticketmaster.backend.domain.user.repository.UserRepository;
 import com.ticketmaster.backend.global.exception.BusinessException;
 import com.ticketmaster.backend.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
