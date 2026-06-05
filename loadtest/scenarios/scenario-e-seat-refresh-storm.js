@@ -11,6 +11,7 @@ const tokens = new SharedArray('tokens', () =>
     papaparse.parse(open('../tokens.csv'), { header: false }).data
 )
 
+const BASE = __ENV.BASE_URL || 'http://localhost:8080'   // 원격 부하생성 시 서버 LAN IP 를 env 로 주입 (코드엔 안 박음)
 const MATCH_ID = __ENV.MATCH_ID || 1
 const SECTION_ID = __ENV.SECTION_ID || 1
 
@@ -36,14 +37,14 @@ export default function () {
 
     // 1단계 조회 — 구역 목록 + 등급별 잔여
     http.get(
-        `http://localhost:8080/matches/${MATCH_ID}/sections`,
+        `${BASE}/matches/${MATCH_ID}/sections`,
         { headers: h, tags: { name: 'sections' } }
     )
     sleep(0.5)
 
     // 2단계 조회 — 구역 내 좌석
     http.get(
-        `http://localhost:8080/matches/${MATCH_ID}/sections/${SECTION_ID}/seats`,
+        `${BASE}/matches/${MATCH_ID}/sections/${SECTION_ID}/seats`,
         { headers: h, tags: { name: 'seats' } }
     )
 

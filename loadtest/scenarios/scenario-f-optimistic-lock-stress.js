@@ -19,6 +19,7 @@ const tokens = new SharedArray('tokens', () =>
     papaparse.parse(open('../tokens.csv'), { header: false }).data
 )
 
+const BASE = __ENV.BASE_URL || 'http://localhost:8080'   // 원격 부하생성 시 서버 LAN IP 를 env 로 주입 (코드엔 안 박음)
 const MATCH_ID = __ENV.MATCH_ID || 1
 const FIRST_SEAT_ID = Number(__ENV.FIRST_SEAT_ID || 1)
 const SEAT_ID_STEP = Number(__ENV.SEAT_ID_STEP || 50)
@@ -65,7 +66,7 @@ export default function () {
     }
 
     const res = http.post(
-        `http://localhost:8080/matches/${MATCH_ID}/seats/reserve`,
+        `${BASE}/matches/${MATCH_ID}/seats/reserve`,
         JSON.stringify({ seatIds: [seatId] }),
         { headers, tags: { name: 'reserve' } }
     )
@@ -77,7 +78,7 @@ export default function () {
     // 점유 성공 시 즉시 release — 좌석을 빙빙 돌려서 측정 의미 유지 (DELETE 는 큐 검증 스킵됨)
     if (res.status === 200) {
         http.del(
-            `http://localhost:8080/matches/${MATCH_ID}/seats/reserve`,
+            `${BASE}/matches/${MATCH_ID}/seats/reserve`,
             JSON.stringify({ seatIds: [seatId] }),
             { headers }
         )

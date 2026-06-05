@@ -19,4 +19,6 @@ CLAUDE.md
 # loadtest
 loadtest/tokens.csv
 loadtest/results/
+loadtest/regen-tokens.ps1
+loadtest/backend-loadtest.log*
 loadtest_lsh/

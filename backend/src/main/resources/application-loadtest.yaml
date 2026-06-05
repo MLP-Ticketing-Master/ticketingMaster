@@ -5,9 +5,9 @@
 toss:
   mock-mode: true
 
-# JWT 만료 24시간 — 부하테스트 길어져도 토큰 안 만료되게
+# JWT 만료 240시간 — 부하테스트 길어져도 토큰 안 만료되게
 jwt:
-  access-expiration: 86400000
+  access-expiration: 864000000
 
 # DB 커넥션 풀 확대 (기본 10 → 50)
 spring:

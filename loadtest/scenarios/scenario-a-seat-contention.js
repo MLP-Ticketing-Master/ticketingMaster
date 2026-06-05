@@ -18,6 +18,7 @@ const tokens = new SharedArray('tokens', () =>
     papaparse.parse(open('../tokens.csv'), { header: false }).data
 )
 
+const BASE = __ENV.BASE_URL || 'http://localhost:8080'   // 원격 부하생성 시 서버 LAN IP 를 env 로 주입 (코드엔 안 박음)
 const MATCH_ID = __ENV.MATCH_ID || 1
 const FIRST_SEAT_ID = Number(__ENV.FIRST_SEAT_ID || 1)
 // Hibernate allocationSize=50 으로 좌석 ID 가 50 간격 — 환경변수로 조정 가능
@@ -46,7 +47,7 @@ export default function () {
     const seatId = POPULAR_SEAT_IDS[Math.floor(Math.random() * POPULAR_SEAT_IDS.length)]
 
     const res = http.post(
-        `http://localhost:8080/matches/${MATCH_ID}/seats/reserve`,
+        `${BASE}/matches/${MATCH_ID}/seats/reserve`,
         JSON.stringify({ seatIds: [seatId] }),
         {
             headers: {
