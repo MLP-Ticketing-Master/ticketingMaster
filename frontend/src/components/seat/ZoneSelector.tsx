@@ -26,36 +26,49 @@ export function ZoneSelector({ sections, onSelect }: Props) {
     <div className="flex flex-col items-center gap-6 py-10 px-6">
       {/* 배경 이미지가 있는 경기장 */}
       <div
-        className="w-full max-w-5xl h-96 rounded-3xl bg-cover bg-center relative shadow-2xl"
+        className="relative
+                    w-full
+                    max-w-5xl
+                    aspect-[16/9]
+                    min-h-[180px]
+                    sm:min-h-[280px]
+                    rounded-3xl
+                    bg-cover
+                    bg-center
+                    shadow-2xl
+                    overflow-hidden"
         style={{
           backgroundImage: `url(${stadia})`,
         }}
       >
         {/* 어두운 오버레이 */}
-        <div className="absolute inset-0 bg-black/20 rounded-3xl"></div>
+        <div className="absolute inset-0 bg-black/20"></div>
          {/* 좌측 스크린 */}
  
         {/* 구역 버튼들 - 배경에 맞춰 배치 */}
-        <div className="absolute inset-0 flex items-center justify-between px-6 rounded-3xl">
+        <div className="absolute inset-0">
           {/* 좌측 구역 (홈) */}
           {homeSection && (
             <Button
               onClick={() => onSelect(homeSection.sectionId)}
               className="absolute
-              left-[40px]
+              left-[4%]
               top-[40%]
               -translate-y-1/2
 
               flex flex-col items-center justify-center
-              w-40 h-50
+
+              w-20 h-28
+              sm:w-28 sm:h-36
+              lg:w-40 lg:h-50
               bg-blue-500 hover:bg-blue-600
               text-white text-center
               rounded-2xl shadow-xl
               hover:scale-110 active:scale-95
               transition-all duration-300"
             >
-              <span className="text-sm font-semibold text-white/90">BLUE HOME</span>
-              <span className="text-2xl font-bold">{sectionLabel(homeSection.name)}</span>
+              <span className="hidden sm:block text-xs lg:text-sm font-semibold text-white/90">BLUE HOME</span>
+              <span className="text-sm sm:text-lg lg:text-2xl font-bold">{sectionLabel(homeSection.name)}</span>
             </Button>
           )}
  
@@ -64,21 +77,23 @@ export function ZoneSelector({ sections, onSelect }: Props) {
             <Button
               onClick={() => onSelect(stageSection.sectionId)}
               className=" absolute
-              left-[609px]
-              top-[87%]
-              -translate-x-2/2
+              left-[78%]
+              top-[85%]
+              -translate-x-full
               -translate-y-1/2
 
               flex flex-col items-center justify-center
-              w-50 h-25
+              w-24 h-12
+              sm:w-32 sm:h-16
+              lg:w-48 lg:h-24
               bg-purple-600 hover:bg-purple-700
               text-white text-center
               rounded-2xl shadow-xl
               hover:scale-110 active:scale-95
               transition-all duration-300"
             >
-              <span className="text-sm font-semibold text-white/90">STAGE</span>
-              <span className="text-2xl font-bold">{sectionLabel(stageSection.name)}</span>
+              <span className="hidden sm:block text-xs lg:text-sm font-semibold text-white/90">STAGE</span>
+              <span className="text-xs sm:text-lg lg:text-2xl font-bold">{sectionLabel(stageSection.name)}</span>
             </Button>
           )}
           {/* 중앙 구역 (스테이지) */}
@@ -86,21 +101,23 @@ export function ZoneSelector({ sections, onSelect }: Props) {
             <Button
               onClick={() => onSelect(stageSection2.sectionId)}
               className=" absolute
-              left-[170px]
-              top-[87%]
+              left-[25%]
+              top-[85%]
               -translate-x-0/20
               -translate-y-1/2
 
               flex flex-col items-center justify-center
-              w-50 h-25
+              w-24 h-12
+              sm:w-32 sm:h-16
+              lg:w-48 lg:h-24
               bg-emerald-500 hover:bg-emerald-600
               text-white text-center
               rounded-2xl shadow-xl
               hover:scale-110 active:scale-95
               transition-all duration-300"
             >
-              <span className="text-sm font-semibold text-white/90">STAGE</span>
-              <span className="text-2xl font-bold">{sectionLabel(stageSection2.name)}</span>
+              <span className="hidden sm:block text-xs lg:text-sm font-semibold text-white/90">STAGE</span>
+              <span className="text-xs sm:text-base lg:text-2xl font-bold">{sectionLabel(stageSection2.name)}</span>
             </Button>
           )}
  
@@ -109,31 +126,52 @@ export function ZoneSelector({ sections, onSelect }: Props) {
             <Button
               onClick={() => onSelect(awaySection.sectionId)}
               className="absolute
-              right-[35px]
+              right-[4%]
               top-[40%]
               -translate-y-1/2
 
               flex flex-col items-center justify-center
-              w-40 h-50
+              w-20 h-28
+              sm:w-28 sm:h-36
+              lg:w-40 lg:h-48
+
+
               bg-red-500 hover:bg-red-600
               text-white text-center
               rounded-2xl shadow-xl
               hover:scale-110 active:scale-95
               transition-all duration-300"
             >
-              <span className="text-sm font-semibold text-white/90">RED AWAY</span>
-              <span className="text-2xl font-bold">{sectionLabel(awaySection.name)}</span>
+              <span className="hidden sm:block text-xs lg:text-sm font-semibold text-white/90">RED AWAY</span>
+              <span className="text-sm sm:text-lg lg:text-2xl font-bold">{sectionLabel(awaySection.name)}</span>
             </Button>
           )}
         </div>
       </div>
       {/* 범례 — 백엔드 구역명 그대로 표시 (displayOrder 순) */}
-      <div className="flex flex-wrap justify-center gap-8 mt-6 p-6 bg-gradient-to-r from-blue-50 to-red-50 rounded-xl w-full max-w-5xl border border-gray-200">
+      <div className="w-full
+          max-w-5xl
+          rounded-xl
+          border
+          border-gray-200
+          bg-gradient-to-r
+          from-blue-50
+          to-red-50
+
+          p-3
+          sm:p-6
+
+          flex
+          flex-wrap
+          justify-center
+          gap-3
+          sm:gap-6
+          lg:gap-8">
         {ordered.map((section, idx) => (
           <div key={section.sectionId} className="flex items-center gap-3">
-            <div className={`w-12 h-12 rounded-xl shadow-md ${LEGEND_COLORS[idx] ?? "bg-gray-400"}`} />
+            <div className={`w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-xl shadow-md ${LEGEND_COLORS[idx] ?? "bg-gray-400"}`} />
             <div>
-              <div className="text-sm font-bold text-gray-900">{section.name}</div>
+              <div className="text-xs sm:text-sm font-bold text-gray-900">{section.name}</div>
             </div>
           </div>
         ))}

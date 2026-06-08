@@ -24,7 +24,7 @@ export function SeatSidebar({
   onSubmit,
 }: Props) {
   return (
-    <aside className="flex h-full w-80 flex-col bg-white px-6 pt-16 pb-6">
+    <aside className=" flex w-full lg:w-80 flex-col bg-white px-4 sm:px-6 pt-4 lg:pt-16 pb-6">
       {showGrades && grades.length > 0 && (
         <>
           <div className="space-y-3">
