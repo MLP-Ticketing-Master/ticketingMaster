@@ -14,8 +14,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 한 매치의 대기열 상위 N명을 WAITING → ALLOWED 로 승격하는 트랜잭션 단위
- * 스케줄러(QueueAdmissionScheduler)가 30초마다 활성 매치별로 호출
+ * 한 매치의 대기열 상위 N명을 WAITING → ALLOWED 로 승격하는 트랜잭션 단위 (N = min(admission-batch-size, 남은 좌석 + 버퍼))
+ * 스케줄러(QueueAdmissionScheduler)가 설정 주기(기본 10초)마다 활성 매치별로 호출
  */
 @Slf4j
 @Service

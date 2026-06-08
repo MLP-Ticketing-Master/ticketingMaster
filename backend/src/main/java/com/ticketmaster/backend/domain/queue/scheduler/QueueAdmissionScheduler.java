@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 30초 주기로 대기열 상위 200명을 WAITING → ALLOWED 로 승격하는 트리거
+ * 설정 주기(admission-interval-seconds, 기본 10초)마다 활성 매치별로 대기열 승격을 트리거함
  * 단일 인스턴스 환경 가정 (멀티 인스턴스 시 ShedLock 같은 분산 락 필요 — 현재 범위 외)
  */
 @Slf4j

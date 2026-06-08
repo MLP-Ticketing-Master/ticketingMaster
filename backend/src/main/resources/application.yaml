@@ -92,7 +92,7 @@ queue:
   # WAITING 상태 토큰 TTL
   # 대기열 이탈/비정상 종료 사용자를 자동 정리하기 위한 시간
   token-ttl-seconds: 1800       # 30분
-  # 한 번에 처리하는 입장 인원
+  # 승격 인원 상한 (실제 승격 = min(이 값, 남은 좌석 + 버퍼) / burst 는 첫 이 인원 즉시 입장)
   admission-batch-size: 200
   # burst 게이트 ON/OFF
   # true  → 첫 200명 즉시 입장 (운영 가정)
