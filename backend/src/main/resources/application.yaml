@@ -12,6 +12,9 @@ spring:
     username: ${ORACLE_USER}
     password: ${ORACLE_PASSWORD}
     driver-class-name: oracle.jdbc.OracleDriver
+    hikari:
+      maximum-pool-size: 100   # 운영 커넥션 풀 (Hikari 기본 10 → 100)
+      minimum-idle: 20
 
   data:
     redis:
@@ -56,6 +59,15 @@ spring:
 
 server:
   port: 8080
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/plain
+    min-response-size: 1024   # 1KB 이상만 압축 (작은 응답은 압축 오버헤드가 더 큼)
+  tomcat:
+    threads:
+      max: 400          # 동시 처리 워커 스레드 (기본 200 → 400)
+      min-spare: 50     # 항상 켜둘 유휴 스레드 (기본 10 → 50, 버스트 시 생성 지연 완화)
+    accept-count: 200   # 스레드 포화 시 연결 대기 큐 (기본 100 → 200, 순간 연결거부 완화)
 
 logging:
   level:
@@ -93,6 +105,11 @@ queue:
   # ALLOWED 토큰 만료(초) — 좌석 페이지 진입 후 좌석 점유까지의 데드라인
   # (좌석 점유 성공 시 권한이 좌석 TTL 7분으로 인계되어 결제까지 보호)
   session-seconds: 600          # 10분
+  history:
+    flush-interval-ms: 500    # 이력 배치 저장 주기
+    flush-max: 2000           # 한 번에 저장하는 최대 건수(트랜잭션 크기 제한)
+    buffer-max: 20000         # 버퍼 상한 - 초과 시 즉시 flush
+
 
 booking:
   expiry-scan-interval-ms: 60000             # 1분 주기

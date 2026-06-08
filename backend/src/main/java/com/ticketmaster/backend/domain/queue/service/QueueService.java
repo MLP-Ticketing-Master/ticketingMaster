@@ -79,13 +79,13 @@ public class QueueService {
      *
      * <p>
      * 응답 경로에서 동기 DB 호출을 0으로 둔 hot-path - 검증은 캐시, 등록은 Redis,
-     * 이력은 비동기로 분리해 DB 커넥션 점유 없이 응답함
+     * 이력은 메모리 버퍼에 모아 스케줄러가 배치 저장해 DB 커넥션 점유 없이 응답함
      *
      * <p>
      * 흐름
      * 1) 예매 가능 검증 — 캐시된 게이트만 확인 (적중 시 DB 0, 미스만 DB 1회)
      * 2) 토큰 발급 + Redis 등록 — 재진입(같은 userId)이면 기존 토큰을 그대로 받아옴 (멱등)
-     * 3) 신규 진입일 때만 DB 이력 비동기 저장 (응답/커넥션 풀 점유와 분리)
+     * 3) 신규 진입일 때만 이력 버퍼에 적재 (DB 는 스케줄러가 모아서 배치 저장)
      * 4) 응답 조립 — Redis 결과만으로 (순번 / 남은 인원 / 예상 대기 시간)
      */
     public QueueEnterResponse enter(Long matchId, Long userId) {
@@ -108,11 +108,11 @@ public class QueueService {
         String token = result.token();
         long queueNumber = result.rank();
 
-        // 3) DB 이력 저장 — 신규 진입일 때만 비동기 디스패치 (응답/풀 점유와 분리)
+        // 3) 이력 버퍼 적재 — 신규 진입일 때만 (DB 안 침, 스케줄러가 모아서 배치 저장)
         if (token.equals(newToken)) {
             LocalDateTime expiresAt = now.plusSeconds(tokenTtlSeconds); // 토큰 만료 시각 계산
-            queueHistoryService.saveWaitingHistoryAsync(
-                    userId, matchId, token, queueNumber, now, expiresAt, result.allowed());
+            queueHistoryService.enqueueWaitingHistory(
+                    new QueueHistoryRecord(userId, matchId, token, queueNumber, now, expiresAt, result.allowed()));
         }
 
         // 4) 응답 조립 — Redis 결과만으로 (DB 무관)
