@@ -370,7 +370,6 @@ export function FilterButton({
         )}
       >
         <FilterIcon active={hasActiveFilters} />
-        <span className="hidden sm:inline">필터</span>
         {hasActiveFilters && (
           <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#316DFD] text-[10px] font-bold text-white">
             {[sportType !== "ALL", statuses.length > 0, dateFrom !== null].filter(Boolean).length}
