@@ -60,15 +60,21 @@ public class QueueHistoryService {
         try {
             writer.saveBatch(batch);
         } catch (Exception e) {
-            log.error("[Queue] 이력 배치 저장 실패 size={}", batch.size(), e);
+            // 일시 실패(DB 일시 장애 등) 시 꺼낸 레코드를 버퍼에 되돌려 다음 flush 에서 재시도 - 이력 유실 방지
+            log.error("[Queue] 이력 배치 저장 실패 size={} - 버퍼 재적재 후 재시도", batch.size(), e);
+            batch.forEach(buffer::offer);
+            pending.addAndGet(batch.size());
         }
     }
 
     // 종료 시 잔여분 마지막 flush
+    // 실패 재적재로 인한 무한 루프 방지 - 더 이상 줄지 않으면(진행 없음) 중단
     @PreDestroy
     public void flushOnShutdown() {
         log.info("[Queue] 종료 전 이력 flush pending={}", pending.get());
-        while (!buffer.isEmpty()) {
+        int prev = -1;
+        while (!buffer.isEmpty() && pending.get() != prev) {
+            prev = pending.get();
             flush();
         }
     }
