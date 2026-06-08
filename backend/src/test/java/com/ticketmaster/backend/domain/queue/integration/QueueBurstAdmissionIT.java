@@ -93,6 +93,9 @@ class QueueBurstAdmissionIT {
     private QueueService queueService;
 
     @Autowired
+    private com.ticketmaster.backend.domain.queue.service.QueueHistoryService queueHistoryService;
+
+    @Autowired
     private QueueRepository queueRepository;
 
     @Autowired
@@ -162,7 +165,9 @@ class QueueBurstAdmissionIT {
         assertThat(meta.get("status")).isEqualTo("ALLOWED");
         assertThat(meta.get("allowedAt")).isNotNull();
 
-        // then — DB Queue 도 ALLOWED 상태로 저장 (비동기 INSERT 반영 대기)
+        // then — DB Queue 도 ALLOWED 상태로 저장
+        // 버퍼 적재분을 테스트 스레드에서 직접 flush 해 반영 (백그라운드 스케줄러와의 레이스 회피)
+        queueHistoryService.flush();
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             Queue saved = queueRepository.findByQueueToken(token).orElseThrow();
             assertThat(saved.getStatus()).isEqualTo(QueueStatus.ALLOWED);
@@ -183,7 +188,8 @@ class QueueBurstAdmissionIT {
         assertThat(ttl).isNotNull();
         assertThat(ttl).isBetween(1700L, 1800L);   // 호출 사이 약간의 시차 허용
 
-        // 비동기 이력 INSERT 가 tearDown 청소 전에 반영되도록 대기 (다음 테스트 누수 방지)
+        // 이력 INSERT 가 tearDown 청소 전에 반영되도록 직접 flush (다음 테스트 누수 방지)
+        queueHistoryService.flush();
         await().atMost(5, TimeUnit.SECONDS).until(() -> queueRepository.count() == 1L);
     }
 
@@ -239,7 +245,8 @@ class QueueBurstAdmissionIT {
         String burstKey = "queue:burst:" + matchId;
         assertThat(Integer.parseInt(redis.opsForValue().get(burstKey))).isEqualTo(limit);
 
-        // 비동기 이력 INSERT 250건이 tearDown 청소 전에 모두 반영되도록 대기 (다음 테스트 누수 방지)
+        // 이력 INSERT 250건이 tearDown 청소 전에 모두 반영되도록 직접 flush (다음 테스트 누수 방지)
+        queueHistoryService.flush();
         await().atMost(10, TimeUnit.SECONDS).until(() -> queueRepository.count() == n);
     }
 

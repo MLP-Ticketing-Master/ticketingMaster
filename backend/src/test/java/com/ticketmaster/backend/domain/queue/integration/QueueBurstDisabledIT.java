@@ -84,6 +84,9 @@ class QueueBurstDisabledIT {
     private QueueService queueService;
 
     @Autowired
+    private com.ticketmaster.backend.domain.queue.service.QueueHistoryService queueHistoryService;
+
+    @Autowired
     private QueueRepository queueRepository;
 
     @Autowired
@@ -136,7 +139,8 @@ class QueueBurstDisabledIT {
         assertThat(response.getAllowedAt()).isNull();
         assertThat(response.getEntryDeadline()).isNull();
 
-        // then — DB Queue 도 WAITING 상태로 저장 (비동기 INSERT 반영 대기)
+        // then — DB Queue 도 WAITING 상태로 저장 (버퍼 적재분을 직접 flush 해 반영)
+        queueHistoryService.flush();
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             Queue saved = queueRepository.findByQueueToken(response.getQueueToken()).orElseThrow();
             assertThat(saved.getStatus()).isEqualTo(QueueStatus.WAITING);

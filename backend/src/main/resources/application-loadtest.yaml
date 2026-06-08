@@ -9,12 +9,12 @@ toss:
 jwt:
   access-expiration: 864000000
 
-# DB 커넥션 풀 확대 (기본 10 → 50)
+# DB 커넥션 풀 확대 (기본 10 → 100)
 spring:
   datasource:
     hikari:
-      maximum-pool-size: 50
-      minimum-idle: 10
+      maximum-pool-size: 100
+      minimum-idle: 20
   jpa:
     show-sql: false
     properties:

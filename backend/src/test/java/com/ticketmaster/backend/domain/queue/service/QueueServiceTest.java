@@ -17,6 +17,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -40,7 +41,7 @@ import static org.mockito.Mockito.*;
  *
  * 튜닝 후 enter() 흐름 변경 반영
  *  - 매치 검증: matchRepository.findById → matchQueryService.getBookingGate (캐시 게이트)
- *  - 이력 저장: 동기 queueRepository.save → queueHistoryService.saveWaitingHistoryAsync (비동기 디스패치)
+ *  - 이력 저장: 동기 queueRepository.save → queueHistoryService.enqueueWaitingHistory (버퍼 적재)
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("대기열 진입 서비스 단위 테스트")
@@ -85,7 +86,7 @@ class QueueServiceTest {
     }
 
     @Test
-    @DisplayName("TC-01: 정상 진입 → 토큰 + 순번 1 + 이력 비동기 저장 호출")
+    @DisplayName("TC-01: 정상 진입 → 토큰 + 순번 1 + 이력 버퍼 적재 호출")
     void 정상_진입() {
         // given
         given(matchQueryService.getBookingGate(1L)).willReturn(openGate());
@@ -105,9 +106,14 @@ class QueueServiceTest {
         assertThat(response.getRemainingAhead()).isZero();
         assertThat(response.getEstimatedWaitSeconds()).isZero();
 
-        // then — 이력은 비동기 서비스로 디스패치 (직접 save 가 아님)
-        verify(queueHistoryService).saveWaitingHistoryAsync(
-                eq(1000L), eq(1L), anyString(), eq(1L), any(), any(), eq(false));
+        // then — 이력은 버퍼 적재 서비스로 위임 (직접 save 가 아님)
+        ArgumentCaptor<QueueHistoryRecord> captor = ArgumentCaptor.forClass(QueueHistoryRecord.class);
+        verify(queueHistoryService).enqueueWaitingHistory(captor.capture());
+        QueueHistoryRecord record = captor.getValue();
+        assertThat(record.userId()).isEqualTo(1000L);
+        assertThat(record.matchId()).isEqualTo(1L);
+        assertThat(record.queueNumber()).isEqualTo(1L);
+        assertThat(record.allowed()).isFalse();
     }
 
     @Test
@@ -129,9 +135,8 @@ class QueueServiceTest {
         assertThat(response.getQueueToken()).isEqualTo(existingToken);
         assertThat(response.getQueueNumber()).isEqualTo(42L);
 
-        // then — 재진입이라 이력 저장 디스패치가 발생하지 않아야 함 (이력 중복 방지)
-        verify(queueHistoryService, never()).saveWaitingHistoryAsync(
-                anyLong(), anyLong(), anyString(), anyLong(), any(), any(), anyBoolean());
+        // then — 재진입이라 이력 버퍼 적재가 발생하지 않아야 함 (이력 중복 방지)
+        verify(queueHistoryService, never()).enqueueWaitingHistory(any());
     }
 
     @Test
@@ -350,7 +355,7 @@ class QueueServiceTest {
     class BurstAdmission {
 
         @Test
-        @DisplayName("TC-14: burst 통과 → ALLOWED 응답 + 이력은 allowed=true 로 디스패치")
+        @DisplayName("TC-14: burst 통과 → ALLOWED 응답 + 이력은 allowed=true 로 버퍼 적재")
         void burst_통과() {
             // given — burst 게이트 ON 으로 전환
             ReflectionTestUtils.setField(queueService, "burstEnabled", true);
@@ -370,13 +375,18 @@ class QueueServiceTest {
             assertThat(response.getAllowedAt()).isNotNull();
             assertThat(response.getEntryDeadline()).isAfter(response.getAllowedAt());
 
-            // then — 이력 디스패치에 allowed=true 전달 (실제 ALLOWED 상태 기록은 QueueHistoryServiceTest 에서 검증)
-            verify(queueHistoryService).saveWaitingHistoryAsync(
-                    eq(1000L), eq(1L), anyString(), eq(1L), any(), any(), eq(true));
+            // then — 버퍼 적재 record 에 allowed=true 전달 (실제 ALLOWED 상태 기록은 QueueHistoryServiceTest 에서 검증)
+            ArgumentCaptor<QueueHistoryRecord> captor = ArgumentCaptor.forClass(QueueHistoryRecord.class);
+            verify(queueHistoryService).enqueueWaitingHistory(captor.capture());
+            QueueHistoryRecord record = captor.getValue();
+            assertThat(record.userId()).isEqualTo(1000L);
+            assertThat(record.matchId()).isEqualTo(1L);
+            assertThat(record.queueNumber()).isEqualTo(1L);
+            assertThat(record.allowed()).isTrue();
         }
 
         @Test
-        @DisplayName("TC-15: burst 초과 → WAITING 응답 + 이력은 allowed=false 로 디스패치")
+        @DisplayName("TC-15: burst 초과 → WAITING 응답 + 이력은 allowed=false 로 버퍼 적재")
         void burst_초과() {
             // given — burst 게이트는 ON 이지만 이미 200 명이 차서 201 번째는 통과 못 함
             ReflectionTestUtils.setField(queueService, "burstEnabled", true);
@@ -397,9 +407,14 @@ class QueueServiceTest {
             assertThat(response.getAllowedAt()).isNull();
             assertThat(response.getEntryDeadline()).isNull();
 
-            // then — 이력 디스패치에 allowed=false 전달
-            verify(queueHistoryService).saveWaitingHistoryAsync(
-                    eq(1000L), eq(1L), anyString(), eq(201L), any(), any(), eq(false));
+            // then — 버퍼 적재 record 에 allowed=false 전달
+            ArgumentCaptor<QueueHistoryRecord> captor = ArgumentCaptor.forClass(QueueHistoryRecord.class);
+            verify(queueHistoryService).enqueueWaitingHistory(captor.capture());
+            QueueHistoryRecord record = captor.getValue();
+            assertThat(record.userId()).isEqualTo(1000L);
+            assertThat(record.matchId()).isEqualTo(1L);
+            assertThat(record.queueNumber()).isEqualTo(201L);
+            assertThat(record.allowed()).isFalse();
         }
 
         @Test
@@ -422,9 +437,8 @@ class QueueServiceTest {
             assertThat(response.getQueueToken()).isEqualTo(existingToken);
             assertThat(response.getStatus()).isEqualTo("WAITING");
 
-            // then — 재진입이라 이력 저장 스킵 (이력 중복 방지)
-            verify(queueHistoryService, never()).saveWaitingHistoryAsync(
-                    anyLong(), anyLong(), anyString(), anyLong(), any(), any(), anyBoolean());
+            // then — 재진입이라 이력 버퍼 적재 스킵 (이력 중복 방지)
+            verify(queueHistoryService, never()).enqueueWaitingHistory(any());
         }
 
         @Test

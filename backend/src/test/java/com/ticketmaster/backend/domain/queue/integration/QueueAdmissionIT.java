@@ -92,6 +92,7 @@ public class QueueAdmissionIT {
 
     @Autowired
     private QueueService queueService;
+    @Autowired private com.ticketmaster.backend.domain.queue.service.QueueHistoryService queueHistoryService;
     @Autowired private QueueAdmissionService queueAdmissionService;
     @Autowired private QueueTokenValidator queueTokenValidator;
     @Autowired private QueueRepository queueRepository;
@@ -145,7 +146,8 @@ public class QueueAdmissionIT {
         for (int i = 0; i < 500; i++) {
             queueService.enter(matchId, userIds.get(i));
         }
-        // 이력 INSERT 가 비동기라, 승격이 DB row 를 찾으려면 500건이 모두 반영된 뒤여야 함
+        // 승격이 DB row 를 찾으려면 enter 이력 500건이 먼저 반영돼야 함 → 직접 flush
+        queueHistoryService.flush();
         await().atMost(15, TimeUnit.SECONDS).until(() -> queueRepository.count() == 500L);
 
         // when — 스케줄러 직접 호출
@@ -175,7 +177,8 @@ public class QueueAdmissionIT {
             queueService.enter(matchId, userIds.get(i));
             queueService.enter(matchId2, userIds.get(i + 100));
         }
-        // 이력 INSERT 가 비동기라, 두 매치 합산 200건이 모두 반영된 뒤 승격
+        // 두 매치 합산 200건이 먼저 반영돼야 승격 가능 → 직접 flush
+        queueHistoryService.flush();
         await().atMost(15, TimeUnit.SECONDS).until(() -> queueRepository.count() == 200L);
 
         // when — 두 매치 모두 승격
@@ -212,7 +215,8 @@ public class QueueAdmissionIT {
         QueueStatusResponse status1 = queueService.getStatus(matchId, token);
         assertThat(status1.getStatus()).isEqualTo("WAITING");
 
-        // 이력 INSERT 가 비동기라, 승격이 DB row 를 ALLOWED 로 갱신하려면 반영 후여야 함
+        // 승격이 DB row 를 ALLOWED 로 갱신하려면 enter 이력이 먼저 반영돼야 함 → 직접 flush
+        queueHistoryService.flush();
         await().atMost(5, TimeUnit.SECONDS).until(() -> queueRepository.count() == 1L);
 
         // 3) 스케줄러 승격
