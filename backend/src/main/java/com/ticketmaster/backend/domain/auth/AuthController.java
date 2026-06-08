@@ -18,6 +18,12 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 	private final AuthService authService;
 
+	@GetMapping("/check-email")
+	public ResponseEntity<Void> checkEmail(@RequestParam String email) {
+		authService.checkEmailDuplicate(email);
+		return ResponseEntity.ok().build();
+	}
+
 	@PostMapping("/signup")
 	public ResponseEntity<AuthSignupResponse> signup(@Valid @RequestBody AuthSignupRequest request) {
 		AuthSignupResponse response = authService.signup(request);
