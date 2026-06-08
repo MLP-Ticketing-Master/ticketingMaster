@@ -1,3 +1,4 @@
+import axios from "axios";
 import api from "@/lib/axios";
 import type {
   AuthResponse,
@@ -20,6 +21,25 @@ function toAuthResponse(raw: LoginResponseRaw): AuthResponse {
       role: raw.role,
     },
   };
+}
+
+/**
+ * 이메일 중복 확인
+ * 사용 가능: 200 OK / 중복: 409 Conflict (DUPLICATE_EMAIL)
+ * 인터셉터 간섭을 피하기 위해 순수 axios 사용
+ */
+export async function checkEmailDuplicate(email: string): Promise<boolean> {
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080";
+  try {
+    await axios.get(`${BASE_URL}/auth/check-email`, { params: { email } });
+    return true; // 사용 가능
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 409) {
+      return false; // 중복
+    }
+    // 네트워크 오류 등 예상치 못한 에러는 위로 던짐
+    throw error;
+  }
 }
 
 /**
