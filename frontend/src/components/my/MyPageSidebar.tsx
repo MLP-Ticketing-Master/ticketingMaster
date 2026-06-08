@@ -27,9 +27,9 @@ export function MyPageSidebar() {
   };
 
   return (
-    <aside className="w-60 shrink-0">
-      <nav className="rounded-2xl border bg-white p-4 shadow-sm">
-        <ul className="space-y-1">
+    <aside className="w-full lg:w-64 shrink-0">
+      <nav className="rounded-2xl border bg-white p-2 lg:p-4 shadow-sm">
+        <ul className="flex gap-2 overflow-x-auto lg:block lg:space-y-1 scrollbar-hide">
           {NAV.map(({ to, label, icon: Icon, end }) => (
             <li key={to}>
               <NavLink
@@ -37,7 +37,15 @@ export function MyPageSidebar() {
                 end={end}
                 className={({ isActive }) =>
                   cn(
-                    "flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors",
+                    `flex items-center gap-2
+                      whitespace-nowrap
+                      rounded-lg
+                      px-3 py-2
+                      lg:px-4 lg:py-3
+                      text-xs lg:text-sm
+                      font-medium
+                      transition-colors
+                      shrink-0`,
                     isActive
                       ? "bg-[#1C5EFD] text-white"
                       : "text-gray-700 hover:bg-gray-100",
@@ -53,7 +61,17 @@ export function MyPageSidebar() {
             <button
               type="button"
               onClick={handleLogout}
-              className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-red-500 transition-colors hover:bg-red-50"
+              className="flex items-center gap-2
+              whitespace-nowrap
+              rounded-lg
+              px-3 py-2
+              lg:px-4 lg:py-3
+              text-xs lg:text-sm
+              font-medium
+              text-red-500
+              transition-colors
+              hover:bg-red-50
+              shrink-0"
             >
               <LogOut className="h-4 w-4" />
               로그아웃

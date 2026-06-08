@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { AlertCircle, Timer, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { formatPrice } from "@/lib/format";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -185,11 +186,11 @@ export function BookingDialog() {
         <div
           className={
             showSidebar
-              ? "grid grid-cols-[1fr_320px] items-stretch bg-gray-50"
+              ? "flex flex-col lg:grid lg:grid-cols-[1fr_320px] items-stretch bg-gray-50"
               : "bg-gray-50"
           }
         >
-          <div className="max-h-[85vh] min-h-[60vh] overflow-y-auto">
+          <div className="max-h-[85vh] min-h-[60vh] overflow-y-auto flex-1">
             {isExpired ? (
               <ExpiredView onClose={closeFlow} />
             ) : (
@@ -212,20 +213,66 @@ export function BookingDialog() {
             )}
           </div>
 
-          {showSidebar && (
-            <div className="max-h-[85vh] min-h-[60vh] overflow-y-auto border-l">
-              <SeatSidebar
-                grades={grades}
-                selected={selectedSeats}
-                total={total}
-                canSubmit={selectedSeats.length > 0 && !reserveSeats.isPending}
-                showGrades={step === "SEAT"}
-                onRemove={removeSeat}
-                onSubmit={handleSelectComplete}
-              />
+              {showSidebar && (
+                <div className="hidden
+                                lg:block
+                                max-h-[85vh]
+                                overflow-y-auto
+                                border-l">
+                  <SeatSidebar
+                    grades={grades}
+                    selected={selectedSeats}
+                    total={total}
+                    canSubmit={selectedSeats.length > 0 && !reserveSeats.isPending}
+                    showGrades={step === "SEAT"}
+                    onRemove={removeSeat}
+                    onSubmit={handleSelectComplete}
+                  />
+                </div>
+              )}
+
+              
             </div>
-          )}
+            {showSidebar && (
+      <div
+        className="
+          fixed
+          bottom-0
+          left-0
+          right-0
+          z-50
+          border-t
+          bg-white
+          px-4
+          py-5
+          shadow-lg
+          lg:hidden
+        "
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-muted-foreground">
+              선택 좌석 {selectedSeats.length}개
+            </p>
+
+            <p className="text-lg font-bold text-[#054EFD]">
+              {formatPrice(total)}
+            </p>
+          </div>
+
+          <Button
+            disabled={
+              selectedSeats.length === 0 ||
+              reserveSeats.isPending
+            }
+            onClick={handleSelectComplete}
+            className="bg-[#054EFD] hover:bg-[#3C76FE]"
+          >
+            선택 완료
+          </Button>
         </div>
+      </div>
+    )}
       </DialogContent>
     </Dialog>
 
