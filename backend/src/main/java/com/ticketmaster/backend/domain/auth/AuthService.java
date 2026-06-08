@@ -74,6 +74,12 @@ public class AuthService {
 		}
 	}
 
+	public void checkEmailDuplicate(String email) {
+		if (userRepository.existsByEmail(email)) {
+			throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
+		}
+	}
+
 	@Transactional
 	public AuthSignupResponse signup(AuthSignupRequest request) {
 		// 이메일 중복 검증

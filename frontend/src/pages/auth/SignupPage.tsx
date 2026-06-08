@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { resolveErrorMessage } from "@/lib/error";
 import { useAuthStore } from "@/store";
 import { toast } from "sonner";
 import logo from "@/assets/logoNuki.png";
+import { checkEmailDuplicate } from "@/api/auth";
  
  
 export default function SignupPage() {
@@ -43,8 +44,34 @@ export default function SignupPage() {
     phoneValid: true,
   });
  
+  // ===== 이메일 중복 확인 상태 =====
+  const [emailCheck, setEmailCheck] = useState<{
+    status: "idle" | "checking" | "available" | "duplicate";
+    checkedEmail: string;
+  }>({ status: "idle", checkedEmail: "" });
+
   // ===== 뮤테이션 =====
   const signup = useSignupMutation();
+
+  // ===== 이메일 중복 확인 =====
+  const handleEmailCheck = useCallback(async (email: string) => {
+    if (!isEmailValid(email)) return;
+    // 이미 확인한 이메일과 동일하면 재요청 생략
+    if (emailCheck.checkedEmail === email && emailCheck.status !== "idle") return;
+
+    setEmailCheck({ status: "checking", checkedEmail: email });
+    try {
+      const available = await checkEmailDuplicate(email);
+      setEmailCheck({
+        status: available ? "available" : "duplicate",
+        checkedEmail: email,
+      });
+    } catch {
+      // 네트워크 오류 등 — idle로 되돌려 재시도 가능하게
+      setEmailCheck({ status: "idle", checkedEmail: "" });
+      toast.error("이메일 확인 중 오류가 발생했습니다. 다시 시도해주세요.");
+    }
+  }, [emailCheck.checkedEmail, emailCheck.status]);
  
   // ===== 검증 함수들 =====
  
@@ -101,6 +128,8 @@ export default function SignupPage() {
           ...prev,
           emailValid: isEmailValid(nextValue),
         }));
+        // 이메일 값이 바뀌면 중복 확인 결과 초기화
+        setEmailCheck({ status: "idle", checkedEmail: "" });
         break;
 
       case "password": {
@@ -143,6 +172,10 @@ export default function SignupPage() {
  
   const handleBlur = (field: keyof typeof touched) => {
     setTouched((prev) => ({ ...prev, [field]: true }));
+    // 이메일 필드 blur 시 중복 확인 실행
+    if (field === "email" && isEmailValid(formData.email)) {
+      handleEmailCheck(formData.email);
+    }
   };
 
   // 포커스 진입 시 touched 초기화 — 수정 중에는 에러 메시지 숨김
@@ -153,6 +186,7 @@ export default function SignupPage() {
   // ===== 폼 유효성 검사 =====
   const isFormValid =
     validations.emailValid &&
+    emailCheck.status === "available" &&
     validations.passwordStrong &&
     validations.passwordMatch &&
     validations.nicknameValid &&
@@ -240,6 +274,12 @@ export default function SignupPage() {
               onChange={handleChange} 
               onFocus={() => handleFocus("email")}
               onBlur={() => handleBlur("email")}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleEmailCheck(formData.email);
+                }
+              }}
               disabled={signup.isPending}
               className="h-10"
             />
@@ -248,10 +288,22 @@ export default function SignupPage() {
                 올바른 이메일 형식이 아닙니다.
               </p>
             )}
-            {touched.email && validations.emailValid && (
+            {touched.email && validations.emailValid && emailCheck.status === "checking" && (
+              <p className="mt-1 flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                이메일 중복 확인 중...
+              </p>
+            )}
+            {touched.email && emailCheck.status === "available" && (
               <p className="mt-1 flex items-center gap-1 text-xs font-medium text-green-600">
                 <CheckCircle2 className="h-3.5 w-3.5" />
                 사용 가능한 이메일입니다
+              </p>
+            )}
+            {touched.email && emailCheck.status === "duplicate" && (
+              <p className="mt-1 flex items-center gap-1 text-xs font-medium text-red-500">
+                <AlertCircle className="h-3.5 w-3.5" />
+                이미 사용 중인 이메일입니다
               </p>
             )}
           </div>
