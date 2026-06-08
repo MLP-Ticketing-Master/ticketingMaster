@@ -8,6 +8,29 @@ import { formatShortDate, formatTime, formatPrice, normalizeColorHex } from "@/l
 import { cn } from "@/lib/utils";
 import type { EventDetailResponse, MatchResponse } from "@/types";
 
+/** 매치의 예매 상태를 3가지로 분류 */
+type BookingStatus = "open" | "upcoming" | "closed";
+
+function getBookingStatus(match: MatchResponse): BookingStatus {
+  const now = new Date();
+  const openAt = new Date(match.bookingOpenAt);
+  const closeAt = new Date(match.bookingCloseAt);
+
+  if (now < openAt) return "upcoming";
+  if (now > closeAt) return "closed";
+  return "open";
+}
+
+/** "6/5 17:00 오픈예정" 형태의 짧은 날짜 포맷 */
+function formatOpenAt(iso: string): string {
+  const d = new Date(iso);
+  const month = d.getMonth() + 1;
+  const day = d.getDate();
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${month}/${day} ${hh}:${mm} 오픈예정`;
+}
+
 interface Props {
   event: EventDetailResponse;
   onProceed: (matchId: number) => void;
@@ -19,11 +42,10 @@ export function BookingWidget({ event, onProceed }: Props) {
     return Array.from(set).sort();
   }, [event.matches]);
 
-  // 초기 선택은 첫 "예매 가능" 매치 — 없으면 첫 매치로 fallback
-  // 날짜도 그 매치 기준으로 맞춤 — 날짜/회차가 어긋나 예매불가 회차인데
-  // 버튼이 활성화되는 버그 방지
+  // 초기 선택은 첫 "예매 가능(open)" 매치 — 없으면 첫 "예매 예정(upcoming)" — 없으면 첫 매치로 fallback
   const initialMatch =
-    event.matches.find((m) => m.bookable ?? m.isBookable) ??
+    event.matches.find((m) => getBookingStatus(m) === "open") ??
+    event.matches.find((m) => getBookingStatus(m) === "upcoming") ??
     event.matches[0] ??
     null;
 
@@ -38,11 +60,9 @@ export function BookingWidget({ event, onProceed }: Props) {
     (m) => m.matchDate === selectedDate,
   );
 
-  const selectedMatch = event.matches.find(
-    (m) => m.matchId === selectedMatchId,
-  );
-  const canBookSelected =
-    (selectedMatch?.bookable ?? selectedMatch?.isBookable) === true;
+  const selectedMatch = event.matches.find((m) => m.matchId === selectedMatchId);
+  const selectedBookingStatus = selectedMatch ? getBookingStatus(selectedMatch) : null;
+  const canBookSelected = selectedBookingStatus === "open";
 
   // 가격 내림차순 정렬 (VIP → R → S → A 순)
   const sortedGrades = useMemo(
@@ -81,12 +101,15 @@ export function BookingWidget({ event, onProceed }: Props) {
                   type="button"
                   onClick={() => {
                     setSelectedDate(d);
-                    // 해당 날짜의 예매 가능한 회차 우선 — 없으면 첫 회차
+                    // 해당 날짜의 예매 가능(open) 회차 우선 → 예매예정(upcoming) → 첫 회차
                     const firstOfDate =
                       event.matches.find(
-                        (m) =>
-                          m.matchDate === d && (m.bookable ?? m.isBookable),
-                      ) ?? event.matches.find((m) => m.matchDate === d);
+                        (m) => m.matchDate === d && getBookingStatus(m) === "open",
+                      ) ??
+                      event.matches.find(
+                        (m) => m.matchDate === d && getBookingStatus(m) === "upcoming",
+                      ) ??
+                      event.matches.find((m) => m.matchDate === d);
                     setSelectedMatchId(firstOfDate?.matchId ?? null);
                   }}
                   className={cn(
@@ -147,14 +170,22 @@ export function BookingWidget({ event, onProceed }: Props) {
           </div>
         )}
 
-        {/* 예매하기 버튼 — 선택된 회차가 예매 불가면 비활성 */}
+        {/* 예매하기 버튼 — 상태별 텍스트 및 비활성 처리 */}
         <Button
           size="lg"
           disabled={!selectedMatchId || !canBookSelected}
           onClick={() => selectedMatchId && onProceed(selectedMatchId)}
-          className="w-full bg-[#054EFD] hover:bg-[#3C76FE] disabled:bg-gray-200 disabled:text-gray-400"
+          className={cn(
+            "w-full disabled:text-gray-400",
+            selectedBookingStatus === "upcoming"
+              ? "bg-amber-400 hover:bg-amber-500 disabled:bg-amber-100"
+              : "bg-[#054EFD] hover:bg-[#3C76FE] disabled:bg-gray-200",
+          )}
         >
-          {canBookSelected ? "예매하기" : "예매 불가"}
+          {selectedBookingStatus === "open" && "예매하기"}
+          {selectedBookingStatus === "upcoming" && "오픈 예정"}
+          {selectedBookingStatus === "closed" && "예매 종료"}
+          {!selectedMatchId && "회차를 선택하세요"}
           <ChevronRight className="ml-1 h-4 w-4" />
         </Button>
       </Card>
@@ -190,36 +221,47 @@ function MatchButton({
   selected: boolean;
   onSelect: () => void;
 }) {
-  const bookable = match.bookable ?? match.isBookable ?? false;
+  const status = getBookingStatus(match);
+  const isOpen = status === "open";
+  const isUpcoming = status === "upcoming";
+  const isClosed = status === "closed";
 
   return (
     <button
       type="button"
-      onClick={onSelect}
-      disabled={!bookable}
+      onClick={isOpen || isUpcoming ? onSelect : undefined}
+      disabled={isClosed}
       className={cn(
         "flex w-full items-center justify-between rounded-lg border px-4 py-3 text-sm font-medium transition-colors",
-        selected
-          ? "border-[#3C76FE] bg-blue-50"
-          : bookable
-            ? "border-gray-200 bg-white hover:bg-gray-50"
-            : "cursor-not-allowed border-gray-100 bg-gray-50 opacity-50",
+        isClosed && "cursor-not-allowed border-gray-100 bg-gray-100 opacity-60",
+        isUpcoming && !selected && "border-amber-200 bg-amber-50 hover:bg-amber-100",
+        isUpcoming && selected && "border-amber-400 bg-amber-100",
+        isOpen && !selected && "border-gray-200 bg-white hover:bg-gray-50",
+        isOpen && selected && "border-[#3C76FE] bg-blue-50",
       )}
     >
       <div className="flex flex-col items-start gap-0.5">
         {match.roundLabel && (
-          <span className="text-xs text-muted-foreground">{match.roundLabel}</span>
+          <span className={cn("text-xs", isClosed ? "text-gray-400" : "text-muted-foreground")}>
+            {match.roundLabel}
+          </span>
         )}
-        <span>{formatTime(match.startAt)}</span>
+        <span className={cn(isClosed && "text-gray-400")}>{formatTime(match.startAt)}</span>
       </div>
-      <span
-        className={cn(
-          "text-xs font-semibold",
-          bookable ? "text-green-600" : "text-gray-400",
-        )}
-      >
-        {bookable ? "예매가능" : "예매불가"}
-      </span>
+
+      {isClosed && (
+        <span className="rounded-md bg-gray-200 px-2 py-0.5 text-xs font-semibold text-gray-500">
+          종료
+        </span>
+      )}
+      {isUpcoming && (
+        <span className="text-right text-xs font-semibold text-amber-600">
+          {formatOpenAt(match.bookingOpenAt)}
+        </span>
+      )}
+      {isOpen && (
+        <span className="text-xs font-semibold text-green-600">예매가능</span>
+      )}
     </button>
   );
 }

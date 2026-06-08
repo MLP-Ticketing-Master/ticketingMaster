@@ -293,8 +293,8 @@ public class SeedData implements CommandLineRunner {
                 today.plusDays(21),
                 now.plusDays(21).withHour(17).withMinute(0),
                 now.plusDays(21).withHour(21).withMinute(0),
-                now.plusDays(7),
-                now.plusDays(20).withHour(23).withMinute(59),
+                now.plusDays(7).withHour(17).withMinute(0),
+                now.plusDays(20).withHour(17).withMinute(0),
                 now.plusDays(20).withHour(17).withMinute(0)
         );
 
@@ -304,8 +304,8 @@ public class SeedData implements CommandLineRunner {
                 today.plusDays(7),
                 now.plusDays(7).withHour(17).withMinute(0),
                 now.plusDays(7).withHour(21).withMinute(0),
-                now.minusDays(1),
-                now.plusDays(6).withHour(23).withMinute(59),
+                now.minusDays(1).withHour(17).withMinute(0),
+                now.plusDays(6).withHour(17).withMinute(00),
                 now.plusDays(6).withHour(17).withMinute(0)
         );
 
@@ -315,8 +315,8 @@ public class SeedData implements CommandLineRunner {
                 today.plusDays(1),
                 now.plusDays(1).withHour(17).withMinute(0),
                 now.plusDays(1).withHour(21).withMinute(0),
-                now.minusDays(14),
-                now.minusDays(1).withHour(23).withMinute(59),
+                now.minusDays(14).withHour(17).withMinute(0),
+                now.minusDays(1).withHour(17).withMinute(0),
                 now.minusDays(1).withHour(17).withMinute(0)
         );
 
@@ -326,8 +326,8 @@ public class SeedData implements CommandLineRunner {
                 today.minusDays(7),
                 now.minusDays(7).withHour(17).withMinute(0),
                 now.minusDays(7).withHour(21).withMinute(0),
-                now.minusDays(21),
-                now.minusDays(8).withHour(23).withMinute(59),
+                now.minusDays(21).withHour(17).withMinute(0),
+                now.minusDays(8).withHour(17).withMinute(0),
                 now.minusDays(8).withHour(17).withMinute(0)
         );
 

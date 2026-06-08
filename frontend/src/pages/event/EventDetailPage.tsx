@@ -100,8 +100,9 @@ export default function EventDetailPage() {
                 return;
               }
               const match = event.matches.find((m) => m.matchId === matchId);
-              const bookable = match?.bookable ?? match?.isBookable;
-              if (!bookable) {
+              const now = new Date();
+              const isOpen = match && new Date(match.bookingOpenAt) <= now && now <= new Date(match.bookingCloseAt);
+              if (!isOpen) {
                 toast.error("현재 예매 불가능한 회차입니다.");
                 return;
               }
