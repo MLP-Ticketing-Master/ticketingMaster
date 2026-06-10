@@ -25,7 +25,7 @@ import java.util.List;
  * EntityManager native query 로 @SQLRestriction 우회하여 hard delete 처리.
  */
 @Service
-@Profile("dev")
+@Profile({"dev", "prod"}) // SeedData(dev,prod) 가 의존하므로 프로파일 일치 필요
 public class DataResetService {
 
     @PersistenceContext

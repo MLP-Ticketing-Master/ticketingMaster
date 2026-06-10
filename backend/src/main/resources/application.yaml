@@ -136,3 +136,6 @@ springdoc:
   api-docs:
     path: /v3/api-docs             # OpenAPI JSON 스펙 경로
   default-produces-media-type: application/json
+
+app:
+  frontend-base-url: http://localhost:5173

@@ -34,7 +34,7 @@ import java.util.List;
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-@Profile("dev") // 개발 환경에서만 실행
+@Profile({"dev", "prod"}) // 데모용 — prod 에도 초기 데이터 + 관리자 계정 생성 위함
 public class SeedData implements CommandLineRunner {
     private final EventRepository eventRepository;
     private final TeamRepository teamRepository;
