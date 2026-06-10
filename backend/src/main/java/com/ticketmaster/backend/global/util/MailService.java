@@ -1,6 +1,7 @@
 package com.ticketmaster.backend.global.util;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -10,9 +11,13 @@ import org.springframework.stereotype.Service;
 public class MailService {
 	private final JavaMailSender mailSender;
 
+	// 프론트 주소를 환경별 설정값으로 분리 — 로컬/운영 링크가 자동으로 달라지게 함
+	@Value("${app.frontend-base-url}")
+	private String frontendBaseUrl;
+
 	public void sendResetLink(String email, String token) {
-		// 프론트엔드 도메인 주소 넣어야 함
-		String resetLink = "http://localhost:5173/password-reset?token=" + token;
+
+		String resetLink = frontendBaseUrl + "/password-reset?token=" + token;
 
 		SimpleMailMessage message = new SimpleMailMessage();
 		message.setTo(email);
