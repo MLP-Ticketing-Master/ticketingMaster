@@ -126,3 +126,13 @@ seed:
     email: admin@ticketmaster.com
     password: ${SEED_ADMIN_PASSWORD}
     nickname: 관리자
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html         # UI 접속 경로
+    operations-sorter: method      # 엔드포인트를 메서드(GET/POST..) 순으로 정렬
+    # tags-sorter 미지정 — OpenApiConfig 의 태그 선언 순서를 그대로 사용 (관리자 API 하단 배치)
+    display-request-duration: true # 요청 소요시간 표시
+  api-docs:
+    path: /v3/api-docs             # OpenAPI JSON 스펙 경로
+  default-produces-media-type: application/json
