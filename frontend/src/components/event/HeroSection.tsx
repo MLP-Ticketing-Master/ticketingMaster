@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-
-import desktopLck from "@/assets/LCKbanner.png";
+import { useEventList } from "@/hooks";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import desktopLck from "@/assets/background.png";
 import desktopVal from "@/assets/VALbanner.png";
 import desktopPubg from "@/assets/PUBGbanner.png";
 import desktopWatch from "@/assets/WATCHbanner.png";
@@ -13,25 +14,39 @@ import mobileWatch from "@/assets/WATCHmobile.png";
 const banners = [
   {image:desktopLck,
     mobileImage: mobileLck,
-    link: "/events/3952",
+    sportType: "LOL",
    },
   {image:desktopVal,
     mobileImage: mobileVal,
-    link: "/events/3954",
+    sportType: "VALORANT",
    },
   {image:desktopPubg,
     mobileImage: mobilePubg,
-    link: "/events/3957",
+    sportType: "PUBG",
    },
   {image:desktopWatch,
     mobileImage: mobileWatch,
-    link: "/events/3955",
+    sportType: "OVERWATCH",
    },
   ];
 
 
 export function HeroSection() {
   const [current, setCurrent] = useState(0);
+
+
+  const { data: events = [] } = useEventList();
+
+  const bannersWithLink = banners.map((banner) => {
+    const event = events.find(
+      (event) => event.sportType === banner.sportType
+    );
+
+      return {
+        ...banner,
+        link: event ? `/events/${event.eventId}` : "/events",
+      };
+    });
 
   const prevSlide = () => {
     setCurrent((prev) =>
@@ -54,11 +69,11 @@ export function HeroSection() {
   }, []);
 
   return (
-    <section className="flex justify-center px-6 py-6">
-      <div className="relative group mx-auto
-            h-[300px] md:h-[400px]
-            w-full max-w-7xl
-            overflow-hidden rounded-3xl">
+    <section>
+      <div className="relative group
+            h-[320px] md:h-[560px]
+            w-full 
+            ">
         <div
             className="flex h-full transition-transform duration-700 ease-in-out" 
             style={{
@@ -66,7 +81,7 @@ export function HeroSection() {
               display: 'flex'
             }}
           >
-          {banners.map((banner, index) => (
+          {bannersWithLink.map((banner, index) => (
             <Link
               key={index}
               to={banner.link}
@@ -81,10 +96,11 @@ export function HeroSection() {
             <img
               src={banner.image}
               alt={`banner-${index}`}
-              className="w-full h-full object-cover"
+              className="h-[320px] md:h-[560px] w-full object-cover"
             />
+            
             </picture>
-            <div className="absolute inset-0 bg-black/20 hover:bg-black/10 transition" />
+            <div className="absolute inset-0 bg-black/20 hover:bg-black/10 transition pointer-events-none" />
             
           </div>
           </Link>
@@ -110,31 +126,35 @@ export function HeroSection() {
       <button
       onClick={prevSlide}
       className="
-        absolute left-4 top-1/2 -translate-y-1/2 z-20
-        h-12 w-12 rounded-full
-        bg-black/30 backdrop-blur-sm
-        text-white
-        opacity-0
+        absolute left-6 top-1/2 -translate-y-1/2 z-30
+        h-24 w-24 rounded-full
+        bg-white/10
+        flex items-center justify-center
+        text-white text-[40px]
+        opacity-100
         group-hover:opacity-100
-        transition-all duration-300
+        hover:scale-110
+        transition-all
       "
     >
-      ‹
+       <ChevronLeft size={58} />
     </button>
 
     <button
       onClick={nextSlide}
       className="
-        absolute right-4 top-1/2 -translate-y-1/2 z-20
-        h-12 w-12 rounded-full
-        bg-black/30 backdrop-blur-sm
-        text-white
-        opacity-0
+        absolute right-6 top-1/2 -translate-y-1/2 z-30
+        h-24 w-24 rounded-full
+        bg-white/10
+        flex items-center justify-center
+        text-white text-[40px]
+        opacity-100
         group-hover:opacity-100
-        transition-all duration-300
+        hover:scale-110
+        transition-all
       "
     >
-      ›
+      <ChevronRight size={58} />
     </button>
     </div>
     </section>
