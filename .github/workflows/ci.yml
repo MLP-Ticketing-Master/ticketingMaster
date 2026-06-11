@@ -18,6 +18,12 @@ jobs:
           cache: gradle
       - name: Build & test
         working-directory: backend
+        env:
+            # CI엔 .env가 없어 테스트 yaml의 placeholder가 안 풀림 → 더미값 주입 (실제 DB는 Testcontainers가 처리)
+            ORACLE_USER: testuser
+            ORACLE_PASSWORD: testpass
+            MAIL_USERNAME: ci@test.com
+            MAIL_PASSWORD: testpass
         run: |
           chmod +x gradlew
           ./gradlew clean build --no-daemon
