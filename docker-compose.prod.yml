@@ -1,0 +1,62 @@
+services:
+  redis:
+    image: redis:latest
+    container_name: tm-redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+
+  oracle:
+    image: gvenzl/oracle-free:23-slim-faststart
+    container_name: tm-oracle
+    restart: unless-stopped
+    environment:
+      ORACLE_PASSWORD: ${ORACLE_PWD}        # SYS/SYSTEM 비번 — 첫 부팅 init 용
+      APP_USER: ${ORACLE_USER}              # 앱 전용 유저 자동 생성
+      APP_USER_PASSWORD: ${ORACLE_PASSWORD}
+      ORACLE_CHARACTERSET: AL32UTF8
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+    # 포트를 호스트에 매핑하지 않음 — 외부에서 DB 직접 접속 차단 (백엔드만 내부 네트워크로 접근)
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 20
+
+  backend:
+    build: ./backend
+    container_name: tm-backend
+    restart: unless-stopped
+    depends_on:
+      oracle:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      APP_FRONTEND_BASE_URL: ${APP_FRONTEND_BASE_URL}   # 서버 .env 에서 주입 (IP 바뀌면 여기만)
+      ORACLE_USER: ${ORACLE_USER}           # datasource username
+      ORACLE_PASSWORD: ${ORACLE_PASSWORD}   # datasource password
+      JWT_SECRET: ${JWT_SECRET}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      TOSS_SECRET_KEY: ${TOSS_SECRET_KEY}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD}
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: /api             # 빌드 시점 주입 — nginx 가 /api 를 backend 로 프록시
+        VITE_TOSS_CLIENT_KEY: ${VITE_TOSS_CLIENT_KEY}
+    container_name: tm-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  oracle-data:
+  redis-data:
