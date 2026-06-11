@@ -8,24 +8,28 @@ services:
       - ticketing-master-redis-data:/data
     # restart: unless-stopped  # 나중에 서버 배포 시 주석 해제 (컨테이너 자동 재시작)
 
-  # 로컬에 MySQL이 이미 설치되어 있어 3306 포트 충돌 방지를 위해 3308로 매핑
-  mysql:
-    image: mysql:8.0
-    container_name: ticketing-master-mysql
+  oracle:
+    image: gvenzl/oracle-free:23-slim-faststart # AMD64/ARM64 모두 지원
+    container_name: ticketing-master-oracle
+    platform: linux/${ORACLE_PLATFORM:-amd64} # Apple Silicon은 .env에서 arm64로
     ports:
-      - '3308:3306'
+      - '1522:1521' # 팀 공통 고정 포트 (로컬 1521 충돌 회피)
+    env_file:
+      - .env
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    command:
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_unicode_ci
+      ORACLE_PASSWORD: ${ORACLE_PWD} # SYS / SYSTEM 비밀번호
+      APP_USER: ${ORACLE_USER} # 앱 전용 사용자 (자동 생성됨)
+      APP_USER_PASSWORD: ${ORACLE_PASSWORD}
+      ORACLE_DATABASE: ${ORACLE_DATABASE} # 추가 PDB 이름 (FREEPDB1 외에)
+      ORACLE_CHARACTERSET: AL32UTF8
     volumes:
-      - ticketing-master-mysql-data:/var/lib/mysql
-    # restart: unless-stopped
+      - ticketing-master-oracle-data:/opt/oracle/oradata
+    healthcheck:
+      test: ['CMD', 'healthcheck.sh']
+      interval: 30s
+      timeout: 10s
+      retries: 20
 
 volumes:
-  ticketing-master-mysql-data:
+  ticketing-master-oracle-data:
   ticketing-master-redis-data:

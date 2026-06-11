@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    # compose 내부 네트워크의 oracle 컨테이너를 가리킴 (username/password 는 base 의 env 주입값 사용)
+    url: jdbc:oracle:thin:@oracle:1521/FREEPDB1
+  data:
+    redis:
+      host: redis     # compose 서비스명으로 접속
+      port: 6379
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+springdoc:
+  api-docs:
+    enabled: false    # 운영 Swagger OFF
+  swagger-ui:
+    enabled: false
+
+app:
+  # 환경변수 우선, 없으면 기본값(현재 EC2 IP)으로 폴백 — 서버 옮기면 .env 만 바꾸면 됨
+  frontend-base-url: ${APP_FRONTEND_BASE_URL:http://13.208.100.144}
+
+logging:
+  level:
+    com.ticketmaster.backend: INFO

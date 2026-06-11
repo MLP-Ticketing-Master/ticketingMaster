@@ -1,0 +1,96 @@
+# 테스트 환경 전용 설정 (main 의 application.yaml 을 통째로 대체)
+# - 같은 파일명이라 main yaml 이 shadow 되므로, 통합 테스트에 필요한 모든 설정을 여기 두어야 함
+# - jwt.secret 만 더미값으로 override (운영 키 절대 아님 / HS256 32바이트 충족용)
+# - 그 외 datasource/redis/jpa/mail 등은 main 과 동일
+
+spring:
+  config:
+    import: optional:file:../.env[.properties]
+  application:
+    name: backend
+
+  # 통합 테스트는 Testcontainers 의 깨끗한 컨테이너 사용
+  # ddl-auto 가 entity 매핑 기준으로 스키마를 만들므로 Flyway 마이그레이션은 비활성화
+  # (V3 ALTER seats 가 테이블 생성 전 실행되면 ORA-00942 로 컨텍스트 로드 실패)
+  flyway:
+    enabled: false
+
+  datasource:
+    url: jdbc:oracle:thin:@localhost:1522/FREEPDB1
+    username: ${ORACLE_USER}
+    password: ${ORACLE_PASSWORD}
+    driver-class-name: oracle.jdbc.OracleDriver
+
+  data:
+    redis:
+      host: localhost
+      port: 6380
+
+  jpa:
+    database-platform: org.hibernate.dialect.OracleDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        highlight_sql: true
+        default_batch_fetch_size: 100
+        jdbc:
+          batch_size: 100
+          batch_versioned_data: true
+        order_inserts: true
+        order_updates: true
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  jackson:
+    time-zone: Asia/Seoul
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.ticketmaster.backend: DEBUG
+    org.hibernate.SQL: debug
+    org.hibernate.orm.jdbc.bind: trace
+
+jwt:
+  # 테스트 전용 더미값 — 운영 키 아님
+  secret: test-jwt-secret-key-for-testing-only-must-be-long-enough-for-hs256-algorithm
+  access-expiration: 1800000
+  refresh-expiration: 1209600000
+
+# 좌석 점유 정책 (main 의 application.yaml 과 동일하게 유지)
+seat:
+  reservation-ttl-seconds: 420
+  expiry-scan-interval-ms: 30000
+
+queue:
+  token-ttl-seconds: 1800        # WAITING 토큰 TTL (30분)
+  admission-batch-size: 200      # 한 번에 처리하는 입장 인원
+  admission-interval-seconds: 30 # 입장 승격 스케줄러 주기
+  session-seconds: 600           # ALLOWED 토큰 만료 (10분)
+  burst-enabled: false           # 테스트 기본은 OFF (burst 검증 전용 IT 만 true 로 override)
+
+# PENDING 예매 자동 만료 스케줄러 주기 (운영과 동일)
+booking:
+  expiry-scan-interval-ms: 60000
+  expiry-scan-initial-delay-ms: 60000
+
+# 토스페이먼츠 — 통합 테스트에서 TossPaymentsClient 빈 생성 시 placeholder 충족용 더미
+# 실제 호출은 @MockitoBean 으로 대체되므로 운영 키 아님
+toss:
+  api-base-url: https://api.tosspayments.test
+  secret-key: test_dummy_secret_key

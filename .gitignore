@@ -5,3 +5,20 @@
 # OS
 .DS_Store
 Thumbs.db
+
+# IntelliJ IDEA
+.idea
+
+# Claude
+.claude/
+CLAUDE.md
+.claude.json
+.claude.json.backup
+.mcp.json
+
+# loadtest
+loadtest/tokens.csv
+loadtest/results/
+loadtest/regen-tokens.ps1
+loadtest/backend-loadtest.log*
+loadtest_lsh/

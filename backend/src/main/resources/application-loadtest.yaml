@@ -1,0 +1,40 @@
+# 부하테스트 전용 프로파일
+# 실행 ./gradlew bootRun --args='--spring.profiles.active=loadtest'
+
+# 토스 mock 모드 — 실제 API 호출 없이 가짜 응답 즉시 반환
+toss:
+  mock-mode: true
+
+# JWT 만료 240시간 — 부하테스트 길어져도 토큰 안 만료되게
+jwt:
+  access-expiration: 864000000
+
+# DB 커넥션 풀 확대 (기본 10 → 100)
+spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 100
+      minimum-idle: 20
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+# Tomcat 스레드 확대 (기본 200 → 400)
+server:
+  tomcat:
+    threads:
+      max: 400
+      min-spare: 50
+
+# 대기열 ON/OFF 토글 — 시나리오 D 에서 false 로 바꿔서 비교
+queue:
+  enabled: true
+
+# SQL 로그 끄기 — 부하 줄임
+logging:
+  level:
+    com.ticketmaster.backend: INFO
+    org.hibernate.SQL: WARN
+    org.hibernate.orm.jdbc.bind: WARN

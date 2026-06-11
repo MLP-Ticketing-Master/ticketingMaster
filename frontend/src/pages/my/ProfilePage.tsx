@@ -1,0 +1,69 @@
+import { Ticket } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { useMyProfile } from "@/hooks";
+import { formatDate } from "@/lib/format";
+
+export default function ProfilePage() {
+  const { data: profile } = useMyProfile();
+
+  if (!profile) return null;
+
+  return (
+    <Card className="space-y-6 p-8">
+      <h2 className="text-2xl font-bold">내 정보 조회</h2>
+
+      <div className="flex items-center gap-5">
+        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-sky-100">
+          <Ticket className="h-8 w-8 -rotate-45 text-[#054EFD]" />
+        </span>
+        <div>
+          <p className="text-lg font-bold">{profile.nickname}</p>
+          {profile.joinedAt && (
+            <p className="text-sm text-muted-foreground">
+              가입일: {formatDate(profile.joinedAt)}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <Separator />
+
+      <div className="grid gap-5 md:grid-cols-2">
+        <ReadOnlyField label="이메일" value={profile.email} />
+        <ReadOnlyField
+          label="휴대폰 번호"
+          value={profile.phone}
+          placeholder="등록된 전화번호가 없습니다"
+        />
+      </div>
+
+      <Separator />
+
+    </Card>
+  );
+}
+
+function ReadOnlyField({
+  label,
+  value,
+  placeholder,
+}: {
+  label: string;
+  value?: string | null;
+  placeholder?: string;
+}) {
+  const isEmpty = !value;
+  return (
+    <div className="space-y-1.5">
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <div className="rounded-lg bg-gray-50 px-4 py-2.5 text-sm font-medium">
+        {isEmpty ? (
+          <span className="text-muted-foreground">{placeholder ?? "-"}</span>
+        ) : (
+          value
+        )}
+      </div>
+    </div>
+  );
+}

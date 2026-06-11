@@ -1,12 +1,20 @@
 spring:
+  config:
+    import: optional:file:../.env[.properties]
   application:
     name: backend
+  profiles:
+    active: dev
 
   datasource:
-    url: jdbc:mysql://localhost:3308/ticketing_master?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: ticketmaster
-    password: 1234
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    # 호스트 포트는 docker-compose에 고정(1522)
+    url: jdbc:oracle:thin:@localhost:1522/FREEPDB1
+    username: ${ORACLE_USER}
+    password: ${ORACLE_PASSWORD}
+    driver-class-name: oracle.jdbc.OracleDriver
+    hikari:
+      maximum-pool-size: 100   # 운영 커넥션 풀 (Hikari 기본 10 → 100)
+      minimum-idle: 20
 
   data:
     redis:
@@ -14,15 +22,120 @@ spring:
       port: 6380
 
   jpa:
+    database-platform: org.hibernate.dialect.OracleDialect
     hibernate:
       ddl-auto: update   # 개발용: 엔티티 변경 시 테이블 자동 반영
-    show-sql: true       # 콘솔에 SQL 출력
+    show-sql: false      # SQL 콘솔 출력 (디버깅 시 true 로 토글)
     properties:
       hibernate:
-        format_sql: true # SQL 예쁘게 출력
+        format_sql: false # show-sql 와 같이 토글
+        highlight_sql: false # show-sql 와 같이 토글
+        default_batch_fetch_size: 100 # 조회 시 lazy 로딩을 IN 쿼리로 묶어 N+1 방지 (SELECT 최적화)
+        jdbc:
+          batch_size: 100              # 100건씩 묶어서 INSERT
+          batch_versioned_data: true
+        order_inserts: true            # INSERT 문 정렬 (배치 효율 ↑)
+        order_updates: true
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true   # 이미 테이블이 있는 환경(Hibernate ddl-auto=update 가 만들었던 상태)에서 첫 적용 허용
+    baseline-version: 2         # V1, V2 는 Hibernate 가 동일 결과를 이미 만든 상태라 skip, V3 부터 실행
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true  # 보안 연결(TLS) 활성화
 
   jackson:
     time-zone: Asia/Seoul
 
 server:
   port: 8080
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/plain
+    min-response-size: 1024   # 1KB 이상만 압축 (작은 응답은 압축 오버헤드가 더 큼)
+  tomcat:
+    threads:
+      max: 400          # 동시 처리 워커 스레드 (기본 200 → 400)
+      min-spare: 50     # 항상 켜둘 유휴 스레드 (기본 10 → 50, 버스트 시 생성 지연 완화)
+    accept-count: 200   # 스레드 포화 시 연결 대기 큐 (기본 100 → 200, 순간 연결거부 완화)
+
+logging:
+  level:
+    com.ticketmaster.backend: DEBUG
+    # SQL/파라미터 로깅은 평소 OFF — 필요 시 아래 두 줄 주석 해제 + show-sql 도 true
+    # org.hibernate.SQL: debug
+    # org.hibernate.orm.jdbc.bind: trace
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-expiration: 1800000
+  refresh-expiration: 1209600000
+
+# 좌석 점유 정책
+seat:
+  # 점유 TTL — 결제 안 하면 이 시간 뒤 자동 해제 (7분)
+  reservation-ttl-seconds: 420
+  # 만료 좌석 스캐너 실행 간격 (30초)
+  expiry-scan-interval-ms: 30000
+
+queue:
+  # WAITING 상태 토큰 TTL
+  # 대기열 이탈/비정상 종료 사용자를 자동 정리하기 위한 시간
+  token-ttl-seconds: 1800       # 30분
+  # 승격 인원 상한 (실제 승격 = min(이 값, 남은 좌석 + 버퍼) / burst 는 첫 이 인원 즉시 입장)
+  admission-batch-size: 200
+  # burst 게이트 ON/OFF
+  # true  → 첫 200명 즉시 입장 (운영 가정)
+  # false → 모두 WAITING으로 시작 (시연/로컬 테스트)
+  burst-enabled: true
+  # 입장 승격 스케줄러 주기(초) WAITING → ALLOWED
+  admission-interval-seconds: 10
+  # 남은 좌석보다 더 입장시킬 여유분(미구매 대비)
+  admission-buffer: 10
+  # ALLOWED 토큰 만료(초) — 좌석 페이지 진입 후 좌석 점유까지의 데드라인
+  # (좌석 점유 성공 시 권한이 좌석 TTL 7분으로 인계되어 결제까지 보호)
+  session-seconds: 600          # 10분
+  history:
+    flush-interval-ms: 500    # 이력 배치 저장 주기
+    flush-max: 2000           # 한 번에 저장하는 최대 건수(트랜잭션 크기 제한)
+    buffer-max: 20000         # 버퍼 상한 - 초과 시 즉시 flush
+
+
+booking:
+  expiry-scan-interval-ms: 60000             # 1분 주기
+  # 부팅 직후 SeedData reset 트랜잭션과의 락 경합 회피용 — 시드 안정화 후 첫 실행
+  expiry-scan-initial-delay-ms: 60000        # 부팅 후 60초 뒤 첫 실행
+
+toss:
+  secret-key: ${TOSS_SECRET_KEY}
+  api-base-url: https://api.tosspayments.com/v1
+
+# 시드 관리자 계정 (dev 프로필 전용)
+seed:
+  admin:
+    email: admin@ticketmaster.com
+    password: ${SEED_ADMIN_PASSWORD}
+    nickname: 관리자
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html         # UI 접속 경로
+    operations-sorter: method      # 엔드포인트를 메서드(GET/POST..) 순으로 정렬
+    # tags-sorter 미지정 — OpenApiConfig 의 태그 선언 순서를 그대로 사용 (관리자 API 하단 배치)
+    display-request-duration: true # 요청 소요시간 표시
+  api-docs:
+    path: /v3/api-docs             # OpenAPI JSON 스펙 경로
+  default-produces-media-type: application/json
+
+app:
+  frontend-base-url: http://localhost:5173
