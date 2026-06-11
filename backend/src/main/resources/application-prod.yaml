@@ -10,6 +10,9 @@ spring:
     hibernate:
       ddl-auto: update
 
+  flyway:
+    enabled: false   # 빈 prod DB 에선 ddl-auto + SeedData 로 스키마/시드 구성 — 마이그레이션 불필요(V3 alter 충돌 회피)
+
 springdoc:
   api-docs:
     enabled: false    # 운영 Swagger OFF
