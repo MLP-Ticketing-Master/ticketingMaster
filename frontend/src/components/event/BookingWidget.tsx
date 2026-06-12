@@ -37,16 +37,22 @@ interface Props {
 }
 
 export function BookingWidget({ event, onProceed }: Props) {
-  const dates = useMemo(() => {
-    const set = new Set(event.matches.map((m) => m.matchDate));
-    return Array.from(set).sort();
-  }, [event.matches]);
+  // 예매 가능 또는 예매 예정 매치만 표시 (종료된 매치 완전 제외)
+  const visibleMatches = useMemo(
+    () => event.matches.filter((m) => getBookingStatus(m) !== "closed"),
+    [event.matches],
+  );
 
-  // 초기 선택은 첫 "예매 가능(open)" 매치 — 없으면 첫 "예매 예정(upcoming)" — 없으면 첫 매치로 fallback
+  const dates = useMemo(() => {
+    const set = new Set(visibleMatches.map((m) => m.matchDate));
+    return Array.from(set).sort();
+  }, [visibleMatches]);
+
+  // 초기 선택은 첫 "예매 가능(open)" 매치 — 없으면 첫 "예매 예정(upcoming)"
   const initialMatch =
-    event.matches.find((m) => getBookingStatus(m) === "open") ??
-    event.matches.find((m) => getBookingStatus(m) === "upcoming") ??
-    event.matches[0] ??
+    visibleMatches.find((m) => getBookingStatus(m) === "open") ??
+    visibleMatches.find((m) => getBookingStatus(m) === "upcoming") ??
+    visibleMatches[0] ??
     null;
 
   const [selectedDate, setSelectedDate] = useState<string>(
@@ -56,11 +62,11 @@ export function BookingWidget({ event, onProceed }: Props) {
     initialMatch?.matchId ?? null,
   );
 
-  const matchesOfDate = event.matches.filter(
+  const matchesOfDate = visibleMatches.filter(
     (m) => m.matchDate === selectedDate,
   );
 
-  const selectedMatch = event.matches.find((m) => m.matchId === selectedMatchId);
+  const selectedMatch = visibleMatches.find((m) => m.matchId === selectedMatchId);
   const selectedBookingStatus = selectedMatch ? getBookingStatus(selectedMatch) : null;
   const canBookSelected = selectedBookingStatus === "open";
 
@@ -103,13 +109,13 @@ export function BookingWidget({ event, onProceed }: Props) {
                     setSelectedDate(d);
                     // 해당 날짜의 예매 가능(open) 회차 우선 → 예매예정(upcoming) → 첫 회차
                     const firstOfDate =
-                      event.matches.find(
+                      visibleMatches.find(
                         (m) => m.matchDate === d && getBookingStatus(m) === "open",
                       ) ??
-                      event.matches.find(
+                      visibleMatches.find(
                         (m) => m.matchDate === d && getBookingStatus(m) === "upcoming",
                       ) ??
-                      event.matches.find((m) => m.matchDate === d);
+                      visibleMatches.find((m) => m.matchDate === d);
                     setSelectedMatchId(firstOfDate?.matchId ?? null);
                   }}
                   className={cn(
@@ -138,7 +144,12 @@ export function BookingWidget({ event, onProceed }: Props) {
                 onSelect={() => setSelectedMatchId(match.matchId)}
               />
             ))}
-            {matchesOfDate.length === 0 && (
+            {matchesOfDate.length === 0 && dates.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                예매 가능한 회차가 없습니다.
+              </p>
+            )}
+            {matchesOfDate.length === 0 && dates.length > 0 && (
               <p className="text-sm text-muted-foreground">
                 해당 날짜의 회차가 없습니다.
               </p>
