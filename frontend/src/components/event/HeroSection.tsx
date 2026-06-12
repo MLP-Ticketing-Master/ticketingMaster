@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useEventList } from "@/hooks";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import desktopLck from "@/assets/background.png";
-import desktopVal from "@/assets/VALbanner.png";
-import desktopPubg from "@/assets/PUBGbanner.png";
-import desktopWatch from "@/assets/WATCHbanner.png";
+import desktopLck from "@/assets/LCKbanner2.png";
+import desktopVal from "@/assets/VALbanner2.png";
+import desktopPubg from "@/assets/PUBGbanner2.png";
+import desktopWatch from "@/assets/WATCHbanner2.png";
 import mobileLck from "@/assets/LCKmobile.png";
 import mobileVal from "@/assets/VALmobile.png";
 import mobilePubg from "@/assets/PUBGmobile.png";
@@ -69,10 +69,12 @@ export function HeroSection() {
   }, []);
 
   return (
-    <section>
-      <div className="relative group
-            h-[320px] md:h-[560px]
-            w-full 
+    <section className="h-[400px]">
+      <div className="relative
+                      w-full
+                      h-[220px]
+                      md:h-[420px]
+                      overflow-hidden
             ">
         <div
             className="flex h-full transition-transform duration-700 ease-in-out" 
@@ -96,10 +98,11 @@ export function HeroSection() {
             <img
               src={banner.image}
               alt={`banner-${index}`}
-              className="h-[320px] md:h-[560px] w-full object-cover"
+              className="h-[220px] md:h-[420px] w-full object-cover"
             />
             
             </picture>
+            
             <div className="absolute inset-0 bg-black/20 hover:bg-black/10 transition pointer-events-none" />
             
           </div>
@@ -127,7 +130,7 @@ export function HeroSection() {
       onClick={prevSlide}
       className="
         absolute left-6 top-1/2 -translate-y-1/2 z-30
-        h-24 w-24 rounded-full
+        h-10 w-10 rounded-full
         bg-white/10
         flex items-center justify-center
         text-white text-[40px]
@@ -137,14 +140,14 @@ export function HeroSection() {
         transition-all
       "
     >
-       <ChevronLeft size={58} />
+       <ChevronLeft size={38} />
     </button>
 
     <button
       onClick={nextSlide}
       className="
         absolute right-6 top-1/2 -translate-y-1/2 z-30
-        h-24 w-24 rounded-full
+        h-10 w-10 rounded-full
         bg-white/10
         flex items-center justify-center
         text-white text-[40px]
@@ -154,7 +157,7 @@ export function HeroSection() {
         transition-all
       "
     >
-      <ChevronRight size={58} />
+      <ChevronRight size={38} />
     </button>
     </div>
     </section>
