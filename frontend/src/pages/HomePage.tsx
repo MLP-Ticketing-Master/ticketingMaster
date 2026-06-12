@@ -64,8 +64,17 @@ export default function HomePage() {
     <>
       <HeroSection />
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12">
-        <div className="mb-6 flex items-center justify-between gap-3">
-          <h2 className="text-2xl font-bold">진행중인 대회</h2>
+        {/* 타이틀 + 필터 헤더 */}
+        <div className="mb-8 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            {/* 강조 바 */}
+            <div className="h-8 w-1.5 rounded-full bg-gradient-to-b from-[#054EFD] to-[#9B5FFC]" />
+            <div>
+              <h2 className="bg-gradient-to-r from-[#054EFD] to-[#9B5FFC] bg-clip-text text-2xl font-extrabold tracking-tight text-transparent sm:text-3xl">
+                Esports
+              </h2>
+            </div>
+          </div>
           <FilterButton
             sportType={sportType}
             statuses={statuses}

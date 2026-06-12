@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+      - name: Build & test
+        working-directory: backend
+        env:
+            # CI엔 .env가 없어 테스트 yaml의 placeholder가 안 풀림 → 더미값 주입 (실제 DB는 Testcontainers가 처리)
+            ORACLE_USER: testuser
+            ORACLE_PASSWORD: testpass
+            MAIL_USERNAME: ci@test.com
+            MAIL_PASSWORD: testpass
+        run: |
+          chmod +x gradlew
+          ./gradlew clean build --no-daemon
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install & build
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build

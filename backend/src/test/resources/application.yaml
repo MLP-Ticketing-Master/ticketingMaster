@@ -94,3 +94,7 @@ booking:
 toss:
   api-base-url: https://api.tosspayments.test
   secret-key: test_dummy_secret_key
+
+# 비밀번호 재설정 메일 링크용 — MailService @Value("${app.frontend-base-url}") 충족 (테스트 더미)
+app:
+  frontend-base-url: http://localhost:5173

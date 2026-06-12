@@ -81,7 +81,7 @@ export function EventGrid({ events, currentPage, onPageChange }: Props) {
               onClick={() => onPageChange(page)}
               className={`flex h-9 w-9 items-center justify-center rounded-lg border text-sm font-medium transition-colors ${
                 page === safePage
-                  ? "border-[#FF6B47] bg-[#FF6B47] text-white shadow-sm"
+                  ? "border-[#054EFD] bg-[#054EFD] text-white shadow-sm"
                   : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
               }`}
               aria-current={page === safePage ? "page" : undefined}
