@@ -15,4 +15,5 @@ RUN npm run build
 FROM nginx:stable-alpine
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY cache.conf /etc/nginx/conf.d/00-cache.conf
 EXPOSE 80
