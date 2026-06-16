@@ -49,44 +49,23 @@
 
 | **대기열 입장** | **좌석 선택 & 점유** |
 |---|---|
-| <img width="400" height="250" alt="대기열" src="https://github.com/user-attachments/assets/235c8529-f9cd-4fb9-9f8e-d108a456197f" />| 스크린샷 또는 GIF |
+| <img width="400" height="250" alt="대기열" src="https://github.com/user-attachments/assets/235c8529-f9cd-4fb9-9f8e-d108a456197f" />| <img width="400" height="250" alt="좌석섵낵" src="https://github.com/user-attachments/assets/12a0cbcc-3045-41dd-98bb-47272e48ee4c" /> |
 
 | **결제 (토스페이먼츠)** | **예매 내역 / 취소** |
 |---|---|
-| 스크린샷 또는 GIF | 스크린샷 또는 GIF |
+| <img width="400" height="250" alt="결제토스" src="https://github.com/user-attachments/assets/7e470050-26a6-4449-8e5d-50934737b76e" /> | <img width="400" height="250" alt="예매취소" src="https://github.com/user-attachments/assets/6ebbcbdd-40d1-4d68-a7c8-90de1b8c4797" /> |
 
 ---
 
 ## 🏗️ 시스템 아키텍처
 
-> 아키텍처 다이어그램 이미지를 여기에 첨부해 주세요
-
-```
-[Client (React + TypeScript)]
-          │  Polling (3초 주기)
-          ▼
-[Spring Boot API Server]
-  · JWT 인증 (Access: Authorization 헤더)
-  · Queue-Token 헤더 검증 (Spring Filter)
-  · @Scheduled 점유 만료 해제 (30초)
-  · @Scheduled 대기열 승격 (10초)
-          │
-    ┌─────┴──────┐
-    ▼            ▼
-[Oracle 23ai]  [Redis 8]
-  JPA @Version  Sorted Set 대기열
-  낙관적 락     입장 토큰 / 매진 플래그
-
-[Docker Compose] — 전체 환경 단일 구성
-[GitHub Actions] — CI
-[k6] — 부하 테스트
-```
+<img width="800" height="900" alt="system architecture" src="https://github.com/user-attachments/assets/867badb6-fba4-45c0-a27a-fd2ad0417be7" />
 
 ---
 
 ## ERD
 
-<img width="3311" height="2002" alt="티켓팅마스터" src="https://github.com/user-attachments/assets/57731c55-6fc8-4728-9f73-21e3adc4fef3" />
+<img width="1536" height="1024" alt="ChatGPT Image 2026년 6월 16일 오후 01_49_26" src="https://github.com/user-attachments/assets/cfab4159-b6a3-410c-8f89-cb938f67b5c1" />
 
 
 
@@ -215,18 +194,14 @@ k6 run scenario-a-seat-concurrency.js
 
 ## 👥 팀원 소개
 
-| | | |
+| <img width="60" height="70" alt="Open Peeps - Avatar (4)" src="https://github.com/user-attachments/assets/dcd7cf4b-3907-4f8b-a2ef-3bc65ccd210c" /> | <img width="60" height="70" alt="Open Peeps - Avatar (1)" src="https://github.com/user-attachments/assets/90b47aa5-f40d-4ee4-8937-90f43cb4e645" /> | <img width="60" height="70" alt="Open Peeps - Avatar (3)" src="https://github.com/user-attachments/assets/f3ab6fe6-1249-4d90-b32a-dd61a87f41d6" /> |
 |---|---|---|
-| **이름** | **이름** | **이름** |
+| **이승헌👑** | **김소강** | **이지원** |
 | Fullstack | Fullstack | Fullstack |
-| [GitHub]() | [GitHub]() | [GitHub]() |
+| [GitHub](https://github.com/2shoneycom) | [GitHub](https://github.com/cherry2766) | [GitHub](https://github.com/Koalaman0) |
 
-> [자세한 팀원 소개 (Notion)]()
 
----
 
-<p align="center">
-  멀티캠퍼스 현대이지웰 Java 풀스택 개발자 아카데미 7회차 · 1조
 
 <p align="center">
 
