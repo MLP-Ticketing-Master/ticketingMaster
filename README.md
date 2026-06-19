@@ -2,9 +2,11 @@
 
 #  티켓팅마스터 (TicketingMaster)
 
+**트래픽 폭주는 대기열로 분산시키고, 좌석 동시성은 낙관적 락으로 처리하는 — 두 단계 방어 구조의 e스포츠 티켓 예매 시스템**
+
 > 멀티캠퍼스 현대이지웰 Java 풀스택 개발자 아카데미 7회차 · 최종 프로젝트 1조
 
-**트래픽 폭주는 대기열로 분산시키고, 좌석 동시성은 낙관적 락으로 처리하는 — 두 단계 방어 구조의 e스포츠 티켓 예매 시스템**
+
 
 - 📄 [프로젝트 문서 (Notion)]()
 - 📌 [API 명세서]()
@@ -19,7 +21,6 @@
 - [ERD](#erd)
 - [기술 스택](#-기술-스택)
 - [폴더 구조](#-폴더-구조)
-- [실행 방법](#-실행-방법)
 - [팀 협업 문화](#-팀-협업-문화)
 - [팀원 소개](#-팀원-소개)
 
@@ -54,6 +55,10 @@
 | **결제 (토스페이먼츠)** | **예매 내역 / 취소** |
 |---|---|
 | <img width="400" height="250" alt="결제토스" src="https://github.com/user-attachments/assets/7e470050-26a6-4449-8e5d-50934737b76e" /> | <img width="400" height="250" alt="예매취소" src="https://github.com/user-attachments/assets/6ebbcbdd-40d1-4d68-a7c8-90de1b8c4797" /> |
+
+| **관리자 페이지** | **비밀번호 찾기** |
+|---|---|
+| <img width="400" height="250" alt="관리자 페이지" src="https://github.com/user-attachments/assets/48c84191-1e12-4a12-87f1-153c7248e6dc" /> | <img width="400" height="250" alt="비밀번호 찾기" src="https://github.com/user-attachments/assets/b7c750b0-8a9a-4a35-9fe4-ae467f5f7a5a" /> |
 
 ---
 
@@ -106,76 +111,52 @@
 
 ```
 ticketingMaster/
-├── backend/                   # Spring Boot 서버 (Java 21)
-│   └── src/main/java/
-│       ├── controller/        # REST API 컨트롤러
-│       ├── service/           # 비즈니스 로직
-│       ├── repository/        # DB 접근 (Spring Data JPA)
-│       ├── domain/            # 엔티티 & DTO
-│       └── scheduler/         # 점유 만료·대기열 승격 스케줄러
-├── frontend/                  # React + TypeScript 클라이언트
+├── backend/                             
 │   └── src/
-│       ├── components/        # 공통 UI 컴포넌트 (shadcn/ui)
-│       ├── pages/             # 페이지 단위 컴포넌트
-│       ├── store/             # 상태 관리 (Zustand)
-│       ├── api/               # API 호출 (TanStack Query)
-│       └── types/             # TypeScript 타입 정의
-├── loadtest/                  # k6 부하 테스트 스크립트 (시나리오 A~F)
-└── docker-compose.yml         # 전체 환경 단일 구성
+│       ├── main/
+│       │   ├── java/com/ticketmaster/backend/
+│       │   │   ├── admin/               
+│       │   │   │   ├── booking/
+│       │   │   │   ├── event/
+│       │   │   │   ├── match/
+│       │   │   │   ├── seat/
+│       │   │   │   ├── seatgrade/
+│       │   │   │   ├── section/
+│       │   │   │   └── team/
+│       │   │   ├── domain/           
+│       │   │   │   ├── auth/
+│       │   │   │   ├── booking/
+│       │   │   │   ├── event/
+│       │   │   │   ├── match/
+│       │   │   │   ├── payment/
+│       │   │   │   ├── queue/        
+│       │   │   │   ├── seat/          
+│       │   │   │   ├── team/
+│       │   │   │   └── user/
+│       │   │   └── global/              
+│       │   │       ├── common/
+│       │   │       ├── config/
+│       │   │       ├── exception/
+│       │   │       ├── security/         
+│       │   │       └── util/
+│       │   └── resources/
+│       │       ├── db/
+│       │       │   ├── migration/       
+│       │       │   └── seed-loadtest.sql
+│       │       ├── application.yaml
+│       │       ├── application-prod.yaml
+│       │       └── application-loadtest.yaml
+│       └── test/
+├── frontend/                            
+│   └── src/
+│       ├── components/                  
+│       ├── pages/                  
+│       ├── store/                       
+│       ├── api/                         
+│       └── types/                       
+├── loadtest/                             
+└── docker-compose.yml                    
 ```
-
----
-
-## 🚀 실행 방법
-
-### 사전 준비
-- Java 21+
-- Node.js 18+
-- Docker & Docker Compose
-
-### ✅ Docker로 실행 (권장)
-
-```bash
-# 1. 레포지토리 클론
-git clone https://github.com/MLP-Ticketing-Master/ticketingMaster.git
-cd ticketingMaster
-
-# 2. 환경 변수 설정
-cp .env.example .env
-# .env 파일을 열어 필요한 값 입력 (Oracle, Redis, JWT 시크릿, 토스 API 키 등)
-
-# 3. 전체 서비스 실행
-docker-compose up -d
-```
-
-| 서비스 | 주소 |
-|--------|------|
-| 프론트엔드 | http://localhost:5173 |
-| 백엔드 API | http://localhost:8080 |
-
----
-
-### 개별 실행
-
-**Backend**
-```bash
-cd backend
-./gradlew bootRun
-```
-
-**Frontend**
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-**부하 테스트 (k6)**
-```bash
-cd loadtest
-k6 run scenario-a-seat-concurrency.js
-```
-
 ---
 
 ## 🤝 팀 협업 문화
