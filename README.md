@@ -68,7 +68,7 @@
 
 <br><br><br><br>
 
-## <img width="20" height="20" alt="image" src="https://github.com/user-attachments/assets/1aef54b0-80a4-4151-b16a-c05e51d23d9f" />  시스템 아키텍처
+## <img width="30" height="30" alt="image" src="https://github.com/user-attachments/assets/3dd404b4-4851-4339-b099-1ea24eef77c0" /> 시스템 아키텍처
 
 <img width="1536" height="1024" alt="Image20260616143304" src="https://github.com/user-attachments/assets/72583b66-d914-45c8-9c5c-fd41f05058bc" /> <br>
 
@@ -95,9 +95,9 @@
 
 <br><br>
 
-## <img width="20" height="20" alt="image" src="https://github.com/user-attachments/assets/db838ae4-a0e6-486d-b35e-029bff21e12e" /> ERD
+## <img width="30" height="30" alt="image" src="https://github.com/user-attachments/assets/4a2b4552-0793-4ff7-9435-a07c9cb046bd" /> ERD
 
-<img width="6676" height="8192" alt="Event Booking Management-2026-06-19-074316" src="https://github.com/user-attachments/assets/d26207c7-27ca-4ae5-8d25-1d15dc591370" />
+<img width="6410" height="8192" alt="Event Booking Management-2026-06-22-044404" src="https://github.com/user-attachments/assets/f9a8c4e3-beb3-488d-abba-8c9e173290ea" />
 
 <br><br><br><br>
 
