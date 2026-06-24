@@ -13,7 +13,7 @@
 <br>
 
 <h3>
-🏷️ Redis 대기열과 낙관적 락을 활용하여 트래픽 폭주와 좌석 동시성 문제를 해결한 e스포츠 티켓 예매 플랫폼
+🏷️ Redis 대기열 · 낙관적 락 기반 e스포츠 티켓 예매 플랫폼
 </h3>
 
 <br>
@@ -165,19 +165,19 @@
 
 | **로그인 / 회원가입** | **이벤트 필터** |
 |---|---|
-| <img width="470" height="294" alt="login" src="https://github.com/user-attachments/assets/329c99bc-6795-4c87-b123-35d72313e081" /> | <img width="470" height="294" alt="filter" src="https://github.com/user-attachments/assets/46438b3c-8608-458d-aebb-517c9f8bdcf1" /> |
+| <img width="400" height="250" alt="login" src="https://github.com/user-attachments/assets/329c99bc-6795-4c87-b123-35d72313e081" /> | <img width="400" height="250" alt="filter" src="https://github.com/user-attachments/assets/46438b3c-8608-458d-aebb-517c9f8bdcf1" /> |
 
 | **대기열 입장** | **좌석 선택 & 점유** |
 |---|---|
-| <img width="470" height="294" alt="대기열" src="https://github.com/user-attachments/assets/235c8529-f9cd-4fb9-9f8e-d108a456197f" />| <img width="470" height="294" alt="좌석섵낵" src="https://github.com/user-attachments/assets/12a0cbcc-3045-41dd-98bb-47272e48ee4c" /> |
+| <img width="400" height="250" alt="대기열" src="https://github.com/user-attachments/assets/235c8529-f9cd-4fb9-9f8e-d108a456197f" />| <img width="400" height="250" alt="좌석선택" src="https://github.com/user-attachments/assets/12a0cbcc-3045-41dd-98bb-47272e48ee4c" /> |
 
 | **결제 (토스페이먼츠)** | **예매 내역 / 취소** |
 |---|---|
-| <img width="470" height="294" alt="결제토스" src="https://github.com/user-attachments/assets/7e470050-26a6-4449-8e5d-50934737b76e" /> | <img width="470" height="294" alt="예매취소" src="https://github.com/user-attachments/assets/6ebbcbdd-40d1-4d68-a7c8-90de1b8c4797" /> |
+| <img width="400" height="250" alt="결제토스" src="https://github.com/user-attachments/assets/7e470050-26a6-4449-8e5d-50934737b76e" /> | <img width="400" height="250" alt="예매취소" src="https://github.com/user-attachments/assets/6ebbcbdd-40d1-4d68-a7c8-90de1b8c4797" /> |
 
 | **관리자 페이지** | **비밀번호 찾기** |
 |---|---|
-| <img width="470" height="294" alt="관리자 페이지" src="https://github.com/user-attachments/assets/48c84191-1e12-4a12-87f1-153c7248e6dc" /> | <img width="470" height="294" alt="비밀번호 찾기" src="https://github.com/user-attachments/assets/b7c750b0-8a9a-4a35-9fe4-ae467f5f7a5a" /> |
+| <img width="400" height="250" alt="관리자 페이지" src="https://github.com/user-attachments/assets/48c84191-1e12-4a12-87f1-153c7248e6dc" /> | <img width="400" height="250" alt="비밀번호 찾기" src="https://github.com/user-attachments/assets/b7c750b0-8a9a-4a35-9fe4-ae467f5f7a5a" /> |
 
 <br><br><br><br>
 
