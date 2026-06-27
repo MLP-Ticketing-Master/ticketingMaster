@@ -26,7 +26,7 @@
 
 🚀 <b>배포 환경</b> : AWS EC2 · Docker Compose
 
-🔗 <b>배포 URL</b> : <a href="http://13.208.100.144/">서비스 바로가기</a>
+🔗 <b>배포 URL</b> : 운영 종료 (부트캠프 기간 한정) · 데모는 아래 참고
 
 </blockquote>
 
@@ -329,6 +329,55 @@ ticketingMaster/
 - Notion으로 회의록 및 기술 문서 관리
 
 <img width="1000" alt="스크린샷 2026-06-19 174703" src="https://github.com/user-attachments/assets/c4e839d1-a95d-41c1-ab83-fc7924bc9e80" /> <br>
+
+<br><br>
+
+## 🚀 실행 방법
+
+### 사전 요구사항
+- Docker / Docker Compose
+- JDK 21
+- Node.js 20+
+
+### 1. 저장소 클론 및 환경 변수 설정
+
+    git clone https://github.com/MLP-Ticketing-Master/ticketingMaster.git
+    cd ticketingMaster
+
+루트의 `.env` 에 DB 계정, JWT 시크릿, 메일, 토스 키 등을 설정함
+
+### 2. 인프라 실행 (Oracle + Redis)
+
+    docker compose up -d
+
+- Oracle: `localhost:1522` (FREEPDB1)
+- Redis: `localhost:6380`
+
+### 3. 백엔드 실행 (Spring Boot)
+
+    cd backend
+    ./gradlew bootRun
+
+- API 서버: http://localhost:8080
+- Swagger UI: http://localhost:8080/swagger-ui.html
+
+### 4. 프론트엔드 실행 (Vite)
+
+    cd frontend
+    npm install
+    npm run dev
+
+- 웹: http://localhost:5173
+
+### Docker 한 번에 실행 (운영 구성)
+프론트 + 백엔드 + Oracle + Redis 를 한 번에 띄움
+
+    docker compose -f docker-compose.prod.yml up -d --build
+
+- 웹: http://localhost (nginx 가 /api 를 백엔드로 프록시)
+
+
+ 
 
  
 
